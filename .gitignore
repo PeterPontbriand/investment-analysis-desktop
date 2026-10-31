@@ -1,0 +1,14 @@
+node_modules/
+.pnpm-store/
+dist/
+.vite/
+coverage/
+src-tauri/target/
+src-tauri/gen/
+*.log
+.DS_Store
+Thumbs.db
+.env
+.env.*
+!.env.example
+.tmp/
