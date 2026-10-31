@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Preview mock-ups</title>
+<style>
+:root{--bg:#fafaf8;--s1:#f1efe8;--s2:#fff;--t1:#1f1f1d;--t2:#5f5e5a;--t3:#888780;--b:#d3d1c7;--ok-bg:#eaf3de;--ok:#3b6d11;--un-bg:#faeeda;--un:#854f0b;--ko-bg:#fcebeb;--ko:#a32d2d;--acc:#185fa5;--mono:ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme: dark){:root{--bg:#1c1c1a;--s1:#2c2c2a;--s2:#242422;--t1:#f1efe8;--t2:#b4b2a9;--t3:#888780;--b:#444441;--ok-bg:#27500a;--ok:#c0dd97;--un-bg:#633806;--un:#fac775;--ko-bg:#791f1f;--ko:#f7c1c1;--acc:#85b7eb}}
+body{margin:0;padding:24px 16px;background:var(--bg);color:var(--t1);font:14px/1.5 system-ui,sans-serif}
+main{max-width:760px;margin:0 auto}
+h1{font-size:20px;font-weight:500}
+.cap{font-size:13px;color:var(--t2);margin:24px 0 6px}
+.f{border:1px solid var(--b);border-radius:12px;overflow:hidden;background:var(--s2)}
+.bar{padding:6px 10px;background:var(--s1);border-bottom:1px solid var(--b);font-size:12px;color:var(--t3)}
+.nav{width:140px;border-right:1px solid var(--b);padding:10px;font-size:13px;flex:none}
+.nav div{padding:5px 8px;border-radius:8px;color:var(--t2)}.nav .on{background:var(--s1);color:var(--t1)}
+table{border-collapse:collapse;font-size:12.5px;width:100%}
+th,td{padding:5px 6px;border-bottom:1px solid var(--b);text-align:left;white-space:nowrap}
+th{color:var(--t2);font-weight:400}.g{font-weight:500;color:var(--t1)}
+.pill{font-size:12px;padding:1px 7px;border-radius:8px}
+.ok{background:var(--ok-bg);color:var(--ok)}.un{background:var(--un-bg);color:var(--un)}.ko{background:var(--ko-bg);color:var(--ko)}
+.mono{font-family:var(--mono);font-size:12px;background:var(--s1);border-radius:8px;padding:10px;white-space:pre;overflow-x:auto}
+.m{background:var(--s1);border-radius:8px;padding:8px 10px}.m p{margin:0}
+button{font:inherit;font-size:13px;padding:4px 10px;border:1px solid var(--b);border-radius:8px;background:var(--s2);color:var(--t1)}
+input{font:inherit;width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid var(--b);border-radius:8px;background:var(--s2);color:var(--t1);margin:4px 0 10px}
+.note{font-size:12px;color:var(--t3);margin-top:6px}
+</style>
+</head>
+<body><main>
+<h1>Preview mock-ups</h1>
+<p>Approved for discussion on 2026-10-30. Sample values come from the engine's workspace guide. Every number and word shown in a table or card comes from an engine API document; the GUI computes none of them.</p>
+
+<p class="cap">1. Refresh comparison. Column groups and cells come from each strategy's headline; rows link to run detail.</p>
+<div class="f"><div class="bar">Watchlists / Core / Refresh of 2026-10-30 14:02</div>
+<div style="display:flex">
+<div class="nav"><div>Analyze a ticker</div><div class="on">Watchlists</div><div>Saved runs</div><div>Setup</div></div>
+<div style="flex:1;min-width:0;padding:12px;overflow-x:auto">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><div style="font-weight:500">Core · refresh of 2026-10-30 14:02</div><div style="font-size:12px;color:var(--t2)">3 tickers · 4 strategies · 9 completed, 2 unavailable, 1 failed</div></div><button>Refresh now</button></div>
+<table>
+<tr><th></th><th class="g" colspan="2">Momentum</th><th class="g" colspan="2">Graham Number</th><th class="g" colspan="2">FCF Growth</th></tr>
+<tr><th>Ticker</th><th>Trend ⓘ</th><th>RSI ⓘ</th><th>Max price ⓘ</th><th>Outcome</th><th>FCF CAGR ⓘ</th><th>Class</th></tr>
+<tr><td><b>ACME</b></td><td>Bullish</td><td>100.0</td><td>36.69 USD</td><td><span class="pill ok">completed</span></td><td>10.2%</td><td>PASS</td></tr>
+<tr><td><b>BOLT</b></td><td>—</td><td>100.0</td><td>—</td><td><span class="pill un">unavailable</span></td><td>—</td><td>INDETERMINATE</td></tr>
+<tr><td><b>CRUX</b></td><td>—</td><td>—</td><td>—</td><td><span class="pill ko">failed</span></td><td>10.2%</td><td>PASS</td></tr>
+</table>
+<div class="note">Click a cell to open its run · ⓘ opens the glossary entry · further strategy groups scroll in from the right · Download JSON</div>
+</div></div></div>
+
+<p class="cap">2. Run detail. Headline cells as cards, then the engine's own projection text for each view.</p>
+<div class="f"><div class="bar">Saved runs / cbbd…</div><div style="padding:12px">
+<div style="font-weight:500">Acme Corp (ACME) — Graham Number</div>
+<div style="font-size:12px;color:var(--t2);margin-bottom:10px">Saved 2026-10-30 14:02 · earnings input period end 2024-06-30 · <span class="pill ok">completed</span></div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px">
+<div class="m"><p style="font-size:12px;color:var(--t2)">Max price</p><p style="font-size:18px;font-weight:500">36.69 USD</p></div>
+<div class="m"><p style="font-size:12px;color:var(--t2)">Current price</p><p style="font-size:18px;font-weight:500">61.20 USD</p></div>
+<div class="m"><p style="font-size:12px;color:var(--t2)">Margin</p><p style="font-size:18px;font-weight:500">—</p><p style="font-size:12px;color:var(--t3)">price above ceiling</p></div></div>
+<div style="display:flex;gap:4px;font-size:13px;margin-bottom:6px"><span class="pill" style="background:var(--s1)">Summary</span><span class="pill" style="color:var(--t2)">Details (provenance)</span><span class="pill" style="color:var(--t2)">Diagnostics</span><span class="pill" style="color:var(--t2)">JSON</span></div>
+<div class="mono">Acme Corp (ACME) — Graham Number
+  Graham Number ceiling   36.69 USD per share
+  EPS (diluted, annual)    2.41 USD   SEC EDGAR 10-K FY2024
+  Book value per share    24.83 USD   SEC EDGAR 10-K FY2024</div>
+</div></div>
+
+<p class="cap">3. Refresh in progress. Progress comes from the engine's refresh job; Stop lets running jobs finish.</p>
+<div class="f"><div style="padding:12px">
+<div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:500">Refreshing Core · 7 of 12 jobs</div><button>Stop after running jobs</button></div>
+<div style="height:6px;background:var(--s1);border-radius:8px;margin:8px 0"><div style="width:58%;height:6px;background:var(--acc);border-radius:8px"></div></div>
+<table><tr><td style="width:60px">ACME</td><td>momentum</td><td><span class="pill ok">completed</span></td></tr><tr><td>ACME</td><td>fcf-growth</td><td style="color:var(--t2)">running…</td></tr><tr><td>BOLT</td><td>graham-number</td><td><span class="pill un">unavailable</span></td></tr></table>
+</div></div>
+
+<p class="cap">4. First run. The SEC identity is kept in the GUI's own settings and passed to the engine it starts.</p>
+<div class="f"><div style="padding:16px;max-width:440px">
+<div style="font-weight:500;margin-bottom:4px">Before your first analysis</div>
+<div style="font-size:13px;color:var(--t2);margin-bottom:12px">The SEC asks software that reads its public filings to identify who is using it. This is not an account and costs nothing.</div>
+<label style="font-size:12px;color:var(--t2)">Your name</label><input value="Jane Investor">
+<label style="font-size:12px;color:var(--t2)">An email address you read</label><input value="jane@example.com" style="margin-bottom:4px">
+<div style="font-size:12px;color:var(--ko);margin-bottom:10px">Use your own address; the example address isn't accepted.</div>
+<button>Save and continue</button>
+</div></div>
+</main></body>
+</html>
