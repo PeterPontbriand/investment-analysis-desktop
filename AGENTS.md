@@ -10,6 +10,7 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - User-facing failure text is a message. Do not call it a sentence, except when counting actual sentences.
 - A section reference always names its document.
 - Technology-specific development rules, scaffold conventions, tests, and CI checks are defined in unit GUI.1. Until that unit is approved, do not invent a framework scaffold or install dependencies.
+- This repository contains no Python. Its tooling, including documentation checks, is written in the repository's own language.
 
 ## Approval gates
 
@@ -48,4 +49,4 @@ Never add AI or tool attribution anywhere in this repository: no Co-Authored-By 
 
 ## Verification
 
-The repository-wide documentation checkers are scripts/check_doc_links.py and scripts/check_sequence_tables.py. Unit GUI.1 defines the application's own test and CI gates. Follow the current unit plan for verification and report actual command results; do not claim checks passed unless they ran successfully.
+Unit GUI.1 adds the repository's documentation checks, equivalent to IAN's scripts/check_doc_links.py and scripts/check_sequence_tables.py, written in the repository's own language. Unit GUI.1 defines the application's own test and CI gates. Follow the current unit plan for verification and report actual command results; do not claim checks passed unless they ran successfully.

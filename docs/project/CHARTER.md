@@ -35,7 +35,7 @@ GUI.2, GUI.3, and GUI.4 cannot start until IAN API.2, API.4, and API.6 respectiv
 
 - **Problem:** Implementation needs an approved desktop shell, interface framework, dependency workflow, tests, and CI gate.
 - **Decision:** Bring the recommendations below to the project owner for approval before GUI.1; this charter itself does not approve or install dependencies.
-- **Scope:** Record the technology decisions, create the approved scaffold, and define the unit's tests and CI gate.
+- **Scope:** Record the technology decisions, create the approved scaffold, and define the unit's tests and CI gate. The gate includes documentation checks written in the repository's own language, equivalent to IAN's scripts/check_doc_links.py (local links and heading anchors resolve; no Mermaid) and scripts/check_sequence_tables.py (sequence-table status order and completion dates), run over every Markdown file, including those GUI.0 added.
 - **Branch:** A dedicated implementation branch from main, after GUI.0 has been reviewed.
 - **Detail:** ⚠ no slice plan yet.
 
@@ -116,7 +116,7 @@ Vue supports command-line type checking of component templates through [its Type
 - The preview excludes local-model synthesis, general settings editing beyond the first-run SEC identity screen, database maintenance, and charts.
 - GUI.2, GUI.3, and GUI.4 begin only after IAN API.2, API.4, and API.6 respectively merge.
 - The first-run screen stores the user's SEC identity in GUI settings and passes it to ian serve as SEC_USER_AGENT.
-- GUI.1 records the approved technology choices and its test and CI gates.
+- GUI.1 records the approved technology choices and its test and CI gates, including the documentation checks.
 
 ## Questions for potential users before GUI.2 scope is fixed
 
