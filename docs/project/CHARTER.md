@@ -50,10 +50,6 @@ GUI.2, GUI.3, and GUI.4 cannot start until IAN API.2, API.4, and API.6 respectiv
 | Type generation from IAN's openapi.json | Choose openapi-typescript, pinned as a development dependency, and check generated types into the repository. Review generated diffs when the pinned IAN API changes; generated types do not validate API responses at runtime. |
 | Help Markdown renderer and sanitization | Choose markdown-it with DOMPurify, a strict allowlist, and application-owned link handling for IAN help links. Sanitization reduces unsafe markup risk and permits in-app navigation; the renderer and allowlist need maintenance as served Markdown evolves. |
 | Touch-screen help | Make each help affordance an explicit, keyboard-accessible control. Touch users can open the same definition and help panel without hover; controls take more screen space than hover-only hints. |
-| Windows and macOS installer formats and signing | Start with a signed Windows installer and a signed, notarized macOS disk image. Signing improves publisher identification and macOS distribution; certificates, notarization, and release steps add recurring cost and operational work. |
-| Obtaining uv and pinning IAN | Bundle a pinned uv executable with each installer and install the exact IAN version selected for that GUI release. This avoids an extra user setup step and makes the pair reproducible; each release must update and validate its bundled installer tooling. |
-| Update mechanism | Use Tauri's signed updater with explicit user confirmation before installing an update. It gives the application a direct update path; signing keys and release metadata become security-critical operational assets. |
-| Start menu product name | Use **Investment Analysis Desktop**. It matches the repository and is recognizable; the full name is longer than a short brand name. |
 
 Vue supports command-line type checking of component templates through [its TypeScript guide](https://vuejs.org/guide/typescript/overview). Tauri documents WebdriverIO with its Tauri service for desktop end-to-end tests, including Windows and macOS, in [its WebDriver guide](https://tauri.app/develop/tests/webdriver/). The project owner approves or changes these recommendations before GUI.1.
 
@@ -61,7 +57,7 @@ Vue supports command-line type checking of component templates through [its Type
 
 - **Problem:** Investors need to inspect analysis documents without learning a command line.
 - **Decision:** Build the first read-only screens on IAN API.2 and use only documented API content for all displayed values and labels.
-- **Scope:** Analyze a ticker with chosen strategies; show the refresh comparison; show run detail with summary, details, diagnostics, and the JSON document.
+- **Scope:** Show the refresh comparison; show run detail with summary, details, diagnostics, and the JSON document.
 - **Branch:** A dedicated GUI.2 branch after IAN API.2 merges and GUI.1 establishes the scaffold.
 - **Detail:** ⚠ no slice plan yet.
 
@@ -69,7 +65,7 @@ Vue supports command-line type checking of component templates through [its Type
 
 - **Problem:** Users need to manage their saved tickers and follow long-running refreshes.
 - **Decision:** Add state-changing actions and refresh controls through IAN API.4 only.
-- **Scope:** Create and edit watchlists; refresh with progress reporting and a stop control.
+- **Scope:** Analyze a ticker with chosen strategies; create and edit watchlists; refresh with progress reporting and a stop control.
 - **Branch:** A dedicated GUI.3 branch after IAN API.4 merges and GUI.1 establishes the scaffold.
 - **Detail:** ⚠ no slice plan yet.
 
@@ -88,6 +84,17 @@ Vue supports command-line type checking of component templates through [its Type
 - **Scope:** The first-run SEC identity screen and Windows/macOS installers, using the technology and signing choices approved in GUI.1.
 - **Branch:** A dedicated GUI.5 branch after the scaffold decisions and API requirements it consumes are available.
 - **Detail:** ⚠ no slice plan yet.
+
+**Decisions to approve before GUI.5**
+
+| Decision | Recommendation and trade-off |
+| :--- | :--- |
+| Windows and macOS installer formats and signing | Start with a signed Windows installer and a signed, notarized macOS disk image. Signing improves publisher identification and macOS distribution; certificates, notarization, and release steps add recurring cost and operational work. |
+| Obtaining uv and pinning IAN | Bundle a pinned uv executable with each installer and install the exact IAN version selected for that GUI release. This avoids an extra user setup step and makes the pair reproducible; each release must update and validate its bundled installer tooling. |
+| Update mechanism | Use Tauri's signed updater with explicit user confirmation before installing an update. It gives the application a direct update path; signing keys and release metadata become security-critical operational assets. |
+| Start menu product name | Use **Investment Analysis Desktop**. It matches the repository and is recognizable; the full name is longer than a short brand name. |
+
+Answers to Q4 inform the signing decision, so these decisions are made after the user questions, not before GUI.1.
 
 ### GUI.6: Preview release and feedback
 
@@ -140,7 +147,7 @@ The preview screens are shown in [preview mock-ups](../design/preview-mockups.ht
 
 ## Appendix A: 2026-10-30 decisions from IAN's API plan
 
-The following excerpts preserve the decisions recorded in IAN's docs/project/milestones/v0.2/api/API_CONTRACT_AND_SLICE_PLAN.md, Appendix A.1, A.2, and A.4, on branch docs/api-plan.
+The following excerpts quote the decisions recorded in Appendix A.1, A.2 and A.4 of IAN's [API contract and slice plan](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/project/milestones/v0.2/api/API_CONTRACT_AND_SLICE_PLAN.md). In these excerpts, "this repository" and "here" mean IAN, not this repository.
 
 ### A.1: A separate GUI application over a local API
 
