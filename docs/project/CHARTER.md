@@ -5,7 +5,7 @@
 - This charter establishes the governance and staged scope for a separate desktop application that lets investors use IAN without a command line.
 - It covers the preview release and the work needed to reach it; it does not authorize application code, a framework scaffold, or dependency installation.
 - The GUI uses only IAN's versioned local HTTP API, displays values and explanations supplied by IAN, and keeps financial calculations in IAN.
-- GUI.1 decides the technology and defines the scaffold, tests, and CI gate. The project owner approves its listed technology decisions before that unit begins.
+- GUI.1 technology decisions were approved on 2026-10-31 and are recorded in the [GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md).
 
 ## Sequence and status
 
@@ -34,24 +34,12 @@ GUI.2, GUI.3, and GUI.4 cannot start until IAN API.2, API.4, and API.6 respectiv
 ### GUI.1: Technology decision and scaffold
 
 - **Problem:** Implementation needs an approved desktop shell, interface framework, dependency workflow, tests, and CI gate.
-- **Decision:** Bring the recommendations below to the project owner for approval before GUI.1; this charter itself does not approve or install dependencies.
+- **Decision:** The technology decisions were approved on 2026-10-31 and are recorded in the [GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md).
 - **Scope:** Record the technology decisions, create the approved scaffold, and define the unit's tests and CI gate. The gate includes documentation checks written in the repository's own language, equivalent to IAN's scripts/check_doc_links.py (local links and heading anchors resolve; no Mermaid) and scripts/check_sequence_tables.py (sequence-table status order and completion dates), run over every Markdown file, including those GUI.0 added.
 - **Branch:** A dedicated implementation branch from main, after GUI.0 has been reviewed.
-- **Detail:** ⚠ no slice plan yet.
+- **Detail:** [GUI.1 technology and scaffold slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md).
 
-**Decisions to approve before GUI.1**
-
-| Decision | Recommendation and trade-off |
-| :--- | :--- |
-| Desktop shell | Choose Tauri 2. It supports a native desktop shell with a web interface and a small installer footprint; it adds Rust and platform packaging work. |
-| Interface framework | Choose Vue 3 with TypeScript single-file components and command-line template checking. Its familiar component model and typed templates suit a small team; contributors must learn Vue's single-file component conventions. |
-| Package manager | Choose pnpm with a checked-in lockfile and pinned package-manager version. Reproducible installs and workspace support are useful as the application grows; contributors need pnpm in addition to Node.js. |
-| Unit and end-to-end tests | Choose Vitest for fast unit/component tests and WebdriverIO with the Tauri service for desktop end-to-end tests. The pair covers isolated UI behavior and the packaged shell across Windows and macOS; end-to-end runs need platform-specific runners and take longer. |
-| Type generation from IAN's openapi.json | Choose openapi-typescript, pinned as a development dependency, and check generated types into the repository. Review generated diffs when the pinned IAN API changes; generated types do not validate API responses at runtime. |
-| Help Markdown renderer and sanitization | Choose markdown-it with DOMPurify, a strict allowlist, and application-owned link handling for IAN help links. Sanitization reduces unsafe markup risk and permits in-app navigation; the renderer and allowlist need maintenance as served Markdown evolves. |
-| Touch-screen help | Make each help affordance an explicit, keyboard-accessible control. Touch users can open the same definition and help panel without hover; controls take more screen space than hover-only hints. |
-
-Vue supports command-line type checking of component templates through [its TypeScript guide](https://vuejs.org/guide/typescript/overview). Tauri documents WebdriverIO with its Tauri service for desktop end-to-end tests, including Windows and macOS, in [its WebDriver guide](https://tauri.app/develop/tests/webdriver/). The project owner approves or changes these recommendations before GUI.1.
+The approved technology decisions and their record are in [Appendix A of the GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record).
 
 ### GUI.2: Read-only screens
 
@@ -92,7 +80,8 @@ Vue supports command-line type checking of component templates through [its Type
 | Windows and macOS installer formats and signing | Start with a signed Windows installer and a signed, notarized macOS disk image. Signing improves publisher identification and macOS distribution; certificates, notarization, and release steps add recurring cost and operational work. |
 | Obtaining uv and pinning IAN | Bundle a pinned uv executable with each installer and install the exact IAN version selected for that GUI release. This avoids an extra user setup step and makes the pair reproducible; each release must update and validate its bundled installer tooling. |
 | Update mechanism | Use Tauri's signed updater with explicit user confirmation before installing an update. It gives the application a direct update path; signing keys and release metadata become security-critical operational assets. |
-| Start menu product name | Use **Investment Analysis Desktop**. It matches the repository and is recognizable; the full name is longer than a short brand name. |
+
+The product name was decided in GUI.1 ([D13 in Appendix A of the GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record)).
 
 Answers to Q4 inform the signing decision, so these decisions are made after the user questions, not before GUI.1.
 
@@ -112,6 +101,7 @@ Answers to Q4 inform the signing decision, so these decisions are made after the
 - Bundling copies of IAN's investor explanations in the GUI.
 - Requiring users to leave the application to understand displayed analysis content.
 - A strategy-specific GUI implementation. A strategy appears from IAN's generic API content: headline cells, projection text, its JSON document, and its selection JSON Schema. Adding a strategy to IAN therefore needs no GUI code change.
+- Remote access to an engine, an engine-hosting service, and mobile clients are future work; decisions D19 and D20 in the [GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record) keep them open.
 
 ## Acceptance criteria
 
