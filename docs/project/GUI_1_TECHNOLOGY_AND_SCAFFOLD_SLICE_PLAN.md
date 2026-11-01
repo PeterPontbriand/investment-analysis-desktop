@@ -19,17 +19,17 @@
 
 - **Problem:** Contributors need a reproducible frontend workflow and a local and CI quality gate before shell integration.
 - **Decision:** Establish the approved Vue, TypeScript, package, lint, formatting, testing, documentation-check, and CI toolchain without Tauri or Rust.
-- **Scope:** pnpm, Node 24 LTS, and a checked-in lockfile pinned as in D3; a Vue 3 and Vite app with one static screen as in D9; `vue-tsc`, ESLint, and Prettier as in D10, including the import rule in D20; a Vitest component test; Playwright browser tests in Chromium and WebKit against a mocked API as in D21; TypeScript documentation checks as in D11; `pnpm gate` as in D15; the `quality` CI aggregator fed by Windows and macOS jobs as in D14; Dependabot for GitHub Actions only as in D17; and repository layout as in D16. These decisions are recorded in [Appendix A](#appendix-a-2026-10-31-decision-record). Update `AGENTS.md` with the technology-specific development rules GUI.1a establishes.
-- **Branch:** `docs/gui-1-slice-plan` owns this plan; implementation proceeds on the approved GUI.1 branch from `main` after this plan is accepted.
-- **Detail:** This plan owns the [GUI.1a file scope](#gui1a-file-scope) and [GUI.1a acceptance criteria](#gui1a-acceptance-criteria).
+- **Scope:** pnpm, Node 24 LTS, and a checked-in lockfile pinned as in D3; a Vue 3 and Vite app with one static screen as in D9; `vue-tsc`, ESLint, and Prettier as in D10, including the import rule in D20; a Vitest component test; Playwright tests of the static screen in Chromium and WebKit with no mocked API as in D21; TypeScript documentation checks as in D11; `pnpm gate` as in D15; the `quality` CI aggregator fed by Windows and macOS jobs as in D14; Dependabot for GitHub Actions only as in D17; and repository layout as in D16. These decisions are recorded in [Appendix A](#appendix-a-2026-10-31-decision-record). Update `AGENTS.md` with the technology-specific development rules GUI.1a establishes.
+- **Branch:** `feat/gui-1a-tooling`, from main after this plan merges; its own pull request.
+- **Detail:** This plan owns GUI.1a's [file scope](#file-scope) and [acceptance criteria](#acceptance-criteria).
 
 ### GUI.1b — Tauri shell and shell smoke test
 
 - **Problem:** The approved scaffold needs a desktop shell and a smoke test against the real application window.
 - **Decision:** Add Tauri 2 under `src-tauri/`, with Rust, linting, and shell testing pinned and gated as recorded below.
 - **Scope:** Tauri 2 under `src-tauri/` as in D1; Rust pinned as in D3; `cargo fmt --check` and `cargo clippy` with warnings treated as errors as in D10; the bundle identifier and product name as in D12 and D13; a WebdriverIO shell smoke test using the embedded provider as in D4; the feature-gated WebDriver plugin and release-build check as in D5; and gate and CI additions for these checks. These decisions are recorded in [Appendix A](#appendix-a-2026-10-31-decision-record).
-- **Branch:** Continues the approved GUI.1 implementation branch from `main`.
-- **Detail:** This plan owns the [GUI.1b file scope](#gui1b-file-scope) and [GUI.1b acceptance criteria](#gui1b-acceptance-criteria).
+- **Branch:** `feat/gui-1b-tauri-shell`, from main after GUI.1a merges; its own pull request.
+- **Detail:** This plan owns GUI.1b's [file scope](#file-scope-1) and [acceptance criteria](#acceptance-criteria-1).
 
 ## Scope limits
 
@@ -39,29 +39,36 @@
 - No screens beyond the static screen, and no analysis content sourced outside an IAN API document.
 - OpenAPI type generation is deferred until IAN API.2 publishes `openapi.json`; no placeholder document or hand-written API types.
 - Help rendering and touch-screen help are implemented in GUI.4.
+- Playwright tests against a mocked API begin when GUI.2 builds the API adapter (D19, D21).
+- The `src/platform/` module itself is created when the application first needs a Tauri call (D20).
 - Remote engine access, an engine-hosting service, and mobile clients remain future work; the adapter and platform boundaries in D19 and D20 of [Appendix A](#appendix-a-2026-10-31-decision-record) keep these options open.
 
-## Acceptance criteria
+## GUI.1a detail
 
-### GUI.1a file scope
+### File scope
 
 - Root package metadata, pnpm lockfile, `.node-version`, and `engines` pin Node 24 LTS and pnpm as recorded in D3.
 - Vue 3 and Vite scaffold with a single static screen; no `src-tauri/` or Rust files.
-- ESLint flat configuration, Prettier configuration, Vue and TypeScript checking, and the ESLint rule preventing imports from `@tauri-apps/*` outside the platform module boundary.
-- Vitest component test and Playwright Chromium and WebKit browser tests for the static screen.
+- ESLint flat configuration, Prettier configuration, Vue and TypeScript checking, and the ESLint rule preventing imports from `@tauri-apps/*` outside `src/platform/`.
+- Vitest component test and Playwright tests of the static screen in Chromium and WebKit, with no mocked API.
 - TypeScript documentation checks under `tools/` for repository Markdown links, heading anchors, Mermaid prohibition, and sequence-table rules.
 - `pnpm gate`, GitHub Actions Windows and macOS jobs with a `quality` aggregator, and Dependabot limited to GitHub Actions.
 - Root-level `src/`, `tools/`, and `tests/` layout, and the GUI.1a development rules in `AGENTS.md`.
 
-### GUI.1a acceptance criteria
+### Acceptance criteria
 
 - Frozen-lockfile installation, Vue type checking, lint, formatting, component tests, browser tests, and documentation checks run from the local gate.
+- The ESLint rule forbids importing `@tauri-apps/*` outside `src/platform/`.
+- Playwright tests the static screen in Chromium and WebKit with no mocked API.
 - Documentation checks cover every Markdown file in the repository and enforce the link, heading-anchor, no-Mermaid, and sequence-table rules in D11.
 - Windows and macOS CI jobs feed one `quality` job; it passes only when both platform jobs pass, with no path filters or conditional skips.
-- The ruleset is configured to require `quality` after the first workflow run.
+- After the first workflow run, the project owner adds `quality` as a required check in the main ruleset (D14).
+- Each documentation check has tests showing it fails on a broken local link, a missing heading anchor, a Mermaid block, and a sequence table that breaks the status-order or completion-date rules. Each test also shows the check passes on a valid file.
 - No Tauri, Rust, API adapter, IAN-derived fixtures, or engine launch is introduced in this sub-slice.
 
-### GUI.1b file scope
+## GUI.1b detail
+
+### File scope
 
 - `src-tauri/` Tauri 2 application, configuration, and Rust toolchain pin.
 - Tauri application identifier and product name configuration.
@@ -69,7 +76,7 @@
 - Cargo feature configuration that enables the WebDriver plugin only for end-to-end builds, plus the release-build exclusion check.
 - Local gate and Windows/macOS CI additions for Rust formatting, Clippy, shell smoke testing, and release-build verification.
 
-### GUI.1b acceptance criteria
+### Acceptance criteria
 
 - The desktop shell opens the single static screen and uses the approved bundle identifier and product name.
 - `cargo fmt --check` and `cargo clippy` run with warnings treated as errors.
