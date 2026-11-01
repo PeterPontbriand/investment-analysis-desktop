@@ -9,7 +9,7 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - IAN owns explanations for displayed analysis content. Every term, label, status, acronym, and code shown by the GUI explains itself in place using IAN's /v1/help endpoints. The GUI's own help text covers how to use this application.
 - User-facing failure text is a message. Do not call it a sentence, except when counting actual sentences.
 - A section reference always names its document.
-- The application stack is Vue 3 with TypeScript and Vite, managed by pnpm on Node 24 LTS.
+- The application stack is Vue 3 with TypeScript and Vite, managed by pnpm on Node 26 LTS.
 - The repository layout is one root package with `src/`, `tools/`, `tests/unit/`, `tests/tools/`, and `tests/browser/`.
 - ESLint forbids `@tauri-apps/*` imports everywhere except the reserved `src/platform/` module.
 - Tools are written in TypeScript and run directly with Node's type stripping; use erasable TypeScript syntax only.
