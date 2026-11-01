@@ -10,8 +10,8 @@
 
 | Sub-slice | Scope | Status | Completed |
 | :--- | :--- | :--- | :--- |
-| GUI.1a | [Tooling and documentation checks](#gui1a--tooling-and-documentation-checks) | Next | |
-| GUI.1b | [Tauri shell and shell smoke test](#gui1b--tauri-shell-and-shell-smoke-test) | Planned | |
+| GUI.1a | [Tooling and documentation checks](#gui1a--tooling-and-documentation-checks) | Complete | 2026-10-31 |
+| GUI.1b | [Tauri shell and shell smoke test](#gui1b--tauri-shell-and-shell-smoke-test) | Next | |
 
 ## Sub-slices
 
@@ -19,7 +19,7 @@
 
 - **Problem:** Contributors need a reproducible frontend workflow and a local and CI quality gate before shell integration.
 - **Decision:** Establish the approved Vue, TypeScript, package, lint, formatting, testing, documentation-check, and CI toolchain without Tauri or Rust.
-- **Scope:** pnpm, Node 24 LTS, and a checked-in lockfile pinned as in D3; a Vue 3 and Vite app with one static screen as in D9; `vue-tsc`, ESLint, and Prettier as in D10, including the import rule in D20; a Vitest component test; Playwright tests of the static screen in Chromium and WebKit with no mocked API as in D21; TypeScript documentation checks as in D11; `pnpm gate` as in D15; the `quality` CI aggregator fed by Windows and macOS jobs as in D14; Dependabot for GitHub Actions only as in D17; and repository layout as in D16. These decisions are recorded in [Appendix A](#appendix-a-2026-10-31-decision-record). Update `AGENTS.md` with the technology-specific development rules GUI.1a establishes.
+- **Scope:** pnpm, Node 26 LTS, and a checked-in lockfile pinned as in D3 and D23; a Vue 3 and Vite app with one static screen as in D9; `vue-tsc`, ESLint, and Prettier as in D10, including the import rule in D20; a Vitest component test; Playwright tests of the static screen in Chromium and WebKit with no mocked API as in D21; TypeScript documentation checks as in D11; `pnpm gate` as in D15; the `quality` CI aggregator fed by Windows, macOS, and Linux jobs as in D14 and D22; Dependabot for GitHub Actions only as in D17; and repository layout as in D16. These decisions are recorded in [Appendix A](#appendix-a-2026-10-31-decision-record) and [Appendix B](#appendix-b-gui1a-implementation-decisions-2026-10-31). Update `AGENTS.md` with the technology-specific development rules GUI.1a establishes.
 - **Branch:** `feat/gui-1a-tooling`, from main after this plan merges; its own pull request.
 - **Detail:** This plan owns GUI.1a's [file scope](#file-scope) and [acceptance criteria](#acceptance-criteria).
 
@@ -27,7 +27,7 @@
 
 - **Problem:** The approved scaffold needs a desktop shell and a smoke test against the real application window.
 - **Decision:** Add Tauri 2 under `src-tauri/`, with Rust, linting, and shell testing pinned and gated as recorded below.
-- **Scope:** Tauri 2 under `src-tauri/` as in D1; Rust pinned as in D3; `cargo fmt --check` and `cargo clippy` with warnings treated as errors as in D10; the bundle identifier and product name as in D12 and D13; a WebdriverIO shell smoke test using the embedded provider as in D4; the feature-gated WebDriver plugin and release-build check as in D5; and gate and CI additions for these checks. These decisions are recorded in [Appendix A](#appendix-a-2026-10-31-decision-record).
+- **Scope:** Tauri 2 under `src-tauri/` as in D1; Rust pinned as in D3; `cargo fmt --check` and `cargo clippy` with warnings treated as errors as in D10; the bundle identifier and product name as in D12 and D13; a WebdriverIO shell smoke test using the embedded provider on Windows and macOS as in D4, with the Linux provider confirmed in GUI.1b before the Linux smoke test is implemented (D22); the feature-gated WebDriver plugin and release-build check as in D5; and gate and CI additions for these checks. These decisions are recorded in [Appendix A](#appendix-a-2026-10-31-decision-record).
 - **Branch:** `feat/gui-1b-tauri-shell`, from main after GUI.1a merges; its own pull request.
 - **Detail:** This plan owns GUI.1b's [file scope](#file-scope-1) and [acceptance criteria](#acceptance-criteria-1).
 
@@ -47,12 +47,14 @@
 
 ### File scope
 
-- Root package metadata, pnpm lockfile, `.node-version`, and `engines` pin Node 24 LTS and pnpm as recorded in D3.
+- Root package metadata, pnpm lockfile, `.node-version`, and `engines` pin Node 26 LTS and pnpm as recorded in D3 and D23.
+- `pnpm-workspace.yaml` holding pnpm settings only, with no package list (G19).
 - Vue 3 and Vite scaffold with a single static screen; no `src-tauri/` or Rust files.
 - ESLint flat configuration, Prettier configuration, Vue and TypeScript checking, and the ESLint rule preventing imports from `@tauri-apps/*` outside `src/platform/`.
 - Vitest component test and Playwright tests of the static screen in Chromium and WebKit, with no mocked API.
 - TypeScript documentation checks under `tools/` for repository Markdown links, heading anchors, Mermaid prohibition, and sequence-table rules.
-- `pnpm gate`, GitHub Actions Windows and macOS jobs with a `quality` aggregator, and Dependabot limited to GitHub Actions.
+- `pnpm gate`, GitHub Actions Windows, macOS, and Linux jobs with a `quality` aggregator, and Dependabot limited to GitHub Actions (D14, D22).
+- `.gitattributes`, `.gitignore`, and `docs/project/CHARTER.md` updates for line endings, generated output, and Linux support.
 - Root-level `src/`, `tools/`, and `tests/` layout, and the GUI.1a development rules in `AGENTS.md`.
 
 ### Acceptance criteria
@@ -61,7 +63,7 @@
 - The ESLint rule forbids importing `@tauri-apps/*` outside `src/platform/`.
 - Playwright tests the static screen in Chromium and WebKit with no mocked API.
 - Documentation checks cover every Markdown file in the repository and enforce the link, heading-anchor, no-Mermaid, and sequence-table rules in D11.
-- Windows and macOS CI jobs feed one `quality` job; it passes only when both platform jobs pass, with no path filters or conditional skips.
+- Windows, macOS, and Linux CI jobs feed one `quality` job; it passes only when all three platform jobs pass, with no path filters or conditional skips (D14, D22).
 - After the first workflow run, the project owner adds `quality` as a required check in the main ruleset (D14).
 - Each documentation check has tests showing it fails on a broken local link, a missing heading anchor, a Mermaid block, and a sequence table that breaks the status-order or completion-date rules. Each test also shows the check passes on a valid file.
 - No Tauri, Rust, API adapter, IAN-derived fixtures, or engine launch is introduced in this sub-slice.
@@ -74,13 +76,13 @@
 - Tauri application identifier and product name configuration.
 - WebdriverIO configuration and the embedded-provider shell smoke test.
 - Cargo feature configuration that enables the WebDriver plugin only for end-to-end builds, plus the release-build exclusion check.
-- Local gate and Windows/macOS CI additions for Rust formatting, Clippy, shell smoke testing, and release-build verification.
+- Local gate and Windows, macOS, and Linux CI additions for Rust formatting, Clippy, shell smoke testing, and release-build verification (D4, D14, D22).
 
 ### Acceptance criteria
 
 - The desktop shell opens the single static screen and uses the approved bundle identifier and product name.
 - `cargo fmt --check` and `cargo clippy` run with warnings treated as errors.
-- WebdriverIO runs the real-shell smoke test on Windows and macOS with the embedded provider.
+- WebdriverIO runs the real-shell smoke test on Windows and macOS with the embedded provider; GUI.1b confirms which WebdriverIO provider supports Linux before implementing the Linux smoke test (D4, D22).
 - The WebDriver plugin is off by default, enabled only for the end-to-end build, and absent from a release build.
 - `pnpm gate` and the `quality` CI job cover all checks that apply to GUI.1a and GUI.1b.
 
@@ -115,6 +117,8 @@ Approved by the project owner on 2026-10-31.
 | D19 | Engine address: the API adapter takes the engine's base URL and credential from configuration. The desktop supplies 127.0.0.1 and the per-launch token. No other code assumes a localhost engine or that the application launched it. This applies from GUI.2, when the adapter is built. It keeps remote engine access, a hosting service and mobile viewers possible without a rewrite. |
 | D20 | Platform module: every Tauri API call goes through one platform module that also has a browser implementation. An ESLint rule forbids importing `@tauri-apps/*` anywhere else; the rule lands in GUI.1a, and the module is created when the application first needs a Tauri call. The UI therefore runs in a plain browser, as a hosted web app or the browser tests need. |
 | D21 | Browser tests: Playwright runs the UI in Chromium and WebKit against a mocked API, and carries most UI testing. Chromium and WebKit are the engines behind Tauri's Windows and macOS webviews. WebdriverIO keeps only the shell smoke test. |
+| D22 | Linux is a supported platform. It amends D14: CI adds a Linux job feeding `quality`. It amends D4: the GUI.1b shell smoke test also runs on Linux, and GUI.1b confirms which WebdriverIO provider supports Linux before implementing it. |
+| D23 | Node: Node 26, the current LTS line since 2026-10-28, replaces Node 24 LTS. It amends D3 (`.node-version` and `engines` pin Node 26) and D11 (the documentation checks run with Node 26's built-in type stripping). `@types/node` follows the pinned Node major version. |
 
 ### Rejected alternatives
 
@@ -128,3 +132,25 @@ Reassessed on 2026-10-31, including suitability for mobile.
 - Rust-native UI kits (Slint, Dioxus, egui): too young.
 - Python toolkits: this repository has no Python, and the charter's Appendix A.1 rejects a Python GUI.
 - React and Svelte were considered for the UI framework; Vue was kept.
+
+## Appendix B: GUI.1a implementation decisions (2026-10-31)
+
+| # | Decision |
+| :--- | :--- |
+| G1 | `.gitattributes` sets `* text=auto eol=lf`; Prettier uses `endOfLine: "lf"`. |
+| G2 | `.gitignore` ignores `gate-output.txt`, `playwright-report/`, `test-results/`, and `blob-report/`. |
+| G3 | Prettier formats code and configuration only; `.prettierignore` excludes Markdown and `docs/design/*.html`. |
+| G4 | Both documentation checks scan every tracked Markdown file and every untracked, unignored Markdown file via `git ls-files --cached --others --exclude-standard`; outside Git they scan all on-disk Markdown except `node_modules`. |
+| G5 | Shared Markdown listing and both checks live in `tools/docs/` and run directly with Node 26 type stripping (D23); `tools/tsconfig.json` enables `noEmit`, `erasableSyntaxOnly`, `allowImportingTsExtensions`, and `verbatimModuleSyntax`, and the gate runs its TypeScript check. |
+| G6 | Vitest is the unit-test runner; the Vue Test Utils component test is in `tests/unit/` with jsdom, tool tests are in `tests/tools/`, and Playwright tests are in `tests/browser/`. |
+| G7 | Playwright tests the production build served by `vite preview`; Chromium and WebKit run on every platform, including Windows. |
+| G8 | The window, document, and heading say `Investment Analysis Desktop`; its only other text is the approved pre-release notice. No routing, state management, or styling framework is added. |
+| G9 | `pnpm gate` runs `node tools/gate.ts`: frozen install, Playwright browser install, Prettier, ESLint, Vue type check, tools type check, both documentation checks, Vitest, Vite build, and Playwright in order; it logs to ignored `gate-output.txt`, reports every step and duration, stops if install fails, and otherwise runs all steps and exits non-zero on failure. No step spawns through a shell; pnpm steps run the program named by `npm_execpath`. |
+| G10 | CI runs Windows, macOS, and Linux jobs, uploads each `gate-output.txt` even on failure, and uses an always-running `quality` aggregator that fails unless all platform jobs succeed; triggers target main without path filters or conditional skips, with actions pinned by major tag. Linux installs Playwright system dependencies before the gate. |
+| G11 | One root package pins the approved Vue, Vite, ESLint, Prettier, Vitest, Vue Test Utils, jsdom, Playwright, and Node types dependencies exactly at their latest stable versions. `vue` is the only runtime dependency. `@types/node` follows the pinned Node major version (D23). TypeScript is held at the newest version supported by typescript-eslint and vue-tsc; TypeScript 7.0.2 was incompatible with both on 2026-10-31. |
+| G16 | Linux is supported and is included in GUI.1 CI; GUI.1b confirms a Linux-capable WebdriverIO provider before implementing its shell smoke test. |
+| G17 | Linux package format remains a GUI.5 decision; candidates include AppImage, `.deb`, and Flatpak. |
+| G18 | The gate installs Chromium and WebKit; Linux CI installs their system libraries before the gate. |
+| G19 | `pnpm-workspace.yaml` holds pnpm settings only and lists no packages, so the repository stays one package (D16). It sets `verifyDepsBeforeRun: false`, so running a script never installs dependencies or changes the lockfile; the gate's frozen install is the first install. |
+
+Numbering follows the approval discussion; G12–G15 were operational or withdrawn and are not recorded.

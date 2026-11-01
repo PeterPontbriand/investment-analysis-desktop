@@ -12,3 +12,7 @@ Thumbs.db
 .env.*
 !.env.example
 .tmp/
+gate-output.txt
+playwright-report/
+test-results/
+blob-report/

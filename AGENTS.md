@@ -9,7 +9,15 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - IAN owns explanations for displayed analysis content. Every term, label, status, acronym, and code shown by the GUI explains itself in place using IAN's /v1/help endpoints. The GUI's own help text covers how to use this application.
 - User-facing failure text is a message. Do not call it a sentence, except when counting actual sentences.
 - A section reference always names its document.
-- Technology-specific development rules, scaffold conventions, tests, and CI checks are defined in unit GUI.1. Until that unit is approved, do not invent a framework scaffold or install dependencies.
+- The application stack is Vue 3 with TypeScript and Vite, managed by pnpm on Node 26 LTS.
+- The repository layout is one root package with `src/`, `tools/`, `tests/unit/`, `tests/tools/`, and `tests/browser/`.
+- `pnpm-workspace.yaml` holds pnpm settings only; it lists no packages. Running a script never installs dependencies or changes the lockfile.
+- ESLint forbids `@tauri-apps/*` imports everywhere except the reserved `src/platform/` module.
+- Tools are written in TypeScript and run directly with Node's type stripping; use erasable TypeScript syntax only.
+- Dependency versions are pinned exactly. Add or upgrade dependencies only through approved work.
+- Dependabot pull requests are never merged; reapply dependency bumps on a project branch.
+- `pnpm gate` must pass before pushing.
+- The required CI check is `quality`, fed by Windows, macOS, and Linux jobs.
 - This repository contains no Python. Its tooling, including documentation checks, is written in the repository's own language.
 
 ## Approval gates
@@ -49,4 +57,4 @@ Never add AI or tool attribution anywhere in this repository: no Co-Authored-By 
 
 ## Verification
 
-Unit GUI.1 adds the repository's documentation checks, equivalent to IAN's scripts/check_doc_links.py and scripts/check_sequence_tables.py, written in the repository's own language. Unit GUI.1 defines the application's own test and CI gates. Follow the current unit plan for verification and report actual command results; do not claim checks passed unless they ran successfully.
+Run `pnpm gate` before pushing. The gate installs frozen dependencies and Playwright's Chromium and WebKit browsers, checks formatting, lint, application and tools types, Markdown links and anchors, Mermaid fences and sequence tables, runs Vitest, builds the production app, and runs the Chromium and WebKit browser tests. It writes the full output and a per-step result and duration summary to the root `gate-output.txt`, which is git-ignored. CI runs the same gate on Windows, macOS, and Linux; Linux installs Playwright's system libraries first. The `quality` check passes only when all three platform jobs succeed. Report actual command results; do not claim checks passed unless they ran successfully.
