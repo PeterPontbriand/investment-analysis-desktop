@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm gate
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: gate-output-windows
+          path: gate-output.txt
+          if-no-files-found: warn
+
+  macos:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm gate
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: gate-output-macos
+          path: gate-output.txt
+          if-no-files-found: warn
+
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install-deps chromium webkit
+      - run: pnpm gate
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: gate-output-linux
+          path: gate-output.txt
+          if-no-files-found: warn
+
+  quality:
+    name: quality
+    runs-on: ubuntu-latest
+    needs: [windows, macos, linux]
+    if: always()
+    steps:
+      - name: Require all platform jobs to succeed
+        env:
+          WINDOWS_RESULT: ${{ needs.windows.result }}
+          MACOS_RESULT: ${{ needs.macos.result }}
+          LINUX_RESULT: ${{ needs.linux.result }}
+        run: |
+          test "$WINDOWS_RESULT" = success
+          test "$MACOS_RESULT" = success
+          test "$LINUX_RESULT" = success
