@@ -16,13 +16,13 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   ...vue.configs['flat/recommended'],
   {
-    files: ['**/*.{ts,vue}'],
+    files: ['**/*.{js,mjs,cjs,ts,tsx,vue}'],
     rules: {
       'no-restricted-imports': ['error', { patterns: ['@tauri-apps/*'] }],
     },
   },
   {
-    files: ['src/platform/**/*.{ts,vue}'],
+    files: ['src/platform/**/*.{js,mjs,cjs,ts,tsx,vue}'],
     rules: { 'no-restricted-imports': 'off' },
   },
   {
