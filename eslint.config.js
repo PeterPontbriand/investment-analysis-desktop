@@ -1,6 +1,7 @@
 import eslint from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import vue from 'eslint-plugin-vue';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -26,8 +27,8 @@ export default tseslint.config(
     rules: { 'no-restricted-imports': 'off' },
   },
   {
-    files: ['**/*.{ts,vue}'],
-    languageOptions: { globals: { process: 'readonly' } },
+    files: ['*.config.{js,ts}', 'tools/**', 'tests/**'],
+    languageOptions: { globals: globals.node },
   },
   prettier,
 );

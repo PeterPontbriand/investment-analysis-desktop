@@ -32,12 +32,12 @@ const steps: Step[] = [
   {
     name: 'Markdown links, anchors, and Mermaid check',
     command: 'node',
-    args: ['tools/check-doc-links.ts'],
+    args: ['tools/docs/check-doc-links.ts'],
   },
   {
     name: 'Sequence table check',
     command: 'node',
-    args: ['tools/check-sequence-tables.ts'],
+    args: ['tools/docs/check-sequence-tables.ts'],
   },
   { name: 'Vitest', command: packageManager, args: ['test'] },
   { name: 'Vite production build', command: packageManager, args: ['build'] },

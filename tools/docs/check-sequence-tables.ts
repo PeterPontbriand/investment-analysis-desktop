@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { checkSequenceTables } from './docs/sequence.ts';
+import { checkSequenceTables } from './sequence.ts';
 
 const root = process.cwd();
 const issues = checkSequenceTables(root);

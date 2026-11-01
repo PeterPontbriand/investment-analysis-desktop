@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { checkMarkdownLinks } from './docs/markdown.ts';
+import { checkMarkdownLinks } from './markdown.ts';
 
 const root = process.cwd();
 const issues = checkMarkdownLinks(root);
