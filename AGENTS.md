@@ -11,6 +11,7 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - A section reference always names its document.
 - The application stack is Vue 3 with TypeScript and Vite, managed by pnpm on Node 26 LTS.
 - The repository layout is one root package with `src/`, `tools/`, `tests/unit/`, `tests/tools/`, and `tests/browser/`.
+- `pnpm-workspace.yaml` holds pnpm settings only; it lists no packages. Running a script never installs dependencies or changes the lockfile.
 - ESLint forbids `@tauri-apps/*` imports everywhere except the reserved `src/platform/` module.
 - Tools are written in TypeScript and run directly with Node's type stripping; use erasable TypeScript syntax only.
 - Dependency versions are pinned exactly. Add or upgrade dependencies only through approved work.

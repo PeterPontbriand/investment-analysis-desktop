@@ -48,6 +48,7 @@
 ### File scope
 
 - Root package metadata, pnpm lockfile, `.node-version`, and `engines` pin Node 26 LTS and pnpm as recorded in D3 and D23.
+- `pnpm-workspace.yaml` holding pnpm settings only, with no package list (G19).
 - Vue 3 and Vite scaffold with a single static screen; no `src-tauri/` or Rust files.
 - ESLint flat configuration, Prettier configuration, Vue and TypeScript checking, and the ESLint rule preventing imports from `@tauri-apps/*` outside `src/platform/`.
 - Vitest component test and Playwright tests of the static screen in Chromium and WebKit, with no mocked API.
@@ -144,11 +145,12 @@ Reassessed on 2026-10-31, including suitability for mobile.
 | G6 | Vitest is the unit-test runner; the Vue Test Utils component test is in `tests/unit/` with jsdom, tool tests are in `tests/tools/`, and Playwright tests are in `tests/browser/`. |
 | G7 | Playwright tests the production build served by `vite preview`; Chromium and WebKit run on every platform, including Windows. |
 | G8 | The window, document, and heading say `Investment Analysis Desktop`; its only other text is the approved pre-release notice. No routing, state management, or styling framework is added. |
-| G9 | `pnpm gate` runs `node tools/gate.ts`: frozen install, Playwright browser install, Prettier, ESLint, Vue type check, tools type check, both documentation checks, Vitest, Vite build, and Playwright in order; it logs to ignored `gate-output.txt`, reports every step and duration, stops if install fails, and otherwise runs all steps and exits non-zero on failure. |
+| G9 | `pnpm gate` runs `node tools/gate.ts`: frozen install, Playwright browser install, Prettier, ESLint, Vue type check, tools type check, both documentation checks, Vitest, Vite build, and Playwright in order; it logs to ignored `gate-output.txt`, reports every step and duration, stops if install fails, and otherwise runs all steps and exits non-zero on failure. No step spawns through a shell; pnpm steps run the program named by `npm_execpath`. |
 | G10 | CI runs Windows, macOS, and Linux jobs, uploads each `gate-output.txt` even on failure, and uses an always-running `quality` aggregator that fails unless all platform jobs succeed; triggers target main without path filters or conditional skips, with actions pinned by major tag. Linux installs Playwright system dependencies before the gate. |
 | G11 | One root package pins the approved Vue, Vite, ESLint, Prettier, Vitest, Vue Test Utils, jsdom, Playwright, and Node types dependencies exactly at their latest stable versions. `vue` is the only runtime dependency. `@types/node` follows the pinned Node major version (D23). TypeScript is held at the newest version supported by typescript-eslint and vue-tsc; TypeScript 7.0.2 was incompatible with both on 2026-10-31. |
 | G16 | Linux is supported and is included in GUI.1 CI; GUI.1b confirms a Linux-capable WebdriverIO provider before implementing its shell smoke test. |
 | G17 | Linux package format remains a GUI.5 decision; candidates include AppImage, `.deb`, and Flatpak. |
 | G18 | The gate installs Chromium and WebKit; Linux CI installs their system libraries before the gate. |
+| G19 | `pnpm-workspace.yaml` holds pnpm settings only and lists no packages, so the repository stays one package (D16). It sets `verifyDepsBeforeRun: false`, so running a script never installs dependencies or changes the lockfile; the gate's frozen install is the first install. |
 
 Numbering follows the approval discussion; G12–G15 were operational or withdrawn and are not recorded.

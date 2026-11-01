@@ -1,0 +1,2 @@
+# pnpm settings only; this file lists no packages.
+verifyDepsBeforeRun: false
