@@ -12,7 +12,7 @@
 | Unit | Scope | Status | Completed |
 | :--- | :--- | :--- | :--- |
 | GUI.0 | [Charter and governance](#gui0-charter-and-governance) | Complete | 2026-10-30 |
-| GUI.1 | [Technology decision and scaffold](#gui1-technology-decision-and-scaffold) | Next | |
+| GUI.1 | [Technology decision and scaffold](#gui1-technology-decision-and-scaffold) | In progress | |
 | GUI.2 | [Read-only screens against IAN API.2](#gui2-read-only-screens) | Planned | |
 | GUI.3 | [Actions and refresh progress against IAN API.4](#gui3-actions-and-refresh-progress) | Planned | |
 | GUI.4 | [Help in place against IAN API.6](#gui4-help-in-place) | Planned | |
@@ -69,7 +69,7 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 
 - **Problem:** Users need a guided first launch and a predictable way to install the GUI and its pinned engine.
 - **Decision:** Keep the SEC identity in GUI settings and pass it to ian serve as SEC_USER_AGENT; install the release's pinned IAN version behind the scenes.
-- **Scope:** The first-run SEC identity screen and Windows/macOS installers, using the technology and signing choices approved in GUI.1.
+- **Scope:** The first-run SEC identity screen and Windows, macOS and Linux installers, using the technology and signing choices approved in GUI.1.
 - **Branch:** A dedicated GUI.5 branch after the scaffold decisions and API requirements it consumes are available.
 - **Detail:** ⚠ no slice plan yet.
 
@@ -78,6 +78,7 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 | Decision | Recommendation and trade-off |
 | :--- | :--- |
 | Windows and macOS installer formats and signing | Start with a signed Windows installer and a signed, notarized macOS disk image. Signing improves publisher identification and macOS distribution; certificates, notarization, and release steps add recurring cost and operational work. |
+| Linux package format | No recommendation yet. Linux became a supported platform in GUI.1 ([D22 in Appendix A of the GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record)). Candidates include AppImage, .deb and Flatpak, which differ in distribution reach, sandboxing and update handling. |
 | Obtaining uv and pinning IAN | Bundle a pinned uv executable with each installer and install the exact IAN version selected for that GUI release. This avoids an extra user setup step and makes the pair reproducible; each release must update and validate its bundled installer tooling. |
 | Update mechanism | Use Tauri's signed updater with explicit user confirmation before installing an update. It gives the application a direct update path; signing keys and release metadata become security-critical operational assets. |
 
