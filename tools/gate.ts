@@ -3,9 +3,11 @@ import { createWriteStream } from 'node:fs';
 import { once } from 'node:events';
 
 type Step = { name: string; command: string; args: string[] };
+type Program = { file: string; args: string[] };
 type Result = { name: string; passed: boolean; duration: number };
 
-const packageManager = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
+const packageManager = 'pnpm';
+const node = 'node';
 const steps: Step[] = [
   {
     name: 'Install frozen dependencies',
@@ -31,12 +33,12 @@ const steps: Step[] = [
   },
   {
     name: 'Markdown links, anchors, and Mermaid check',
-    command: 'node',
+    command: node,
     args: ['tools/docs/check-doc-links.ts'],
   },
   {
     name: 'Sequence table check',
-    command: 'node',
+    command: node,
     args: ['tools/docs/check-sequence-tables.ts'],
   },
   { name: 'Vitest', command: packageManager, args: ['test'] },
@@ -54,12 +56,21 @@ function log(message: string): void {
   output.write(message);
 }
 
+function resolveProgram(step: Step): Program {
+  if (step.command === node) return { file: process.execPath, args: step.args };
+  const execPath = process.env.npm_execpath as string;
+  if (/\.(js|cjs|mjs)$/.test(execPath))
+    return { file: process.execPath, args: [execPath, ...step.args] };
+  return { file: execPath, args: step.args };
+}
+
 function run(step: Step): Promise<{ passed: boolean; duration: number }> {
   return new Promise((resolve) => {
     const started = Date.now();
-    const child = spawn(step.command, step.args, {
+    const program = resolveProgram(step);
+    const child = spawn(program.file, program.args, {
       cwd: process.cwd(),
-      shell: process.platform === 'win32',
+      shell: false,
       env: process.env,
       stdio: ['inherit', 'pipe', 'pipe'],
     });
@@ -76,6 +87,13 @@ function run(step: Step): Promise<{ passed: boolean; duration: number }> {
 }
 
 async function main(): Promise<void> {
+  if (!process.env.npm_execpath) {
+    process.stderr.write(
+      'Run the gate with `pnpm gate`; npm_execpath is not set.\n',
+    );
+    process.exitCode = 1;
+    return;
+  }
   const results: Result[] = [];
   const totalStarted = Date.now();
   for (const [index, step] of steps.entries()) {
