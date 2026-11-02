@@ -171,5 +171,7 @@ Approved by the project owner on 2026-11-02.
 | T8 | The default window capability grants no Tauri permissions. The WebDriver permission is present only in the end-to-end capability selected by the `e2e` Cargo feature. |
 | T9 | Generate placeholder desktop and platform icons with `tauri icon` from `src-tauri/icons/placeholder.svg`. GUI.5 owns the real icon. |
 | T10 | Cache Cargo dependencies and build outputs with `Swatinem/rust-cache@v2`. |
-| T11 | Append gate checks in this order: Rust format, Clippy with warnings denied, default Cargo tree exclusion, feature-enabled debug Tauri build, and the real-window smoke test. CI runs the full gate on Windows, macOS, and Linux and feeds `quality`, with no path filters or platform skips. The frozen pnpm install uses command-scoped non-strict dependency-build handling; the Vite production build was verified with lifecycle scripts skipped, and the embedded provider does not require Edge or Gecko driver installation. |
+| T11 | Append gate checks in this order: Rust format, Clippy with warnings denied, default Cargo tree exclusion, feature-enabled debug Tauri build, and the real-window smoke test. CI runs the full gate on Windows, macOS, and Linux and feeds `quality`, with no path filters or platform skips. The embedded provider does not require Edge or Gecko driver installation. |
 | T12 | Windows, macOS, and Linux CI passed in Actions run [41379017399](https://github.com/PeterPontbriand/investment-analysis-desktop/actions/runs/41379017399). GUI.1b and GUI.1 are complete as of 2026-11-01. |
+| T13 | CI runs on pushes to `main`, pull requests to `main`, and manual dispatch. |
+| T14 | pnpm 12 `allowBuilds` denies `edgedriver` and `geckodriver` while allowing `esbuild`. |

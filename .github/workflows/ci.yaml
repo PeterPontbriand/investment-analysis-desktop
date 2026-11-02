@@ -4,6 +4,8 @@ on:
   pull_request:
     branches: [main]
   push:
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   windows:
@@ -60,7 +62,7 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: sudo apt-get update
       - run: sudo apt-get install --yes build-essential curl file libayatana-appindicator3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev patchelf webkit2gtk-driver xvfb
-      - run: pnpm install --frozen-lockfile --config.strict-dep-builds=false
+      - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install-deps chromium webkit
       - run: xvfb-run --auto-servernum pnpm gate
       - uses: actions/upload-artifact@v7

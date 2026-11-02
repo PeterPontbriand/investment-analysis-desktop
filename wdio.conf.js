@@ -1,5 +1,10 @@
 import { platform } from 'node:process';
 
+const applicationBinaryPath =
+  platform === 'win32'
+    ? './src-tauri/target/debug/investment-analysis-desktop.exe'
+    : './src-tauri/target/debug/investment-analysis-desktop';
+
 export const config = {
   runner: 'local',
   specs: ['./tests/shell/**/*.spec.js'],
@@ -8,10 +13,7 @@ export const config = {
     [
       '@wdio/tauri-service',
       {
-        appBinaryPath:
-          platform === 'win32'
-            ? './src-tauri/target/debug/investment-analysis-desktop.exe'
-            : './src-tauri/target/debug/investment-analysis-desktop',
+        appBinaryPath: applicationBinaryPath,
         driverProvider: 'embedded',
       },
     ],
@@ -20,10 +22,7 @@ export const config = {
     {
       browserName: 'tauri',
       'tauri:options': {
-        application:
-          platform === 'win32'
-            ? './src-tauri/target/debug/investment-analysis-desktop.exe'
-            : './src-tauri/target/debug/investment-analysis-desktop',
+        application: applicationBinaryPath,
       },
     },
   ],

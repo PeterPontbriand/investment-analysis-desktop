@@ -49,6 +49,7 @@ Documentation uses no Mermaid. Draw diagrams as plain text or tables. A section 
 - The `tauri-plugin-wdio-webdriver` crate is optional and enabled only by the `e2e` Cargo feature used for the shell smoke test. The normal dependency tree must not include it; the gate checks this with `cargo tree` using the default feature set.
 - The shell smoke test runs against the real Tauri window through WebdriverIO. Keep the WebDriver plugin permission in the end-to-end capability only.
 - Do not run a full release build or bundle before GUI.5.
+
 ## GitHub changes
 
 Pull requests are squash-merged. Titles use type(scope): description (unit), following IAN AGENTS.md §11. Use a conventional type such as docs, feat, fix, refactor, test, chore, ci, build, or perf; use a short lowercase scope and the plan's unit identifier when one exists.

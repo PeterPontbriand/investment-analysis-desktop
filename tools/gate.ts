@@ -17,7 +17,7 @@ const steps: Step[] = [
   {
     name: 'Install frozen dependencies',
     command: packageManager,
-    args: ['install', '--frozen-lockfile', '--config.strict-dep-builds=false'],
+    args: ['install', '--frozen-lockfile'],
   },
   {
     name: 'Install Playwright Chromium and WebKit',
