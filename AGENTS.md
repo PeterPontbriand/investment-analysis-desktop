@@ -10,7 +10,7 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - User-facing failure text is a message. Do not call it a sentence, except when counting actual sentences.
 - A section reference always names its document.
 - The application stack is Vue 3 with TypeScript and Vite, managed by pnpm on Node 26 LTS.
-- The repository layout is one root package with `src/`, `tools/`, `tests/unit/`, `tests/tools/`, and `tests/browser/`.
+- The repository layout is one root package with `src/`, `src-tauri/`, `tools/`, `tests/unit/`, `tests/tools/`, `tests/browser/`, and `tests/shell/`.
 - `pnpm-workspace.yaml` holds pnpm settings only; it lists no packages. Running a script never installs dependencies or changes the lockfile.
 - ESLint forbids `@tauri-apps/*` imports everywhere except the reserved `src/platform/` module.
 - Tools are written in TypeScript and run directly with Node's type stripping; use erasable TypeScript syntax only.
@@ -41,6 +41,14 @@ Use IAN's docs/project/milestones/v0.2/integration-readiness/IR_CONTRACT_AND_SLI
 
 Documentation uses no Mermaid. Draw diagrams as plain text or tables. A section reference always names its document.
 
+## Rust and Tauri
+
+- Rust is pinned in `rust-toolchain.toml` to an exact stable release with `rustfmt` and `clippy`; do not use a floating `stable` channel.
+- Keep Tauri Rust crates and the `@tauri-apps/cli` package pinned to exact versions, and check in `src-tauri/Cargo.lock`.
+- `pnpm gate` runs `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings` for `src-tauri/`.
+- The `tauri-plugin-wdio-webdriver` crate is optional and enabled only by the `e2e` Cargo feature used for the shell smoke test. The normal dependency tree must not include it; the gate checks this with `cargo tree` using the default feature set.
+- The shell smoke test runs against the real Tauri window through WebdriverIO. Keep the WebDriver plugin permission in the end-to-end capability only.
+- Do not run a full release build or bundle before GUI.5.
 ## GitHub changes
 
 Pull requests are squash-merged. Titles use type(scope): description (unit), following IAN AGENTS.md §11. Use a conventional type such as docs, feat, fix, refactor, test, chore, ci, build, or perf; use a short lowercase scope and the plan's unit identifier when one exists.

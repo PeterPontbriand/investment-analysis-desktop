@@ -11,14 +11,17 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint .",
+    "lint": "eslint . --ignore-pattern src-tauri/target/** --ignore-pattern src-tauri/gen/**",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run",
     "test:browser": "playwright test",
     "docs:check": "node tools/docs/check-doc-links.ts && node tools/docs/check-sequence-tables.ts",
-    "gate": "node tools/gate.ts"
+    "gate": "node tools/gate.ts",
+    "tauri": "tauri",
+    "build:shell:e2e": "tauri build --no-bundle --debug --features e2e --config src-tauri/tauri.e2e.conf.json -- --locked",
+    "test:shell": "wdio run wdio.conf.js"
   },
   "dependencies": {
     "vue": "3.5.44"
@@ -26,9 +29,15 @@
   "devDependencies": {
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.64.1",
+    "@tauri-apps/cli": "2.12.4",
     "@types/node": "26.6.6",
     "@vitejs/plugin-vue": "6.0.10",
     "@vue/test-utils": "2.5.1",
+    "@wdio/cli": "9.32.0",
+    "@wdio/globals": "9.31.3",
+    "@wdio/local-runner": "9.32.0",
+    "@wdio/mocha-framework": "9.32.0",
+    "@wdio/tauri-service": "1.5.1",
     "eslint": "10.14.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-vue": "10.12.0",

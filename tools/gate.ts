@@ -2,7 +2,12 @@ import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { once } from 'node:events';
 
-type Step = { name: string; command: string; args: string[] };
+type Step = {
+  name: string;
+  command: string;
+  args: string[];
+  forbidOutput?: string;
+};
 type Program = { file: string; args: string[] };
 type Result = { name: string; passed: boolean; duration: number };
 
@@ -12,7 +17,7 @@ const steps: Step[] = [
   {
     name: 'Install frozen dependencies',
     command: packageManager,
-    args: ['install', '--frozen-lockfile'],
+    args: ['install', '--frozen-lockfile', '--config.strict-dep-builds=false'],
   },
   {
     name: 'Install Playwright Chromium and WebKit',
@@ -48,6 +53,41 @@ const steps: Step[] = [
     command: packageManager,
     args: ['test:browser'],
   },
+  {
+    name: 'Rust formatting check',
+    command: 'cargo',
+    args: ['fmt', '--check', '--manifest-path', 'src-tauri/Cargo.toml'],
+  },
+  {
+    name: 'Rust Clippy with warnings denied',
+    command: 'cargo',
+    args: [
+      'clippy',
+      '--locked',
+      '--manifest-path',
+      'src-tauri/Cargo.toml',
+      '--all-targets',
+      '--',
+      '-D',
+      'warnings',
+    ],
+  },
+  {
+    name: 'Cargo release dependency tree excludes WebDriver',
+    command: 'cargo',
+    args: ['tree', '--manifest-path', 'src-tauri/Cargo.toml', '--locked'],
+    forbidOutput: 'tauri-plugin-wdio-webdriver',
+  },
+  {
+    name: 'Tauri end-to-end build with WebDriver feature',
+    command: packageManager,
+    args: ['build:shell:e2e'],
+  },
+  {
+    name: 'Tauri shell smoke test',
+    command: packageManager,
+    args: ['test:shell'],
+  },
 ];
 
 const output = createWriteStream('gate-output.txt', { flags: 'w' });
@@ -58,6 +98,8 @@ function log(message: string): void {
 
 function resolveProgram(step: Step): Program {
   if (step.command === node) return { file: process.execPath, args: step.args };
+  if (step.command !== packageManager)
+    return { file: step.command, args: step.args };
   const execPath = process.env.npm_execpath as string;
   if (/\.(js|cjs|mjs)$/.test(execPath))
     return { file: process.execPath, args: [execPath, ...step.args] };
@@ -74,15 +116,30 @@ function run(step: Step): Promise<{ passed: boolean; duration: number }> {
       env: process.env,
       stdio: ['inherit', 'pipe', 'pipe'],
     });
-    child.stdout?.on('data', (chunk: Buffer) => log(chunk.toString()));
+    let capturedOutput = '';
+    child.stdout?.on('data', (chunk: Buffer) => {
+      const message = chunk.toString();
+      capturedOutput += message;
+      log(message);
+    });
     child.stderr?.on('data', (chunk: Buffer) => log(chunk.toString()));
     child.on('error', (error: Error) => {
       log(`${error.message}\n`);
       resolve({ passed: false, duration: Date.now() - started });
     });
-    child.on('close', (code) =>
-      resolve({ passed: code === 0, duration: Date.now() - started }),
-    );
+    child.on('close', (code) => {
+      const containsForbiddenOutput =
+        step.forbidOutput !== undefined &&
+        capturedOutput.includes(step.forbidOutput);
+      if (containsForbiddenOutput)
+        log(
+          `Forbidden dependency found in command output: ${step.forbidOutput}\n`,
+        );
+      resolve({
+        passed: code === 0 && !containsForbiddenOutput,
+        duration: Date.now() - started,
+      });
+    });
   });
 }
 
