@@ -5,6 +5,7 @@
 - This charter establishes the governance and staged scope for a separate desktop application that lets investors use IAN without a command line.
 - It covers the preview release and the work needed to reach it; it does not authorize application code, a framework scaffold, or dependency installation.
 - The GUI uses only IAN's versioned local HTTP API, displays values and explanations supplied by IAN, and keeps financial calculations in IAN.
+- IAD is one application in a suite whose boundaries are recorded in IAN's Master Plan, in the [Product boundaries section](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/project/MASTER_PLAN.md#25-product-boundaries).
 - GUI.1 technology decisions were approved on 2026-10-31 and are recorded in the [GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md).
 
 ## Sequence and status
