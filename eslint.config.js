@@ -9,6 +9,8 @@ export default tseslint.config(
     ignores: [
       'dist/**',
       'node_modules/**',
+      'src-tauri/target/**',
+      'src-tauri/gen/**',
       'playwright-report/**',
       'test-results/**',
     ],
