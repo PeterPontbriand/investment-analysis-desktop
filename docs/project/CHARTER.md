@@ -13,7 +13,7 @@
 | Unit | Scope | Status | Completed |
 | :--- | :--- | :--- | :--- |
 | GUI.0 | [Charter and governance](#gui0-charter-and-governance) | Complete | 2026-10-30 |
-| GUI.1 | [Technology decision and scaffold](#gui1-technology-decision-and-scaffold) | In progress | |
+| GUI.1 | [Technology decision and scaffold](#gui1-technology-decision-and-scaffold) | Complete | 2026-11-01 |
 | GUI.2 | [Read-only screens against IAN API.2](#gui2-read-only-screens) | Planned | |
 | GUI.3 | [Actions and refresh progress against IAN API.4](#gui3-actions-and-refresh-progress) | Planned | |
 | GUI.4 | [Help in place against IAN API.6](#gui4-help-in-place) | Planned | |

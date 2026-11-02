@@ -11,7 +11,7 @@
 | Sub-slice | Scope | Status | Completed |
 | :--- | :--- | :--- | :--- |
 | GUI.1a | [Tooling and documentation checks](#gui1a--tooling-and-documentation-checks) | Complete | 2026-10-31 |
-| GUI.1b | [Tauri shell and shell smoke test](#gui1b--tauri-shell-and-shell-smoke-test) | In progress | |
+| GUI.1b | [Tauri shell and shell smoke test](#gui1b--tauri-shell-and-shell-smoke-test) | Complete | 2026-11-01 |
 
 ## Sub-slices
 
@@ -164,7 +164,7 @@ Approved by the project owner on 2026-11-02.
 | T1 | Pin Rust to 1.99.1 in `rust-toolchain.toml`, with `rustfmt` and `clippy` components. |
 | T2 | Pin `tauri` 2.12.5, `tauri-build` 2.7.4, and `@tauri-apps/cli` 2.12.4 exactly; check in `src-tauri/Cargo.lock`. Pin the WebdriverIO stack exactly: `@wdio/tauri-service` 1.5.1, CLI/local-runner/Mocha framework 9.32.0, and globals 9.31.3. Pin `tauri-plugin-wdio-webdriver` 1.5.1. |
 | T3 | Do not install `@tauri-apps/api`; the static screen makes no Tauri API call, and `src/platform/` remains deferred until an API call is needed. |
-| T4 | The Windows shell smoke test passed with the embedded provider. The Linux embedded-provider outcome is pending the first Linux CI job; this record does not confirm it. If that check fails, apply the approved Linux-only `tauri-driver` and WebKitWebDriver path before continuing. |
+| T4 | The Windows and Linux shell smoke tests passed with the embedded provider. Linux was confirmed in Actions run [41379017399](https://github.com/PeterPontbriand/investment-analysis-desktop/actions/runs/41379017399), so the Linux-only `tauri-driver` and WebKitWebDriver fallback was not needed. |
 | T5 | Linux CI installs WebKitGTK 4.1 and its companion development packages, then runs `pnpm gate` under `xvfb-run`. |
 | T6 | The gate runs `cargo tree --locked` with default features and fails if `tauri-plugin-wdio-webdriver` appears. No release build or bundle is run before GUI.5. |
 | T7 | Configure one resizable window titled “Investment Analysis Desktop” at 1200 by 800 with a minimum size of 800 by 600. Use the strict CSP `default-src 'self'`; GUI.2 may widen `connect-src`. Tauri devtools remain available only in debug builds. |
@@ -172,4 +172,4 @@ Approved by the project owner on 2026-11-02.
 | T9 | Generate placeholder desktop and platform icons with `tauri icon` from `src-tauri/icons/placeholder.svg`. GUI.5 owns the real icon. |
 | T10 | Cache Cargo dependencies and build outputs with `Swatinem/rust-cache@v2`. |
 | T11 | Append gate checks in this order: Rust format, Clippy with warnings denied, default Cargo tree exclusion, feature-enabled debug Tauri build, and the real-window smoke test. CI runs the full gate on Windows, macOS, and Linux and feeds `quality`, with no path filters or platform skips. The frozen pnpm install uses command-scoped non-strict dependency-build handling; the Vite production build was verified with lifecycle scripts skipped, and the embedded provider does not require Edge or Gecko driver installation. |
-| T12 | Keep GUI.1b In progress and GUI.1 In progress until all three CI platform jobs pass. Record the completion date and mark both Complete after the CI result; the T4 Linux outcome stays pending until then. |
+| T12 | Windows, macOS, and Linux CI passed in Actions run [41379017399](https://github.com/PeterPontbriand/investment-analysis-desktop/actions/runs/41379017399). GUI.1b and GUI.1 are complete as of 2026-11-01. |
