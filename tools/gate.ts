@@ -67,6 +67,7 @@ const steps: Step[] = [
       '--manifest-path',
       'src-tauri/Cargo.toml',
       '--all-targets',
+      '--all-features',
       '--',
       '-D',
       'warnings',
