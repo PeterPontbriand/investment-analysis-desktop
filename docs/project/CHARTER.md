@@ -119,21 +119,37 @@ Answers to Q4 inform the signing decision, so these decisions are made after the
 
 ## Questions for potential users before GUI.2 scope is fixed
 
+Answers recorded on 2026-11-02.
+
 Q1. Which computer would you use it on (Windows, Mac or other), and where did you stop last time you looked at the project?
+
+A1. Windows & Mac. Stopped after reading the GitHub main page with little click-through. Might have been before latest changes to GitHub main page.
+
+(Project owner insists that Linux compatibility be maintained)
 
 Q2. Would you rather analyze one ticker at a time, or keep a list and check it periodically?
 
+A2. Both, but if only one option is possible, then list.
+
 Q3. In the comparison screen, what is missing or confusing? Which column would you look at first?
+
+A3. "Acme Corp (ACME) — Graham Number" first, then, oddly, the large text in the center column "61.20 USD".
 
 Q4. Would you install a desktop app that sets up its own engine in the background? Would an "unrecognized app" warning stop you?
 
+A4. Yes, and yes with slight misgivings.
+
 Q5. Of these, which would you most want next: Altman Z, Beneish M, EV/EBITDA and FCF yield, Interest Coverage, ROIC, or Magic Formula ranking?
+
+A5. EV/EBITDA and FCF yield - supports cross-checking valuation from two independent angles rather than relying on a single accounting anchor (Graham Number).
 
 Q6. Do you have, or want, a local AI model?
 
+A6. Not yet, but very interested in exploring this.
+
 ## Background
 
-The project starts from the 2026-10-30 decision to provide investors with a desktop route into IAN while keeping the engine's financial analysis, labels, and explanations owned by IAN. The preview is aimed first at Windows users, including people who are new to investing and do not use command-line tools. The technology and installer choices remain subject to project-owner approval before GUI.1.
+The project starts from the 2026-10-30 decision to provide investors with a desktop route into IAN while keeping the engine's financial analysis, labels, and explanations owned by IAN. The preview is aimed first at Windows users, including people who are new to investing and do not use command-line tools. The technology choices were approved in GUI.1; the installer choices are approved before GUI.5.
 
 The preview screens are shown in [preview mock-ups](../design/preview-mockups.html).
 
