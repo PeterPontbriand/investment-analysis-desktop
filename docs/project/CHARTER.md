@@ -91,7 +91,7 @@ Answers to Q4 inform the signing decision, so these decisions are made after the
 
 - **Problem:** The preview needs a controlled release and a way for users to report what they cannot understand or complete.
 - **Decision:** Release the application as a preview and collect feedback against the screens and setup flow.
-- **Scope:** Publish preview builds, explain the pre-release status, and provide a feedback intake route.
+- **Scope:** Publish preview builds, explain the pre-release status, and provide a feedback intake route. Before preview builds are published, run and record a human smoke test of the installed application that walks through the preview's screens against a real engine started by the application. It is the human end-to-end check of IAN's local HTTP API, which [IAN's smoke test](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/SMOKE_TESTING.md) does not cover.
 - **Branch:** A dedicated release branch or tag from the accepted GUI implementation.
 - **Detail:** ⚠ no slice plan yet.
 
