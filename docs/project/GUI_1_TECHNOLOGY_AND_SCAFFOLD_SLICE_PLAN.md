@@ -177,3 +177,49 @@ Approved by the project owner on 2026-11-02.
 | T14 | pnpm 12 `allowBuilds` denies `edgedriver` and `geckodriver` while allowing `esbuild`. |
 
 WebdriverIO 9 requires `tsx` to compile TypeScript shell specs, so the configuration and smoke test remain JavaScript without adding that dependency.
+
+## Appendix D: Localization readiness decision (2026-11-08)
+
+Status: Accepted (Peter, 2026-11-08). The decision continues the numbering of [Appendix A](#appendix-a-2026-10-31-decision-record), D1 to D23. It applies to all application code from GUI.2 onward; GUI.1 code is checked against it in the retrofit table below.
+
+| # | Decision |
+| :--- | :--- |
+| D24 | IAD is locale-ready: adding an engine locale needs no IAD code change, and translating IAD itself is a data change only. |
+| D25 | IAD never hard-codes or parses engine text. It shows what the API serves and branches only on machine-readable codes. |
+| D26 | Every request sends the user's chosen locale as `Accept-Language`. IAD honours the locale the engine reports it served (`Content-Language`). |
+| D27 | The language picker is built from the engine's locale list, with a startup default when the engine is unreachable. |
+| D28 | IAD formats numbers and dates itself with `Intl`, from raw values the API returns. The unit still comes from the API document, as the [project charter](CHARTER.md) requires. |
+| D29 | Every IAD string lives in a message catalog (for example vue-i18n), with a fallback locale for missing translations. |
+| D30 | Layout uses CSS logical properties and follows the locale's text direction (`dir`), so right-to-left locales work. |
+| D31 | IAD stores only term ids and document ids from help content, never section or group ids. |
+
+D29 names vue-i18n only as an example. Choosing and pinning a catalog library is a dependency addition and needs project-owner approval under [AGENTS.md](../../AGENTS.md).
+
+### Dependencies on IAN API.1
+
+IAD needs the following from IAN's versioned `/v1` API. IAN is not edited by this decision; each item is a requirement to confirm against the API contract before the GUI unit that consumes it starts.
+
+| Need | Used for |
+| :--- | :--- |
+| A locale list endpoint | The language picker (D27) |
+| `Accept-Language` handling on requests and a `Content-Language` header on responses | Requesting and honouring the served locale (D26) |
+| Raw numbers and dates, with units, in documents instead of preformatted text | Formatting with `Intl` (D28) |
+| Machine-readable error codes | Branching without parsing engine text (D25) |
+| Stable term ids and document ids | Storing help references (D31) |
+
+### Retrofit items against the merged GUI.1 code
+
+The merged GUI.1 code (pull request 6, GUI.1b) was checked against D24 to D31. These gaps are recorded, not fixed. Each is retrofitted in the first unit that touches the file, or earlier if the project owner directs.
+
+| # | Gap | Where | Decision |
+| :--- | :--- | :--- | :--- |
+| R1 | No message catalog, locale state, or fallback locale; no i18n library is installed. | `package.json`, `src/main.ts` | D29, D24 |
+| R2 | The heading and the pre-release notice are literal English strings in the template. | `src/App.vue` | D29 |
+| R3 | The document language is fixed as `lang="en"` and no `dir` is set; neither follows the active locale. | `index.html` | D24, D30 |
+| R4 | The page `<title>` is a literal string, not catalog text. | `index.html` | D29 |
+| R5 | The window title is a literal string in the Tauri configuration. Following the locale needs a window-title call through the `src/platform/` module, which does not exist yet. | `src-tauri/tauri.conf.json`, T7 in [Appendix C](#appendix-c-gui1b-implementation-decisions-2026-11-02) | D29 |
+| R6 | The unit, browser, and shell tests assert the literal English strings, so a new locale or a changed translation breaks them. They should pin the locale and read expected text from the catalog. | `tests/unit/App.test.ts`, `tests/browser/static-screen.spec.ts`, `tests/shell/window.spec.js` | D29 |
+| R7 | The only style rule uses symmetric shorthand, so it passes today, but nothing enforces logical properties. A check, such as a stylelint rule, would be a new dependency and needs approval. | `src/App.vue`, `eslint.config.js` | D30 |
+| R8 | Playwright runs with its default locale and no right-to-left or second-locale case. | `playwright.config.ts` | D24, D30 |
+
+Not yet applicable, because GUI.1 has no API adapter (D9): D25, D26, D27, D28, and D31. They bind the adapter and help work in GUI.2 and GUI.4. The strict content security policy (T7 in [Appendix C](#appendix-c-gui1b-implementation-decisions-2026-11-02)) does not affect bundled catalogs.

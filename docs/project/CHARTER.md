@@ -116,6 +116,7 @@ Answers to Q4 inform the signing decision, so these decisions are made after the
 - GUI.2, GUI.3, and GUI.4 begin only after IAN API.2, API.4, and API.6 respectively merge.
 - The first-run screen stores the user's SEC identity in GUI settings and passes it to ian serve as SEC_USER_AGENT.
 - GUI.1 records the approved technology choices and its test and CI gates, including the documentation checks.
+- The application is locale-ready as recorded in [Appendix D of the GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-d-localization-readiness-decision-2026-11-08): adding an engine locale needs no application code change, and the application's own strings are catalog data.
 
 ## Questions for potential users before GUI.2 scope is fixed
 
