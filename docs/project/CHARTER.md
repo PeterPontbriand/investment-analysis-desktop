@@ -14,7 +14,7 @@
 | :--- | :--- | :--- | :--- |
 | GUI.0 | [Charter and governance](#gui0-charter-and-governance) | Complete | 2026-10-30 |
 | GUI.1 | [Technology decision and scaffold](#gui1-technology-decision-and-scaffold) | Complete | 2026-11-02 |
-| GUI.2 | [Read-only screens against IAN API.2](#gui2-read-only-screens) | Planned | |
+| GUI.2 | [Read-only screens against IAN API.2](#gui2-read-only-screens) | Next | |
 | GUI.3 | [Actions and refresh progress against IAN API.4](#gui3-actions-and-refresh-progress) | Planned | |
 | GUI.4 | [Help in place against IAN API.6](#gui4-help-in-place) | Planned | |
 | GUI.5 | [First-run screen and installer](#gui5-first-run-and-installer) | Planned | |
@@ -46,9 +46,9 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 
 - **Problem:** Investors need to inspect analysis documents without learning a command line.
 - **Decision:** Build the first read-only screens on IAN API.2 and use only documented API content for all displayed values and labels.
-- **Scope:** Show the refresh comparison; show run detail with summary, details, diagnostics, and the JSON document.
-- **Branch:** A dedicated GUI.2 branch after IAN API.2 merges and GUI.1 establishes the scaffold.
-- **Detail:** ⚠ no slice plan yet.
+- **Scope:** Show watchlists, recent refreshes and the refresh comparison; show run detail with summary, details, diagnostics, and the JSON document.
+- **Branch:** `feat/gui-2a-adapter`, then `feat/gui-2b-screens`, after the slice plan merges; GUI.2b also waits for IAN's refreshes list endpoint.
+- **Detail:** [GUI.2 read-only screens slice plan](GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md).
 
 ### GUI.3: Actions and refresh progress
 
