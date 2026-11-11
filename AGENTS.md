@@ -15,6 +15,7 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - ESLint forbids `@tauri-apps/*` imports everywhere except the reserved `src/platform/` module.
 - Tools are written in TypeScript and run directly with Node's type stripping; use erasable TypeScript syntax only.
 - Dependency versions are pinned exactly. Add or upgrade dependencies only through approved work.
+- `pnpm-workspace.yaml` must not contain a `minimumReleaseAgeExclude` entry; if a dependency version is too recent for pnpm's release-age check, pin an older version instead of adding an exclusion.
 - Dependabot pull requests are never merged; reapply dependency bumps on a project branch.
 - `pnpm gate` must pass before pushing.
 - The required CI check is `quality`, fed by Windows, macOS, and Linux jobs.

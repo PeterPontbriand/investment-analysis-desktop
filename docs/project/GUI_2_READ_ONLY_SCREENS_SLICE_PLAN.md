@@ -51,7 +51,7 @@
 - The message catalog, locale state and the vue-i18n setup (D39, D41); vue-router setup (D42).
 - `src/App.vue`, `src/main.ts`, `index.html`, `src-tauri/tauri.conf.json`, the existing tests and `playwright.config.ts`, for R1 to R8.
 - stylelint configuration and its gate step (D40).
-- `package.json`, the pnpm lockfile, `tools/gate.ts`, `AGENTS.md` (development rules this sub-slice establishes), and this plan's status row.
+- `package.json`, the pnpm lockfile, `pnpm-workspace.yaml`, `tools/gate.ts`, `AGENTS.md` (development rules this sub-slice establishes), and this plan's status row.
 
 ### Acceptance criteria
 
@@ -61,6 +61,7 @@
 - Every request sends `Accept-Language` from the locale state, and the application follows the response's `Content-Language`.
 - The placeholder screen shows `/v1/info` fields through the adapter.
 - R1 to R8 are closed: no literal user-facing string remains outside the catalog, `lang` and `dir` follow the locale, tests read expected text from the catalog with a pinned locale, Playwright includes a second-locale or right-to-left case, and stylelint enforces logical properties.
+- The dependency pins in `package.json` are exact versions; `pnpm-workspace.yaml` contains no release-age exclusion (D50).
 - `pnpm gate` passes on Windows, macOS and Linux.
 
 ## GUI.2b detail
@@ -110,3 +111,5 @@ Approved by the project owner on 2026-11-10. The numbering continues [Appendix D
 | D47 | Real-engine check: no IAN in CI. The GUI.2b pull request records a manual run against a real engine, and GUI.6 keeps the recorded human smoke test. |
 | D48 | Engine version: GUI.2 pins the IAN commit in the vendored source record (D37). IAN still reports engine version 0.1.0 and its only tag is v0.1.0, so before GUI.5 pins an installable version, IAN needs a release or tag that includes the API. |
 | D49 | Implementation: Claude Code implements IAD work while Codex is unavailable, under the same rules: the project owner approves and merges every pull request, and no AI attribution appears in the repository. |
+| D50 | vue-router pin: 5.4.0 instead of 5.5.0, because 5.5.0 was published within pnpm's minimum-release-age window at commit time; the release-age exclusion is removed so `pnpm-workspace.yaml` matches main. |
+| D51 | Logical-properties plugin: stylelint-use-logical@2.1.3 with stylelint 17.16.0, replacing stylelint-use-logical-spec (which targets stylelint 16) because the spec package is unmaintained and incompatible with stylelint 17. |
