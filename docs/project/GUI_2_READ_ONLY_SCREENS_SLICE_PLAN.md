@@ -97,6 +97,7 @@
 - The openapi-typescript peer warning is allowed by the single entry D51 describes, added with the drift check's gate step; no other peer rule or release-age exclusion exists.
 - The stub engine smoke test (D57) passes on every CI platform without IAN.
 - Until GUI.5, Rust writes one line per launch outcome to standard error (D67).
+- The shell smoke test prints no "Tauri core.invoke not available" warning; the WebdriverIO Tauri service reaches the application, or its window-state query is configured off with the reason recorded.
 - `pnpm gate` passes on Windows, macOS and Linux.
 
 ### Engine state messages
