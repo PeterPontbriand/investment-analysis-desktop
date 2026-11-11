@@ -27,6 +27,11 @@ const steps: Step[] = [
   { name: 'Prettier check', command: packageManager, args: ['format:check'] },
   { name: 'ESLint', command: packageManager, args: ['lint'] },
   {
+    name: 'Stylelint logical properties',
+    command: packageManager,
+    args: ['lint:css'],
+  },
+  {
     name: 'Vue and application type check',
     command: packageManager,
     args: ['typecheck'],
@@ -48,6 +53,11 @@ const steps: Step[] = [
   },
   { name: 'Vitest', command: packageManager, args: ['test'] },
   { name: 'Vite production build', command: packageManager, args: ['build'] },
+  {
+    name: 'Production build excludes test locales',
+    command: node,
+    args: ['tools/check-production-locales.ts'],
+  },
   {
     name: 'Playwright Chromium and WebKit',
     command: packageManager,
