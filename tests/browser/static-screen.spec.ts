@@ -35,9 +35,18 @@ test.describe('English', () => {
 });
 
 test.describe('right-to-left pseudo-locale', () => {
-  test.use({ locale: 'ar-XB' });
-
   test('follows the ar-XB catalog, lang and dir', async ({ page }) => {
+    // Not Playwright's locale option: WebKit on macOS drops a private-use region such as XB.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, 'language', {
+        get: () => 'ar-XB',
+        configurable: true,
+      });
+      Object.defineProperty(navigator, 'languages', {
+        get: () => ['ar-XB'],
+        configurable: true,
+      });
+    });
     await page.goto('/');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar-XB');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
