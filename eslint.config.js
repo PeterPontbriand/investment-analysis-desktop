@@ -8,6 +8,7 @@ export default tseslint.config(
   {
     ignores: [
       'dist/**',
+      'dist-browser-test/**',
       'node_modules/**',
       'src-tauri/target/**',
       'src-tauri/gen/**',
@@ -23,6 +24,10 @@ export default tseslint.config(
     rules: {
       'no-restricted-imports': ['error', { patterns: ['@tauri-apps/*'] }],
     },
+  },
+  {
+    files: ['**/*.vue'],
+    rules: { 'vue/no-bare-strings-in-template': 'error' },
   },
   {
     files: ['src/platform/**/*.{js,mjs,cjs,ts,tsx,vue}'],

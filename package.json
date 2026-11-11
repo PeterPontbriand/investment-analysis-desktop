@@ -12,6 +12,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
+    "lint:css": "stylelint \"src/**/*.{css,vue}\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "vue-tsc --noEmit",
