@@ -61,7 +61,7 @@
 - Every request sends `Accept-Language` from the locale state, and the application follows the response's `Content-Language`.
 - The placeholder screen shows `/v1/info` fields through the adapter.
 - R1 to R8 are closed: no literal user-facing string remains outside the catalog, `lang` and `dir` follow the locale, tests read expected text from the catalog with a pinned locale, Playwright includes a second-locale or right-to-left case, and stylelint enforces logical properties.
-- The dependency pins in `package.json` are exact versions; `pnpm-workspace.yaml` contains no release-age exclusion (D50).
+- The openapi-typescript peer warning is allowed by the single entry D51 describes, added with the drift check's gate step; no other peer rule or release-age exclusion exists.
 - `pnpm gate` passes on Windows, macOS and Linux.
 
 ## GUI.2b detail
@@ -111,5 +111,5 @@ Approved by the project owner on 2026-11-10. The numbering continues [Appendix D
 | D47 | Real-engine check: no IAN in CI. The GUI.2b pull request records a manual run against a real engine, and GUI.6 keeps the recorded human smoke test. |
 | D48 | Engine version: GUI.2 pins the IAN commit in the vendored source record (D37). IAN still reports engine version 0.1.0 and its only tag is v0.1.0, so before GUI.5 pins an installable version, IAN needs a release or tag that includes the API. |
 | D49 | Implementation: Claude Code implements IAD work while Codex is unavailable, under the same rules: the project owner approves and merges every pull request, and no AI attribution appears in the repository. |
-| D50 | vue-router pin: 5.4.0 instead of 5.5.0, because 5.5.0 was published within pnpm's minimum-release-age window at commit time; the release-age exclusion is removed so `pnpm-workspace.yaml` matches main. |
-| D51 | Logical-properties plugin: stylelint-use-logical@2.1.3 with stylelint 17.16.0, replacing stylelint-use-logical-spec (which targets stylelint 16) because the spec package is unmaintained and incompatible with stylelint 17. |
+| D50 | Logical-properties plugin (D40): stylelint-use-logical (maintained by csstools) at an exact version, with stylelint 17. Rejected: stylelint-use-logical-spec, unmaintained since 2024 and limited to stylelint below 17. Dependencies are never excluded from pnpm's minimum release age; when the newest release is too recent, the newest release outside the window is pinned. |
+| D51 | openapi-typescript peer range: openapi-typescript 7.13.0 declares a peer of TypeScript 5, and the project pins TypeScript 6. Generation from IAN's openapi.json was checked to work with TypeScript 6. The warning is allowed through one narrow `peerDependencyRules.allowedVersions` entry in `pnpm-workspace.yaml` (`openapi-typescript>typescript: "6"`), added in the same change as the drift check's gate step, so the gate proves the combination works. |
