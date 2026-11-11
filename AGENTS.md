@@ -17,8 +17,10 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - Dependency versions are pinned exactly. Add or upgrade dependencies only through approved work.
 - `pnpm-workspace.yaml` must not contain a `minimumReleaseAgeExclude` entry; if a dependency version is too recent for pnpm's release-age check, pin an older version instead of adding an exclusion.
 - Every user-facing string lives in a message catalog under `src/locales/`; ESLint's `vue/no-bare-strings-in-template` rule enforces this in templates.
+- Components read messages through `useMessages()` from `src/i18n/`, whose keys are typed from `en.json`; ESLint forbids importing `vue-i18n` elsewhere, and templates have no `$t`.
 - Styles use CSS logical properties; stylelint enforces this (`pnpm lint:css`).
 - Tests read expected user-facing text from the catalog with the locale pinned; they never assert literal user-facing English.
+- Project type declarations, generated or hand-written, go in `.ts` files, not `.d.ts`, because `skipLibCheck` skips `.d.ts` files.
 - User-facing messages never name internal shorthand (such as `ian` or `iad`), an environment variable, a command-line option or a command. Such detail belongs in developer output such as standard error or logs.
 - Dependabot pull requests are never merged; reapply dependency bumps on a project branch.
 - `pnpm gate` must pass before pushing.

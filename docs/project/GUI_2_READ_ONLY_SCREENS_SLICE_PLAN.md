@@ -65,10 +65,11 @@
 
 - Every user-facing string is in `src/locales/en.json`, discovered at build time with the locale tag taken from the file name; message keys are typed from it; `meta.direction` is `ltr` or `rtl` in every catalog.
 - ESLint's `vue/no-bare-strings-in-template` rule is an error for `.vue` files, so a literal string in a template fails lint.
+- Messages are read only through `useMessages()`: `vue-i18n` cannot be imported outside `src/i18n/`, and `$t` is not injected into templates.
 - The starting locale is the first `navigator.languages` entry with a catalog, then English (D63); `lang`, `dir` and the page title follow the active catalog (R3, R4).
 - stylelint's `csstools/use-logical` rule is `always`; a test proves it fires for a physical property in plain CSS and in a `.vue` style block, and the gate runs it.
 - Tests read expected user-facing text from the catalog with the locale pinned (R6); a unit test checks that every catalog has `en.json`'s key set.
-- The browser-test build (`--mode browser-test`) includes the `ar-XB` pseudo-locale, and Playwright checks its `lang`, `dir`, title and text (R8); a gate step fails when the production build contains the text `ar-XB`.
+- The browser-test build (`--mode browser-test`) includes the `ar-XB` pseudo-locale, and Playwright checks its `lang`, `dir`, title and text (R8); a gate step fails when the production build contains the tag of any test-only locale.
 - `vite preview` serves the CSP read from `src-tauri/tauri.conf.json`; every browser test fails on a CSP violation or console error, and one test checks the header.
 - vue-router uses memory history and serves the screen at `/`.
 - `pnpm gate` passes on Windows, macOS and Linux.
@@ -172,6 +173,7 @@ Approved by the project owner on 2026-11-10. The numbering continues [Appendix D
 | D62 | Product name and titles: the product name is catalog text like any other. `tauri.conf.json` and `index.html` keep it only as the title shown before the application loads; the page title (GUI.2a1) and the window title (GUI.2a2) are set from the catalog. |
 | D63 | Starting locale: the first `navigator.languages` entry with an IAD catalog, matching the exact tag and then its language, otherwise English. Persisting the choice is decided in the slice where the language picker first becomes visible. |
 | D64 | Served locale (D26): the adapter returns each response's `Content-Language` with its data, and an element showing engine text carries a `lang` attribute with that value. |
-| D65 | Vendored API description: `vendor/ian/openapi.json`, with `vendor/ian/SOURCE.md` recording the IAN commit and its date. Generated types are in `src/api/schema.d.ts`, excluded from Prettier and ESLint. A gate step, "OpenAPI types drift check", regenerates the types into a temporary file and compares them. The D51 peer entry lands in the same commit. |
+| D65 | Vendored API description: `vendor/ian/openapi.json`, with `vendor/ian/SOURCE.md` recording the IAN commit and its date. Generated types are in `src/api/schema.ts`, excluded from Prettier and ESLint. A gate step, "OpenAPI types drift check", regenerates the types into a temporary file and compares them. The D51 peer entry lands in the same commit. |
 | D66 | Placeholder screen: the product heading and pre-release notice, then an "Analysis engine" section listing the engine version, API versions, schema version, SEC identity ("Configured" or "Not configured") and languages. Labels come from the catalog; values come from `/v1/info`, with language names as the API serves them. |
 | D67 | Engine launch detail: until GUI.5, Rust writes one line per launch outcome to standard error, naming the executable path tried and where it came from (`PATH` or `IAD_IAN_PATH`), the `reason_code` and the engine's reason message. GUI.5 decides IAD's log file. |
+| D68 | Library type checking: `tsconfig.json` sets `skipLibCheck`, as `tools/tsconfig.json` already does. vue-i18n 11's declarations import `GenericComponentInstance`, a Vue 3.6 type that Vue 3.5 does not export, and every vue-i18n 11 release does so. Because `skipLibCheck` also skips the project's own `.d.ts` files, generated or hand-written type declarations are kept in `.ts` files (D65). Revisit when Vue 3.6 is adopted. |
