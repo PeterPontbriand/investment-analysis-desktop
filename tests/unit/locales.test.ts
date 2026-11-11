@@ -12,6 +12,12 @@ function keysOf(node: Node, prefix = ''): string[] {
   );
 }
 
+function valueAt(node: Node, key: string): unknown {
+  return key
+    .split('.')
+    .reduce<unknown>((value, part) => (value as Node)[part], node);
+}
+
 const directories = ['src/locales', 'tests/fixtures/locales'];
 const files = directories.flatMap((directory) =>
   readdirSync(directory)
@@ -37,8 +43,10 @@ describe('message catalogs', () => {
   it('prefixes every displayed ar-XB value with its tag', () => {
     const catalog = JSON.parse(
       readFileSync('tests/fixtures/locales/ar-XB.json', 'utf8'),
-    ) as { app: Record<string, string> };
-    for (const [key, value] of Object.entries(en.app))
-      expect(catalog.app[key]).toBe(`[ar-XB] ${value}`);
+    ) as Node;
+    const displayed = keysOf(en).filter((key) => !key.startsWith('meta.'));
+    expect(displayed.length).toBeGreaterThan(0);
+    for (const key of displayed)
+      expect(valueAt(catalog, key)).toBe(`[ar-XB] ${valueAt(en, key)}`);
   });
 });
