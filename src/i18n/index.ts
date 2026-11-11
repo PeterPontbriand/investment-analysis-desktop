@@ -12,6 +12,7 @@ export type MessageKey = Exclude<Paths<MessageSchema>, `meta.${string}`>;
 export function createAppI18n() {
   return createI18n({
     legacy: false,
+    globalInjection: false,
     locale: 'en',
     fallbackLocale: 'en',
     messages: catalogs,

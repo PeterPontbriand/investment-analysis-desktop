@@ -26,3 +26,36 @@ describe('Tauri import boundary', () => {
     ).toBe(false);
   });
 });
+
+describe('vue-i18n import boundary', () => {
+  const source = "import { useI18n } from 'vue-i18n';";
+  const tauri = "import { invoke } from '@tauri-apps/api/core';";
+
+  async function restricted(code: string, path: string): Promise<boolean> {
+    const [result] = await new ESLint().lintText(code, {
+      filePath: resolve(path),
+    });
+    return (
+      result?.messages.some(
+        (message) =>
+          message.ruleId === 'no-restricted-imports' && message.severity === 2,
+      ) ?? false
+    );
+  }
+
+  it('rejects vue-i18n outside src/i18n', async () => {
+    expect(await restricted(source, 'src/example.ts')).toBe(true);
+  });
+
+  it('allows vue-i18n in src/i18n', async () => {
+    expect(await restricted(source, 'src/i18n/example.ts')).toBe(false);
+  });
+
+  it('rejects Tauri API imports in src/i18n', async () => {
+    expect(await restricted(tauri, 'src/i18n/example.ts')).toBe(true);
+  });
+
+  it('rejects vue-i18n in src/platform', async () => {
+    expect(await restricted(source, 'src/platform/example.ts')).toBe(true);
+  });
+});
