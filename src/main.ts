@@ -1,4 +1,10 @@
 import { createApp } from 'vue';
 import App from './App.vue';
+import { createAppI18n } from './i18n/index.ts';
+import { applyLocale, chooseStartingLocale } from './i18n/locale.ts';
+import { createAppRouter } from './router.ts';
 
-createApp(App).mount('#app');
+const i18n = createAppI18n();
+applyLocale(i18n, chooseStartingLocale(navigator.languages));
+
+createApp(App).use(i18n).use(createAppRouter()).mount('#app');

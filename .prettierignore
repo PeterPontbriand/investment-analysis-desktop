@@ -1,3 +1,5 @@
+dist/
+dist-browser-test/
 *.md
 docs/design/*.html
 pnpm-lock.yaml
