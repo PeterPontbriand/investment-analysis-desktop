@@ -22,6 +22,6 @@ export function createAppI18n() {
 export type AppI18n = ReturnType<typeof createAppI18n>;
 
 export function useMessages() {
-  const { t } = useI18n();
-  return { t: (key: MessageKey): string => t(key) };
+  const { t, locale } = useI18n();
+  return { t: (key: MessageKey): string => t(key), locale };
 }

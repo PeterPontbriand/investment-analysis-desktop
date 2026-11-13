@@ -16,6 +16,7 @@ export default tseslint.config(
       'src-tauri/gen/**',
       'playwright-report/**',
       'test-results/**',
+      'src/api/schema.ts',
     ],
   },
   eslint.configs.recommended,

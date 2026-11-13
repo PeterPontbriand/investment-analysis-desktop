@@ -11,8 +11,8 @@
 | Sub-slice | Scope | Status | Completed |
 | :--- | :--- | :--- | :--- |
 | GUI.2a1 | [Localization retrofit](#gui2a1--localization-retrofit) | Complete | 2026-11-11 |
-| GUI.2a2 | [Engine launch and API adapter](#gui2a2--engine-launch-and-api-adapter) | Next | |
-| GUI.2b | [Read-only screens](#gui2b--read-only-screens) | Planned | |
+| GUI.2a2 | [Engine launch and API adapter](#gui2a2--engine-launch-and-api-adapter) | Complete | 2026-11-13 |
+| GUI.2b | [Read-only screens](#gui2b--read-only-screens) | Next | |
 
 ## Sub-slices
 
@@ -97,7 +97,7 @@
 - The openapi-typescript peer warning is allowed by the single entry D51 describes, added with the drift check's gate step; no other peer rule or release-age exclusion exists.
 - The stub engine smoke test (D57) passes on every CI platform without IAN.
 - Until GUI.5, Rust writes one line per launch outcome to standard error (D67).
-- The shell smoke test prints no "Tauri core.invoke not available" warning; the WebdriverIO Tauri service reaches the application, or its window-state query is configured off with the reason recorded.
+- The shell smoke test passes; its "Tauri core.invoke not available" warning is the accepted exception recorded in D76.
 - `pnpm gate` passes on Windows, macOS and Linux.
 
 ### Engine state messages
@@ -179,3 +179,11 @@ Approved by the project owner on 2026-11-10. The numbering continues [Appendix D
 | D67 | Engine launch detail: until GUI.5, Rust writes one line per launch outcome to standard error, naming the executable path tried and where it came from (`PATH` or `IAD_IAN_PATH`), the `reason_code` and the engine's reason message. GUI.5 decides IAD's log file. |
 | D68 | Library type checking: `tsconfig.json` sets `skipLibCheck`, as `tools/tsconfig.json` already does. vue-i18n's declarations import `GenericComponentInstance`, a Vue 3.6 type that Vue 3.5 does not export, in every release from 11.2.1 (2025-11-22) onward. Rejected: pinning vue-i18n 11.2.0, the last release without that import, which would forgo a year of fixes and block vue-i18n upgrades until Vue 3.6. Because `skipLibCheck` also skips the project's own `.d.ts` files, generated or hand-written type declarations are kept in `.ts` files (D65). Revisit when Vue 3.6 is adopted. |
 | D69 | Pseudo-locale in browser tests: the right-to-left test sets `navigator.language` and `navigator.languages` to `ar-XB` with an init script instead of Playwright's `locale` option, because WebKit on macOS does not report a private-use region such as `XB` through that option. The English projects keep `locale: 'en-US'`. Rejected: renaming the pseudo-locale to a real tag, which takes a name a real catalog needs, and a locale override in the browser-test build, which bypasses the real startup path. |
+| D70 | No engine in the browser build: when the platform module's browser implementation finds no `#engine=` fragment, the placeholder screen's "Analysis engine" section shows one catalog message, "No analysis engine is connected.", and makes no request. It is not one of the engine states in the "Engine state messages" table. |
+| D71 | Language picker: GUI.2a2 builds no picker component. IAN serves only `en` and IAD has only the `en` catalog, so D41's condition can't be met yet. The picker, and the choice of whether to remember the selection (D63), come in the first slice where either side has a second locale. GUI.2a2 still builds the locale state's `Accept-Language` and `Content-Language` handling (D41, D64). |
+| D72 | Rust tests: the engine launch's pure parts have Rust unit tests: choosing the executable (`IAD_IAN_PATH` over `PATH`), parsing the first standard-output line into `ready` or `launch_failed` (with the envelope's `reason_code`, or none), and deriving the origin from the webview URL. A new gate step, "Rust unit tests", runs `cargo test` for `src-tauri/` with the default features, after the Clippy step. |
+| D73 | Vendored engine: `vendor/ian/openapi.json` comes from IAN commit `ab180c7` (2026-11-12). That commit already contains `GET /v1/refreshes`, so GUI.2b does not need to re-vendor for D34. |
+| D74 | Ending the engine: when the application exits, Rust closes the engine's standard input and neither waits for the engine nor kills it. IAN finishes or stops a running refresh within its own bounded shutdown and then exits. After a `timed_out` or `launch_failed` result, Rust kills the child if it is still running, so no engine is left listening. |
+| D75 | Window title permission: the `default` capability gains only `core:window:allow-set-title`, for R5. The app's own commands (`engine_connection`, `engine_status`) need no capability entry. No other permission is added. |
+| D76 | Shell test warning: the shell smoke test runs without `tauri-plugin-wdio`, so `@wdio/tauri-service` 1.5.1's window-state probe logs "Tauri core.invoke not available" and costs about 5 s per probed command. The service has no setting to disable the probe. Accepted until a shell test needs `browser.tauri.execute` or mocks; that slice adds the plugin to the end-to-end build only. |
+| D77 | Placeholder messages outside the engine states: while the connection is pending, the "Analysis engine" section shows "Connecting to the analysis engine…" (`engine.loading`). A request that fails while the engine is still running, whether from a network error or an HTTP failure, shows "The analysis engine did not respond as expected." (`engine.unreachable`). Both are catalog messages, and neither shows the API's reason text. GUI.2b replaces `engine.unreachable` on its screens with D45's reason-code branches. |

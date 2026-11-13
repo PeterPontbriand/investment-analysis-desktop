@@ -5,5 +5,31 @@
   "app": {
     "name": "Investment Analysis Desktop",
     "preReleaseNotice": "Pre-release: this application is under development and does not yet show any analysis."
+  },
+  "engine": {
+    "heading": "Analysis engine",
+    "loading": "Connecting to the analysis engine…",
+    "noEngine": "No analysis engine is connected.",
+    "unreachable": "The analysis engine did not respond as expected.",
+    "labels": {
+      "version": "Engine version",
+      "apiVersions": "API versions",
+      "schemaVersion": "Schema version",
+      "secIdentity": "SEC identity",
+      "languages": "Languages"
+    },
+    "secIdentity": {
+      "configured": "Configured",
+      "notConfigured": "Not configured"
+    },
+    "state": {
+      "notFound": "The analysis engine is not installed, or could not be found.",
+      "databaseSetup": "The analysis engine's database needs to be set up or upgraded before the engine can start.",
+      "databaseBusy": "The analysis engine's database is in use by another program. Close that program, then restart this application.",
+      "databaseOther": "The analysis engine could not open its database.",
+      "launchFailed": "The analysis engine could not start.",
+      "timedOut": "The analysis engine did not start within 30 seconds.",
+      "exited": "The analysis engine stopped unexpectedly. Restart the application to continue."
+    }
   }
 }

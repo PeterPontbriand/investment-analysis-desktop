@@ -4,3 +4,6 @@ allowBuilds:
   esbuild: true
   geckodriver: false
 verifyDepsBeforeRun: false
+peerDependencyRules:
+  allowedVersions:
+    openapi-typescript>typescript: '6'
