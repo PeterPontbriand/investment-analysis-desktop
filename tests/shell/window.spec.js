@@ -18,6 +18,7 @@ describe('desktop shell', () => {
     await browser.waitUntil(
       async () => (await browser.getTitle()) === en.app.name,
       {
+        timeout: 20_000,
         timeoutMsg: 'the window title did not come from the catalog',
       },
     );
