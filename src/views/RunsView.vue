@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useEngine } from '../api/engine.ts';
 import type { ResolvedName } from '../api/terms.ts';
 import { pageSize, usePagedList } from '../api/useScreenData.ts';
@@ -34,9 +34,27 @@ const filtered = computed(
   () => ticker.value !== '' || method.value !== '' || outcome.value !== '',
 );
 
+// The strategy options in declared order, the outcome options in served order.
+const strategies = ref<{ method: string; name: ResolvedName }[]>([]);
+const outcomes = ref<{ code: string; name: ResolvedName }[]>([]);
+
+async function loadOptions(): Promise<void> {
+  await engine.terms.preload(['references', 'help', 'strategies']);
+  strategies.value = await engine.terms.strategies();
+  const codes = await engine.terms.codeSetValues('RunOutcome');
+  outcomes.value = await Promise.all(
+    codes.map(async (code) => ({
+      code,
+      name: await engine.terms.term('RunOutcome', code),
+    })),
+  );
+}
+
+// A failed help or strategies request fails the list, like a failed list request.
 const list = usePagedList(
-  async (client, offset) =>
-    (
+  async (client, offset) => {
+    if (offset === 0) await loadOptions();
+    return (
       await client.get('/v1/runs', {
         query: {
           ticker: ticker.value === '' ? undefined : ticker.value,
@@ -46,35 +64,10 @@ const list = usePagedList(
           offset: String(offset),
         },
       })
-    ).data,
+    ).data;
+  },
   [ticker, method, outcome],
 );
-
-// The strategy options in declared order, the outcome options in served order.
-const strategies = ref<{ method: string; name: ResolvedName }[]>([]);
-const outcomes = ref<{ code: string; name: ResolvedName }[]>([]);
-
-async function loadOptions(): Promise<void> {
-  try {
-    strategies.value = await engine.terms.strategies();
-  } catch {
-    strategies.value = [];
-  }
-  try {
-    const codes = await engine.terms.codeSetValues('RunOutcome');
-    outcomes.value = await Promise.all(
-      codes.map(async (code) => ({
-        code,
-        name: await engine.terms.term('RunOutcome', code),
-      })),
-    );
-  } catch {
-    outcomes.value = [];
-  }
-}
-
-onMounted(loadOptions);
-watch(locale, loadOptions);
 </script>
 
 <template>

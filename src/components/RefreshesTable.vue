@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 import { useEngine } from '../api/engine.ts';
 import { pageSize, usePagedList } from '../api/useScreenData.ts';
 import { formatCompletion, formatCount } from '../i18n/format.ts';
@@ -12,9 +12,17 @@ const props = defineProps<{ watchlistId?: string; emptyKey: MessageKey }>();
 const { t, locale } = useMessages();
 const engine = useEngine();
 
+// The outcome columns, in the order the engine serves the outcome code set.
+const served = ref<string[]>([]);
+
 const list = usePagedList(
-  async (client, offset) =>
-    (
+  async (client, offset) => {
+    if (offset === 0) {
+      // A failed help request fails the list, like a failed list request.
+      await engine.terms.preload(['references', 'help']);
+      served.value = await engine.terms.codeSetValues('RunOutcome');
+    }
+    return (
       await client.get('/v1/refreshes', {
         query: {
           watchlist_id: props.watchlistId,
@@ -22,29 +30,16 @@ const list = usePagedList(
           offset: String(offset),
         },
       })
-    ).data,
+    ).data;
+  },
   [() => props.watchlistId],
 );
-
-// The outcome columns, in the order the engine serves the outcome code set.
-const served = ref<string[] | null>(null);
-async function loadOutcomes(): Promise<void> {
-  try {
-    served.value = await engine.terms.codeSetValues('RunOutcome');
-  } catch {
-    served.value = null;
-  }
-}
-onMounted(loadOutcomes);
-watch(locale, loadOutcomes);
 
 const columns = computed(() => {
   const state = list.state.value;
   if (state.kind !== 'ready' || state.data.items.length === 0) return [];
   const counted = Object.keys(state.data.items[0]?.outcome_counts ?? {});
-  return served.value
-    ? served.value.filter((code) => counted.includes(code))
-    : counted;
+  return served.value.filter((code) => counted.includes(code));
 });
 
 function countOf(counts: Record<string, number>, code: string): string {

@@ -14,7 +14,8 @@ export function useResolvedName(
 
   async function load(): Promise<void> {
     const current = ++latest;
-    const resolved = await resolve();
+    // A failed request is shown by the screen that preloaded the documents.
+    const resolved = await resolve().catch(() => null);
     if (current === latest) name.value = resolved;
   }
 

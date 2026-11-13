@@ -468,6 +468,49 @@ test.describe('errors', () => {
     expect(engine.paths('/v1/watchlists')).toHaveLength(2);
   });
 
+  test('shows a failed help index request as the failure state, not raw codes, and recovers on Try again', async ({
+    page,
+  }) => {
+    let down = true;
+    await open(page, (url) =>
+      url.pathname === '/v1/help' && down
+        ? failure(503, 'database_busy', 'Run the command to clear it.')
+        : undefined,
+    );
+    await page
+      .getByRole('navigation', { name: en.nav.label })
+      .getByRole('link', { name: en.nav.runs })
+      .click();
+    await expect(page.getByRole('status')).toContainText(
+      en.engine.state.databaseBusy,
+    );
+    await expect(page.locator('table')).toHaveCount(0);
+    await expect(page.getByText('completed', { exact: true })).toHaveCount(0);
+    down = false;
+    await page.getByRole('button', { name: en.common.tryAgain }).click();
+    await expect(rows(page)).toHaveCount(50);
+    await expect
+      .poll(() => cells(rows(page).nth(0)))
+      .toEqual(['Nov 2, 2026, 9:41 AM', 'MSFT', 'Graham Number', 'Completed']);
+    await expect(
+      page.getByLabel(en.runs.filters.strategy).locator('option'),
+    ).toHaveCount(4);
+  });
+
+  test('shows a failed strategies request as the failure state, not method ids', async ({
+    page,
+  }) => {
+    await open(page, (url) =>
+      url.pathname === '/v1/strategies'
+        ? failure(500, 'execution_error', 'Internal detail.')
+        : undefined,
+    );
+    await page.getByRole('link', { name: 'Core' }).click();
+    await expect(page.getByRole('status')).toHaveText(en.state.defect);
+    await expect(page.getByText('sma_crossover')).toHaveCount(0);
+    await expect(page.locator('table')).toHaveCount(0);
+  });
+
   test('shows another database code without a retry button', async ({
     page,
   }) => {

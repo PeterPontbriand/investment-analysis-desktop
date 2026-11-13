@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { useEngine } from '../api/engine.ts';
 import { useScreenData } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import RefreshesTable from '../components/RefreshesTable.vue';
@@ -10,16 +11,20 @@ import { formatDateOrInstant, formatInstant } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 
 const { t, plural, locale } = useMessages();
+const engine = useEngine();
 const route = useRoute();
 const watchlistId = computed(() => String(route.params.watchlistId));
 
 const { state, reload } = useScreenData(
-  async (client) =>
-    (
+  async (client) => {
+    // A failed strategies request fails the screen, like a failed watchlist request.
+    await engine.terms.preload(['strategies']);
+    return (
       await client.get('/v1/watchlists/{watchlist_id}', {
         path: { watchlist_id: watchlistId.value },
       })
-    ).data,
+    ).data;
+  },
   [watchlistId],
 );
 </script>

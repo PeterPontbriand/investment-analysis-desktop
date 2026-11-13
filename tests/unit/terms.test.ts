@@ -102,6 +102,29 @@ describe('term names', () => {
     ]);
   });
 
+  it('rejects when a document request fails, instead of showing codes as served', async () => {
+    const fetchStub = vi.fn(() => Promise.reject(new TypeError('down')));
+    const api = createApiClient({
+      baseUrl: 'http://x',
+      token: 't',
+      locale: () => 'en',
+      engineStatus: () => Promise.resolve('running'),
+      fetch: fetchStub as unknown as typeof fetch,
+    });
+    const terms = createTerms(
+      () => Promise.resolve(api),
+      () => 'en',
+    );
+
+    await expect(terms.term('RunOutcome', 'completed')).rejects.toMatchObject({
+      kind: 'unreachable',
+    });
+    await expect(terms.strategy('sma_crossover')).rejects.toMatchObject({
+      kind: 'unreachable',
+    });
+    await expect(terms.preload(['help'])).rejects.toBeTruthy();
+  });
+
   it('does not keep a failed fetch', async () => {
     let failing = true;
     const fetchStub = vi.fn(() =>

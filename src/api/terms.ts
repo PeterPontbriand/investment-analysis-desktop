@@ -12,11 +12,17 @@ type References = ApiResult<GetResponse<'/v1/help/references'>>;
 type HelpIndex = ApiResult<GetResponse<'/v1/help'>>;
 type Strategies = ApiResult<GetResponse<'/v1/strategies'>>;
 
+export type TermDocument = 'references' | 'help' | 'strategies';
+
 export type Terms = {
+  // Fetches the named documents now, so a screen can show a failed request as
+  // its own failure state before it shows any name.
+  preload(needs: TermDocument[]): Promise<void>;
   // A code of a code set as its term's name; as served, with no term id, when
-  // the engine lists no term for it.
+  // the engine lists no reference or no term for it. A failed request rejects.
   term(codeSet: string, code: string): Promise<ResolvedName>;
   // A strategy's name, by method; as served when the engine does not list it.
+  // A failed request rejects.
   strategy(methodId: string): Promise<ResolvedName>;
   // The strategies in declared order.
   strategies(): Promise<{ method: string; name: ResolvedName }[]>;
@@ -73,26 +79,29 @@ export function createTerms(
   ): ResolvedName => ({ text: item.label, termId: item.term, lang });
 
   return {
+    async preload(needs) {
+      await Promise.all(
+        needs.map((need) =>
+          need === 'references'
+            ? references()
+            : need === 'help'
+              ? helpIndex()
+              : strategyList(),
+        ),
+      );
+    },
     async term(codeSet, code) {
-      try {
-        const [refs, index] = await Promise.all([references(), helpIndex()]);
-        const termId = refs.data.code_sets[codeSet]?.[code];
-        const name =
-          termId === undefined ? undefined : namesOf(index).get(termId);
-        if (termId === undefined || name === undefined) return asServed(code);
-        return { text: name, termId, lang: index.contentLanguage };
-      } catch {
-        return asServed(code);
-      }
+      const [refs, index] = await Promise.all([references(), helpIndex()]);
+      const termId = refs.data.code_sets[codeSet]?.[code];
+      const name =
+        termId === undefined ? undefined : namesOf(index).get(termId);
+      if (termId === undefined || name === undefined) return asServed(code);
+      return { text: name, termId, lang: index.contentLanguage };
     },
     async strategy(methodId) {
-      try {
-        const { data, contentLanguage } = await strategyList();
-        const item = data.items.find((entry) => entry.method === methodId);
-        return item ? labelled(item, contentLanguage) : asServed(methodId);
-      } catch {
-        return asServed(methodId);
-      }
+      const { data, contentLanguage } = await strategyList();
+      const item = data.items.find((entry) => entry.method === methodId);
+      return item ? labelled(item, contentLanguage) : asServed(methodId);
     },
     async strategies() {
       const { data, contentLanguage } = await strategyList();
