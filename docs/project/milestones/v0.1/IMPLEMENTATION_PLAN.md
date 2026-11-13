@@ -25,10 +25,10 @@ GUI.2, GUI.3, and GUI.4 cannot start until IAN API.2, API.4, and API.6 respectiv
 ### GUI.0: Charter and governance
 
 - **Problem:** The application needs a separate repository with clear boundaries, user goals, and approval rules before implementation.
-- **Decision:** Keep the GUI separate from IAN and make this charter the approved scope for its initial planning branch.
+- **Decision:** Keep the GUI separate from IAN and make the [charter](../../CHARTER.md) the approved scope for its initial planning branch.
 - **Scope:** Repository governance, preview scope, user questions, and mock-ups. No application code or framework scaffold.
 - **Branch:** docs/charter, based on the two-file main initialization.
-- **Detail:** [This unit](#gui0-charter-and-governance) is owned by this charter.
+- **Detail:** [This unit](#gui0-charter-and-governance) is owned by this plan.
 
 ### GUI.1: Technology decision and scaffold
 
