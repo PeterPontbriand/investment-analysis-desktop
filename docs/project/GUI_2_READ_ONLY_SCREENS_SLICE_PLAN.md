@@ -130,6 +130,7 @@
 - `src/`: the API adapter and client, the shared engine client, term names, formatting, the message catalogs, the router, `src/App.vue`, `src/main.ts`, and the views and components of the shell and the three screens.
 - `tests/unit/`, `tests/browser/` and `tests/fixtures/`, including the typed API fixtures and the test-only catalog; `playwright.config.ts` and `vitest.config.ts` for the time zone only (D107).
 - `eslint.config.js`, for D109 only.
+- `tests/shell/window.spec.js`, updated to the new shell.
 - This plan and the [project charter](CHARTER.md)'s GUI.2 section.
 
 ### Acceptance criteria
