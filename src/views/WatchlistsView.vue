@@ -8,6 +8,7 @@ import { useMessages } from '../i18n/index.ts';
 const { t, locale } = useMessages();
 const { state, reload } = useScreenData(
   async (client) => (await client.get('/v1/watchlists')).data,
+  [],
 );
 </script>
 

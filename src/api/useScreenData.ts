@@ -8,6 +8,7 @@ import {
 } from 'vue';
 import { useMessages, type MessageKey } from '../i18n/index.ts';
 import type { ApiClient } from './client.ts';
+import type { TermDocument } from './terms.ts';
 import { useEngine } from './engine.ts';
 
 export type ScreenState<T> =
@@ -20,9 +21,13 @@ export type ScreenState<T> =
   | { kind: 'ready'; data: T };
 
 // Loads a screen's data through the shared client, and loads it again when the
-// locale or any of the extra sources change.
+// locale or any of the extra sources change. `terms` lists the term documents
+// the screen shows names from (empty when it shows none); they are fetched
+// before the screen's own load, so a failed request shows as the screen's
+// failure state and no screen can show names without them.
 export function useScreenData<T>(
   load: (client: ApiClient) => Promise<T>,
+  terms: TermDocument[],
   sources: WatchSource[] = [],
 ): { state: ShallowRef<ScreenState<T>>; reload: () => Promise<void> } {
   const engine = useEngine();
@@ -43,6 +48,7 @@ export function useScreenData<T>(
     }
     state.value = { kind: 'loading' };
     try {
+      await engine.terms.preload(terms);
       const data = await load(await engine.client());
       if (current === latest) state.value = { kind: 'ready', data };
     } catch (error) {
@@ -71,16 +77,21 @@ export const pageSize = 50;
 // from a locale or filter change, starts again at the first page.
 export function usePagedList<Item>(
   fetchPage: (client: ApiClient, offset: number) => Promise<Page<Item>>,
+  terms: TermDocument[],
   sources: WatchSource[] = [],
 ): PagedList<Item> {
   const engine = useEngine();
   const loadingMore = ref(false);
   const moreError = ref<unknown>(null);
-  const { state, reload } = useScreenData(async (client) => {
-    moreError.value = null;
-    const page = await fetchPage(client, 0);
-    return { items: page.items, hasMore: page.has_more };
-  }, sources);
+  const { state, reload } = useScreenData(
+    async (client) => {
+      moreError.value = null;
+      const page = await fetchPage(client, 0);
+      return { items: page.items, hasMore: page.has_more };
+    },
+    terms,
+    sources,
+  );
 
   async function showMore(): Promise<void> {
     const current = state.value;

@@ -6,7 +6,7 @@ import { formatList } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 
 const { t, locale } = useMessages();
-const { state, reload } = useScreenData((client) => client.get('/v1/info'));
+const { state, reload } = useScreenData((client) => client.get('/v1/info'), []);
 </script>
 
 <template>

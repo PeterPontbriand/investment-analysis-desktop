@@ -18,8 +18,6 @@ const served = ref<string[]>([]);
 const list = usePagedList(
   async (client, offset) => {
     if (offset === 0) {
-      // A failed help request fails the list, like a failed list request.
-      await engine.terms.preload(['references', 'help']);
       served.value = await engine.terms.codeSetValues('RunOutcome');
     }
     return (
@@ -32,6 +30,7 @@ const list = usePagedList(
       })
     ).data;
   },
+  ['references', 'help'],
   [() => props.watchlistId],
 );
 

@@ -39,7 +39,6 @@ const strategies = ref<{ method: string; name: ResolvedName }[]>([]);
 const outcomes = ref<{ code: string; name: ResolvedName }[]>([]);
 
 async function loadOptions(): Promise<void> {
-  await engine.terms.preload(['references', 'help', 'strategies']);
   strategies.value = await engine.terms.strategies();
   const codes = await engine.terms.codeSetValues('RunOutcome');
   outcomes.value = await Promise.all(
@@ -50,7 +49,6 @@ async function loadOptions(): Promise<void> {
   );
 }
 
-// A failed help or strategies request fails the list, like a failed list request.
 const list = usePagedList(
   async (client, offset) => {
     if (offset === 0) await loadOptions();
@@ -66,6 +64,7 @@ const list = usePagedList(
       })
     ).data;
   },
+  ['references', 'help', 'strategies'],
   [ticker, method, outcome],
 );
 </script>
