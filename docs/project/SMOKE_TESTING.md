@@ -33,7 +33,7 @@ Step 1. Get the engine at the commit this repository vendors, and make its comma
 - Confirm that `ian --help` shows the engine's help text.
 - Outbound access to Yahoo Finance and SEC EDGAR must be allowed, because the steps below run live analyses. If you have not run the engine's own [smoke test](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/SMOKE_TESTING.md) on this installation, run its provider check first (`ian health`), so a provider failure is not mistaken for an application failure.
 
-The application and the tool find the engine through the `ian` command on your `PATH`. If `ian` is not on `PATH`, set the environment variable `IAD_IAN_PATH` (IAD is this application) to the full path of the `ian` executable, a `.exe` file on Windows, before you start.
+`pnpm smoke` finds `ian` itself: from `IAD_IAN_PATH` if you set it, otherwise on `PATH`, otherwise in uv's command folder. When you follow the steps by hand, the application finds `ian` on `PATH`. The engine's installer puts the `ian` command in uv's command folder and adds that folder to `PATH` for terminals opened afterwards, so open a new terminal after installing. If `ian` is still not found, follow the engine's troubleshooting entry, [`ian` is "not recognized" / "command not found"](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#ian-is-not-recognized--command-not-found). To use a specific `ian` instead, set the environment variable `IAD_IAN_PATH` (IAD is this application) to the file in the folder that `uv tool dir --bin` prints: `ian.exe` on Windows, `ian` elsewhere.
 
 **Install this repository's development tools** as the [README](../../README.md) describes. On Windows that includes the C++ build tools, because `pnpm tauri dev`, the command that builds and opens the desktop application in development mode, compiles the application.
 
@@ -147,7 +147,7 @@ pnpm tauri dev
 
 `pnpm smoke` starts it.
 
-The first start compiles the application and takes a while. If `ian` is not on `PATH`, set `IAD_IAN_PATH` first, as [Before you start](#before-you-start) says. Expect a window to open. Leave the terminal open: it shows the application's launch line for the engine.
+The first start compiles the application and takes a while. When you follow the steps by hand and `ian` is not on `PATH`, set `IAD_IAN_PATH` first, as [Before you start](#before-you-start) says; `pnpm smoke` does not need this. Expect a window to open. Leave the terminal open: it shows the application's launch line for the engine.
 
 ## N. Navigation and About
 
@@ -259,7 +259,8 @@ It stops with a plain message instead of guessing, and writes the record so far 
 - **`--engine` is required, or the folder does not exist:** pass the folder of your engine checkout.
 - **The folder is not a Git checkout:** pass the folder that holds the engine's `.git` folder.
 - **The engine checkout is at another commit:** the message prints both commits and the `git checkout` to run in the engine checkout. Run it, then try again.
-- **The `ian` command was not found, or `ian --help` failed:** make the command available as Step 1 says, or set `IAD_IAN_PATH`.
+- **The `ian` command was not found on `PATH` or in uv's command folder:** do the engine's "Make the `ian` command available" step (Step 1), then open a new terminal and try again. If that does not help, follow the troubleshooting entry linked in [Before you start](#before-you-start). To use a specific `ian`, set `IAD_IAN_PATH`.
+- **`ian --help` failed:** the file the tool found does not run as the engine's `ian`. The record's Engine line, or the message, names where it came from; fix that installation, or set `IAD_IAN_PATH` to the right file.
 - **`IAD_IAN_PATH` names a `.cmd` or `.bat` file:** the application and the tool start the engine without a shell, so `IAD_IAN_PATH` must name an executable (`.exe`). Point it at the `.exe`, or unset it so `ian` is found on `PATH`.
 - **Your real database is not `ready` or `missing`:** an `upgrade_required` database needs the engine's [explicit upgrade](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md#first-use-and-explicit-upgrades) first. For any other state, use the engine's [Local Database Operations](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md).
 - **A setup command failed:** the message names the step and the command, and its output is in the record. For a provider failure, see the engine's troubleshooting guide.
