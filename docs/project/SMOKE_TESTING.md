@@ -1,16 +1,16 @@
 # Smoke Testing the Desktop Application
 
-Follow this guide to perform a manual "smoke test" of the Investment Analysis Desktop application's user interface connected to a real Investment Analysis Engine instance - the separate program that does the analysis and holds the data, which this application only shows. This guide is for a contributor who starts the application from a terminal they opened themselves, and who judges each screen as a user would see it. At present, every step in this guide needs developer tooling, so this is a contributor document, not a user document. An agent or script may rehearse these steps, but for a run to constitute a formal smoke test it must be done manually.
+Follow this guide to perform a manual "smoke test" of the Investment Analysis Desktop application's user interface connected to a real Investment Analysis Engine instance, the separate program that does the analysis and holds the data, which this application only shows. This guide is for a contributor who starts the application from a terminal they opened themselves, and who judges each screen as a user would see it. At present, every step in this guide needs developer tooling, so this is a contributor document, not a user document. An agent or script may rehearse these steps, but for a run to constitute a formal smoke test it must be done manually.
 
-The test checks that the application starts the engine, that each screen shows what the engine holds, and that the application reports an engine that stops or is missing. It does not try to cover every control. This repository's automated browser tests cover what a real engine cannot easily produce: paging through many results, a stored selection the engine cannot read, a busy database, and a refresh of ad hoc entries (a refresh is one batch run of a saved list of tickers, called a watchlist; ad hoc entries are arbitrary sets tickers not preserved as watchlists).
+The test checks that the application starts the engine, that each screen shows what the engine holds, and that the application reports an engine that stops or is missing. It does not try to cover every control. This repository's automated browser tests cover what a real engine cannot easily produce: paging through many results, a stored [selection](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#selection) the engine cannot read, a busy database, and a [refresh](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#refresh) of [entries](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#entry) that belong to no [watchlist](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#watchlist).
 
-The market and filing data the engine fetches live from Yahoo Finance and SEC EDGAR (the US filings service), is known as "provider data" and it changes over time, so exact values are not prescribed. For each step, judge whether the screen shows what the engine's own commands show, in readable words, with no raw code, traceback or `NaN` where a name or value belongs. Every step has a number (Step 1, Step 2, ... for setup, then Check N1, Check W1, ... for the checks, with a letter for each group of screens: N, W, R, H, E and L) so that [the record](#recording-the-result), the written account of a run, can refer to it.
+[Provider data](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#data-provider), the market and filing data the engine fetches live from Yahoo Finance and [SEC](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#sec) [EDGAR](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#edgar), changes over time, so exact values are not prescribed. For each step, judge whether the screen shows what the engine's own commands show, in readable words, with no raw code, traceback or `NaN` where a name or value belongs. Every step has a number (Step 1, Step 2, ... for setup, then Check N1, Check W1, ... for the checks, with a letter for each group of screens: N, W, R, H, E and L) so that [the record](#recording-the-result), the written account of a run, can refer to it.
 
 ## How the test runs
 
-The test has two parts. The setup steps (Steps 1 to 10) install and prepare the engine, create some data and start the application. The checks (N, W, R, H, E and L) are steps you do by eye in the running application: you look at each screen and judge whether it shows what the setup created.
+The test has two parts. The setup steps (Steps 1 to 10) install and prepare the engine, create some data and start the application. The checks (Check N1, Check W1 and so on) are steps you do by eye in the running application: you look at each screen and judge whether it shows what the setup created.
 
-The setup creates data: watchlists (named lists of tickers, the stock symbols such as `KO`, each with the strategy, or analysis method, to run on it) and analysis runs (one saved result of one strategy on one ticker). A saved run cannot be deleted, so the setup never writes to your real database. It uses a throwaway database instead: a new SQLite file (a single-file database) in a new timestamped folder under this repository's ignored `.tmp/smoke/` folder. The engine's `IAN_DATABASE_URL` environment variable selects which database file it uses, and the test sets it to the throwaway file.
+The setup creates data: watchlists, with the [tickers](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#ticker) and the [analysis strategy](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#analysis-strategy) to run on each, and [analysis runs](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#analysis-run). A saved run cannot be deleted, so the setup never writes to your real database. It uses a throwaway database instead: a new [SQLite](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#sqlite) file in a new timestamped folder under this repository's ignored `.tmp/smoke/` folder. The engine's `IAN_DATABASE_URL` environment variable selects which database file it uses, and the test sets it to the throwaway file.
 
 `pnpm smoke --engine <your engine checkout>` is this repository's tool that does the setup steps for you. It checks the engine, creates the throwaway database and its data, writes a record of the run with the setup steps filled in, and then starts the application against the throwaway database. It sets `IAN_DATABASE_URL` only for the commands and the application it starts, never in your terminal.
 
@@ -25,7 +25,7 @@ The record is `SMOKE_RECORD.md` in the throwaway folder. You mark the checks in 
 Step 1. Get the engine at the commit this repository vendors, and make its command available.
 
 - Read the commit in [the vendored API description's source record](../../vendor/ian/SOURCE.md).
-- Check out that commit of the [engine repository](https://github.com/PeterPontbriand/investment-analysis-engine), then follow [the engine's installation guide](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md): [make the `ian` command available](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#make-the-ian-command-available) (`ian` is the engine's command-line program) and [configure it](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#2-configuration), including the SEC EDGAR identification (the identification that SEC EDGAR requires from programs that use it).
+- Check out that commit of the [engine repository](https://github.com/PeterPontbriand/investment-analysis-engine), then follow [the engine's installation guide](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md): [make the `ian` command available](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#make-the-ian-command-available) and [configure it](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#2-configuration), including the SEC EDGAR identification.
 - Confirm that `ian --help` shows the engine's help text.
 - Outbound access to Yahoo Finance and SEC EDGAR must be allowed, because the steps below run live analyses. If you have not run the engine's own [smoke test](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/SMOKE_TESTING.md) on this installation, run its provider check first (`ian health`), so a provider failure is not mistaken for an application failure.
 
@@ -91,7 +91,7 @@ ian watchlist create "Smoke Test Empty"
 
 `pnpm smoke` runs this step.
 
-Step 6. Fill the first watchlist with four entries. An entry is one ticker with one strategy, such as momentum or Graham number, and an optional as-of: the point in time to run the analysis as of, where no as-of means the latest data. The four entries have no as-of, a date as-of and a timestamp as-of with a timezone offset, in more than one strategy. `--as-of` takes `YYYY-MM-DD` or a timezone-aware ISO-8601 timestamp:
+Step 6. Fill the first watchlist with four entries. They have no [as-of](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#as-of-date), a date as-of and a timestamp as-of with a timezone offset, in more than one strategy. `--as-of` takes `YYYY-MM-DD` or a timezone-aware ISO-8601 timestamp:
 
 ```powershell
 ian watchlist add-selection momentum "Smoke Test" KO
@@ -104,7 +104,7 @@ ian watchlist add-selection graham-number "Smoke Test" KO
 
 Expect each command to print the watchlist with the new entry numbered after the earlier ones.
 
-Step 7. Refresh the first watchlist. A refresh runs every entry and saves each result as an analysis run:
+Step 7. Refresh the first watchlist:
 
 ```powershell
 ian refresh "Smoke Test"
@@ -112,9 +112,9 @@ ian refresh "Smoke Test"
 
 `pnpm smoke` runs this step.
 
-Expect nothing to print until the refresh finishes, then a summary headed by a refresh ID that lists the four entries with their outcomes. An outcome is how a run ended, such as completed or unavailable. Some entries may be unavailable; a refresh with at least one completed run is enough. Note the counts of each outcome: later steps compare the application with them.
+Expect nothing to print until the refresh finishes, then a summary headed by a refresh ID that lists the four entries with their outcomes. Some entries may be [unavailable](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#outcome-unavailable); a refresh with at least one [completed](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#outcome-completed) run is enough. Note the counts of each outcome: later steps compare the application with them.
 
-Step 8. Save one direct analysis. It runs one strategy on one ticker by its own command, and saves a run with no refresh:
+Step 8. Save one direct analysis. It saves a run that belongs to no refresh:
 
 ```powershell
 ian momentum MSFT --save-run
@@ -184,7 +184,7 @@ Check R2. The outcome column headings are names the engine gives its outcomes. T
 
 Check R3. The direct analysis from Step 8 is not a refresh and does not appear here.
 
-Check R4. Paging applies only when the database already holds more than 50 refreshes. In that case "Show more" appends the next page and then disappears at the end. Otherwise mark this step N/A: browser tests cover paging.
+Check R4. Paging applies only when the database already holds more than 50 refreshes. In that case "Show more" appends the next page and then disappears at the end. Otherwise mark this check N/A: browser tests cover paging.
 
 ## H. Saved runs
 
@@ -198,13 +198,13 @@ Check H4. Filter by outcome. The choices are the engine's outcomes, led by "All 
 
 Check H5. A filter that matches nothing says that no saved runs match the filters. Use a ticker the setup never used. "Clear filters" empties all three filters and shows all five runs again.
 
-Check H6. Paging applies only when the database already holds more than 50 runs. In that case "Show more" appends the next page, and changing a filter starts again at the first page. Otherwise mark this step N/A: browser tests cover paging.
+Check H6. Paging applies only when the database already holds more than 50 runs. In that case "Show more" appends the next page, and changing a filter starts again at the first page. Otherwise mark this check N/A: browser tests cover paging.
 
 ## E. Engine problems
 
-Do these last. After E1, close the application. E2 starts it from a new terminal where the engine cannot be found, so it needs no data. To see the data again afterwards, run `pnpm smoke` again, which makes a fresh throwaway database.
+Do these last. After Check E1, close the application. Check E2 starts it from a new terminal where the engine cannot be found, so it needs no data. To see the data again afterwards, run `pnpm smoke` again, which makes a fresh throwaway database.
 
-Check E1. The engine stops while the application is open. The `ian` command is a launcher: a small program that finds the engine's installation and runs it. The application starts the engine through the launcher, which starts a chain of processes; ending the launcher's process makes the rest of the chain exit within seconds, because the engine stops when its input closes. In a second PowerShell terminal, end the `ian.exe` that the application started:
+Check E1. The engine stops while the application is open. The [`ian` command](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#make-the-ian-command-available) is a launcher that starts the engine, and the application starts the engine through it, so a chain of processes runs; ending the launcher's process makes the rest of the chain exit within seconds, because the engine stops when its input closes. In a second PowerShell terminal, end the `ian.exe` that the application started:
 
 ```powershell
 $app = Get-Process investment-analysis-desktop
@@ -242,7 +242,7 @@ With `pnpm smoke`, the throwaway `IAN_DATABASE_URL` setting never reaches your t
 
 ## Recording the result
 
-`pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. Steps 1 to 9 of the setup are filled in as `pass (scripted)`, each with its command output under "Command output". Step 10 and the checks (N, W, R, H, E and L) are yours: the tool only started the application, so mark whether its window opened, and mark each check `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
+`pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. Steps 1 to 9 of the setup are filled in as `pass (scripted)`, each with its command output under "Command output". Step 10 and every check are yours: the tool only started the application, so mark whether its window opened, and mark each check `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
 
 If you followed the steps by hand, write the same record yourself: the date, time zone, operating system, application commit, engine commit, the engine version and what you compared it with, the data you created, and each step with its mark.
 
@@ -262,7 +262,7 @@ It stops with a plain message instead of guessing, and writes the record so far 
 - **The refresh completed no run:** check the providers with `ian health`, then run `pnpm smoke` again, which makes a new throwaway database.
 - **The counts are not the setup's:** the setup leaves 5 runs, 1 refresh of 4 runs and 2 watchlists with 4 entries in all. Run `pnpm smoke` again, which makes a new throwaway database.
 
-Cleaning up, and restarting the application for the engine-problem checks in the E steps, stay manual.
+Cleaning up, and restarting the application for the engine-problem checks (Checks E1 and E2), stay manual.
 
 ## Review checklist
 
@@ -276,4 +276,4 @@ Do not treat a changed market value, an outcome that depends on live data or a s
 
 ## What smoke testing does not cover
 
-A smoke test shows that the application works against a real engine on one day. It proves nothing about boundaries that a real engine cannot easily force, such as paging beyond one page, a stored selection the engine cannot read, a refresh of ad hoc entries, or a busy database. Browser tests cover those. The check for ad hoc entries is added to this document when the application can start refreshes itself, because the command line cannot start one.
+A smoke test shows that the application works against a real engine on one day. It proves nothing about boundaries that a real engine cannot easily force, such as paging beyond one page, a stored selection the engine cannot read, a refresh of entries that belong to no watchlist, or a busy database. Browser tests cover those. The check for such a refresh is added to this document when the application can start refreshes itself, because the command line cannot start one.
