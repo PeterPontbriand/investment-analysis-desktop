@@ -19,11 +19,13 @@ S1. Get the engine at the commit this repository vendors, and make its command a
 
 Also install this repository's development tools as the [README](../../README.md) describes. On Windows that includes the C++ build tools, because `pnpm tauri dev` compiles the application.
 
+Run `pnpm smoke --engine <your engine checkout>` from this repository's root. It does S2 to S10 as described below, writes the record to the throwaway folder and starts the application. The steps below stay the reference for what it runs, and you can follow them by hand instead. [If `pnpm smoke` stops](#if-pnpm-smoke-stops) lists its stop messages.
+
 ### Use a throwaway database
 
 The setup below saves analysis runs and a watchlist. A saved run cannot be deleted, so the test runs against a dedicated throwaway SQLite file and not against your real database.
 
-S2. Open a new terminal in the root folder of this repository, and check your real database once, before you set `IAN_DATABASE_URL` for the throwaway file. Do not unset or change any `IAN_DATABASE_URL` you already use. This command only reads:
+S2. Open a new terminal in the root folder of this repository, and check your real database once, before you set `IAN_DATABASE_URL` for the throwaway file. Do not unset or change any `IAN_DATABASE_URL` you already use. This command only reads: `pnpm smoke` runs this step, reading the state with `ian db status --json`; it continues on `ready` or `missing`.
 
 ```powershell
 ian db status
@@ -31,7 +33,7 @@ ian db status
 
 Expect `State: ready`, or `State: missing` with `Database is not initialized yet.` if you have never run an analysis (the command then exits with status 1, which is expected). If it reports `upgrade_required`, follow [First use and explicit upgrades](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md#first-use-and-explicit-upgrades) before going on. For any other state, stop and use [Local Database Operations](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md).
 
-S3. In that same terminal, point the session at a new throwaway file. This creates a new timestamped folder under this repository's ignored `.tmp/smoke/` folder, so there is nothing to prepare. PowerShell:
+S3. In that same terminal, point the session at a new throwaway file. This creates a new timestamped folder under this repository's ignored `.tmp/smoke/` folder, so there is nothing to prepare. PowerShell: `pnpm smoke` creates the folder and sets the variable for the commands it runs and for the application.
 
 ```powershell
 $smoke = Join-Path (git rev-parse --show-toplevel) ".tmp/smoke/$(Get-Date -Format yyyyMMdd-HHmmss)"
@@ -54,6 +56,8 @@ ian db upgrade
 ian db status
 ```
 
+`pnpm smoke` runs this step.
+
 Expect the second command to name the throwaway file and report `State: ready`.
 
 ### Create the data
@@ -67,6 +71,8 @@ ian watchlist create "Smoke Test"
 ian watchlist create "Smoke Test Empty"
 ```
 
+`pnpm smoke` runs this step.
+
 S6. Fill the first watchlist with entries that have no as-of, a date as-of and a timestamp as-of with a timezone offset, in more than one strategy. `--as-of` takes `YYYY-MM-DD` or a timezone-aware ISO-8601 timestamp:
 
 ```powershell
@@ -76,6 +82,8 @@ ian watchlist add-selection momentum "Smoke Test" AAPL --as-of 2025-12-31T16:00:
 ian watchlist add-selection graham-number "Smoke Test" KO
 ```
 
+`pnpm smoke` runs this step.
+
 Expect each command to print the watchlist with the new entry numbered after the earlier ones.
 
 S7. Refresh the first watchlist, which runs every entry and saves each result:
@@ -83,6 +91,8 @@ S7. Refresh the first watchlist, which runs every entry and saves each result:
 ```powershell
 ian refresh "Smoke Test"
 ```
+
+`pnpm smoke` runs this step.
 
 Expect nothing to print until the refresh finishes, then a summary headed by a refresh ID that lists the four entries with their outcomes. Some entries may be unavailable; a refresh with at least one completed run is enough. Note the counts of each outcome: later steps compare the application with them.
 
@@ -92,12 +102,16 @@ S8. Save one direct analysis, which is a run with no refresh:
 ian momentum MSFT --save-run
 ```
 
+`pnpm smoke` runs this step.
+
 S9. List the saved runs:
 
 ```powershell
 ian runs list
 ian runs refreshes
 ```
+
+`pnpm smoke` runs this step.
 
 Expect five runs, and one refresh named `Smoke Test` with four runs.
 
@@ -108,6 +122,8 @@ S10. From the same terminal, in this repository's root folder, start the desktop
 ```powershell
 pnpm tauri dev
 ```
+
+`pnpm smoke` starts it.
 
 The first start compiles the application and takes a while. Set `IAD_IAN_PATH` to the `ian` executable first only if `ian` is not on `PATH`. Expect a window to open. Leave the terminal open: it shows the application's launch line for the engine.
 
@@ -202,62 +218,30 @@ L3. Narrow the window to about half the screen width. The navigation and the tab
 
 ## Clean-up
 
-Close the application window, then close the terminal you used: the throwaway `IAN_DATABASE_URL` setting goes with it, and closing the window stops the engine. Then delete the throwaway folder `.tmp/smoke/<timestamp>` in this repository, which holds the database file with any `-wal` and `-shm` files beside it.
+Close the application window, then close the terminal you used: the throwaway `IAN_DATABASE_URL` setting goes with it, and closing the window stops the engine. Then delete the throwaway folder: the one `pnpm smoke` named in its record, `.tmp/smoke/<timestamp>` in this repository, which holds the database file with any `-wal` and `-shm` files beside it, and the record itself. Paste the record into the pull request description first.
 
 ## Recording the result
 
-Copy this block into your notes and fill it in. Mark each step `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass. A failure note never includes private data.
+`pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. The setup steps (S1 to S10) are filled in as `pass (scripted)`, each with its command output under "Command output". The checks (N, W, R, H, E and L) are blank: mark each one `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
 
-```text
-Smoke test record
-Date:
-Engine commit (git rev-parse HEAD in the engine checkout; the vendored commit is in vendor/ian/SOURCE.md):
-Application commit (git rev-parse --short HEAD):
-Operating system:
-Time zone:
-Data (watchlists, entries, runs, refreshes):
+If you followed the steps by hand, write the same record yourself: the date, time zone, operating system, application commit, engine commit, the engine version and what you compared it with, the data you created, and each step with its mark.
 
-S1 (engine installed at the vendored commit):
-S2 (database status, real database):
-S3 (throwaway database set):
-S4 (setup and status, throwaway database):
-S5 (watchlists created):
-S6 (entries added):
-S7 (refresh):
-S8 (direct analysis saved):
-S9 (runs and refreshes listed):
-S10 (application started):
-N1:
-N2:
-N3 (say what the engine version was compared with):
-W1:
-W2:
-W3:
-W4:
-W5:
-W6:
-W7:
-R1:
-R2:
-R3:
-R4:
-H1:
-H2:
-H3:
-H4:
-H5:
-H6:
-E1:
-E2:
-E3 (not checked here):
-L1:
-L2:
-L3:
+Record a run in the description of the pull request that adds or changes a screen, naming the engine commit from [the source record](../../vendor/ian/SOURCE.md). Keep the record as the run's record; do not summarise it as "passed".
 
-Result: all steps passed | failing step numbers, with notes
-```
+## If `pnpm smoke` stops
 
-Record a run in the description of the pull request that adds or changes a screen, naming the engine commit from [the source record](../../vendor/ian/SOURCE.md). Keep the block as the run's record; do not summarise it as "passed".
+It stops with a plain message instead of guessing, and writes the record so far beside the throwaway folder when it got that far.
+
+- **`--engine` is required, or the folder does not exist:** pass the folder of your engine checkout.
+- **The folder is not a Git checkout:** pass the folder that holds the engine's `.git` folder.
+- **The engine checkout is at another commit:** the message prints both commits and the `git checkout` to run in the engine checkout. Run it, then try again.
+- **The `ian` command was not found, or `ian --help` failed:** make the command available as step S1 says, or set `IAD_IAN_PATH`.
+- **Your real database is not `ready` or `missing`:** an `upgrade_required` database needs the engine's [explicit upgrade](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md#first-use-and-explicit-upgrades) first. For any other state, use the engine's [Local Database Operations](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md).
+- **A setup command failed:** the message names the step and the command, and its output is in the record. For a provider failure, see the engine's troubleshooting guide.
+- **The refresh completed no run:** check the providers with `ian health`, then run `pnpm smoke` again, which makes a new throwaway database.
+- **The counts are not the setup's:** the setup leaves 5 runs, 1 refresh of 4 runs and 2 watchlists with 4 entries in all. Run `pnpm smoke` again, which makes a new throwaway database.
+
+Cleaning up, and restarting the application for the engine-problem checks in the E steps, stay manual.
 
 ## Review checklist
 
