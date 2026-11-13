@@ -8,6 +8,8 @@ declare global {
 
 // WebKit reports these for the styling of its own native select control under
 // the app's CSP (D111); the control looks and behaves the same without them.
+// Opening the drop-down adds style-src-elem violations, which tests do not
+// accept: no test opens a native drop-down.
 const selectViolation = 'style-src-attr: inline (select)';
 const selectConsoleError =
   "Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline' appears in neither the style-src directive nor the default-src directive of the Content Security Policy.";
