@@ -12,7 +12,7 @@
 | :--- | :--- | :--- | :--- |
 | GUI.2a1 | [Localization retrofit](#gui2a1--localization-retrofit) | Complete | 2026-11-11 |
 | GUI.2a2 | [Engine launch and API adapter](#gui2a2--engine-launch-and-api-adapter) | Complete | 2026-11-13 |
-| GUI.2b | [Read-only screens](#gui2b--read-only-screens) | Planned | |
+| GUI.2b | [Read-only screens](#gui2b--read-only-screens) | Next | |
 
 ## Sub-slices
 
@@ -186,3 +186,4 @@ Approved by the project owner on 2026-11-10. The numbering continues [Appendix D
 | D74 | Ending the engine: when the application exits, Rust closes the engine's standard input and neither waits for the engine nor kills it. IAN finishes or stops a running refresh within its own bounded shutdown and then exits. After a `timed_out` or `launch_failed` result, Rust kills the child if it is still running, so no engine is left listening. |
 | D75 | Window title permission: the `default` capability gains only `core:window:allow-set-title`, for R5. The app's own commands (`engine_connection`, `engine_status`) need no capability entry. No other permission is added. |
 | D76 | Shell test warning: the shell smoke test runs without `tauri-plugin-wdio`, so `@wdio/tauri-service` 1.5.1's window-state probe logs "Tauri core.invoke not available" and costs about 5 s per probed command. The service has no setting to disable the probe. Accepted until a shell test needs `browser.tauri.execute` or mocks; that slice adds the plugin to the end-to-end build only. |
+| D77 | Placeholder messages outside the engine states: while the connection is pending, the "Analysis engine" section shows "Connecting to the analysis engine…" (`engine.loading`). A request that fails while the engine is still running, whether from a network error or an HTTP failure, shows "The analysis engine did not respond as expected." (`engine.unreachable`). Both are catalog messages, and neither shows the API's reason text. GUI.2b replaces `engine.unreachable` on its screens with D45's reason-code branches. |

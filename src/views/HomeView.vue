@@ -2,8 +2,12 @@
 import { useEngineInfo } from '../api/useEngineInfo.ts';
 import { useMessages } from '../i18n/index.ts';
 
-const { t } = useMessages();
+const { t, locale } = useMessages();
 const engine = useEngineInfo();
+
+// Lists take the separator of the active locale.
+const list = (items: string[]) =>
+  new Intl.ListFormat(locale.value, { type: 'unit' }).format(items);
 </script>
 
 <template>
@@ -16,11 +20,11 @@ const engine = useEngineInfo();
       <p v-else-if="engine.kind === 'message'" role="status">
         {{ t(engine.key) }}
       </p>
-      <dl v-else :lang="engine.language ?? undefined">
+      <dl v-else>
         <dt>{{ t('engine.labels.version') }}</dt>
         <dd>{{ engine.info.engine_version }}</dd>
         <dt>{{ t('engine.labels.apiVersions') }}</dt>
-        <dd>{{ engine.info.api_versions.join(', ') }}</dd>
+        <dd>{{ list(engine.info.api_versions) }}</dd>
         <dt>{{ t('engine.labels.schemaVersion') }}</dt>
         <dd>{{ engine.info.schema_version }}</dd>
         <dt>{{ t('engine.labels.secIdentity') }}</dt>
@@ -32,7 +36,9 @@ const engine = useEngineInfo();
           }}
         </dd>
         <dt>{{ t('engine.labels.languages') }}</dt>
-        <dd>{{ engine.info.locales.map((item) => item.name).join(', ') }}</dd>
+        <dd :lang="engine.language ?? undefined">
+          {{ list(engine.info.locales.map((item) => item.name)) }}
+        </dd>
       </dl>
     </section>
   </main>

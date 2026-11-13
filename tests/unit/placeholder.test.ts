@@ -47,6 +47,9 @@ async function mountApp(host: Platform) {
   return wrapper;
 }
 
+const unit = (items: string[]) =>
+  new Intl.ListFormat('en', { type: 'unit' }).format(items);
+
 const ready: EngineConnection = {
   state: 'ready',
   baseUrl: 'http://127.0.0.1:1',
@@ -74,16 +77,18 @@ describe('placeholder screen', () => {
       en.engine.labels.version,
       '9.8.7',
       en.engine.labels.apiVersions,
-      'v1, v2',
+      unit(['v1', 'v2']),
       en.engine.labels.schemaVersion,
       '2',
       en.engine.labels.secIdentity,
       en.engine.secIdentity.configured,
       en.engine.labels.languages,
-      'English, Portugues',
+      unit(['English', 'Portugues']),
     ])
       expect(text).toContain(expected);
-    expect(wrapper.get('dl').attributes('lang')).toBe('en');
+    expect(wrapper.findAll('dd').at(-1)?.attributes('lang')).toBe('en');
+    expect(wrapper.get('dl').attributes('lang')).toBeUndefined();
+    expect(wrapper.get('dt').attributes('lang')).toBeUndefined();
   });
 
   it('shows "Not configured" when no SEC identity is configured', async () => {

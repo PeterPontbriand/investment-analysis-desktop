@@ -55,7 +55,8 @@ test.describe('analysis engine section', () => {
     await expect(list).toContainText('v1');
     await expect(list).toContainText(en.engine.secIdentity.notConfigured);
     await expect(list).toContainText('English');
-    await expect(list).toHaveAttribute('lang', 'en');
+    await expect(list).not.toHaveAttribute('lang');
+    await expect(page.locator('dd').last()).toHaveAttribute('lang', 'en');
     expect(requests).toHaveLength(1);
     expect(requests[0]?.authorization).toBe('Bearer test-token');
     expect(requests[0]?.['accept-language']).toBe('en');
