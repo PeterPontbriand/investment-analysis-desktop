@@ -7,6 +7,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { throwawayFile } from './commands.ts';
 import { parseSteps } from './document.ts';
+import { startAndFinish } from './finish.ts';
 import { fileSystem, run, startApplication } from './process.ts';
 import { renderRecord, type RecordInput } from './record.ts';
 import {
@@ -134,10 +135,16 @@ async function main(): Promise<number> {
   process.stdout.write(
     `The record is ${path}\nClean-up will delete these files in ${folder}, and leave the folder and the record: ${throwawayFile}, ${throwawayFile}-wal, ${throwawayFile}-shm\nStarting the application…\n`,
   );
-  return startApplication(
-    repositoryRoot,
-    applicationEnvironment(process.env, session),
-  );
+  return startAndFinish({
+    session,
+    start: () =>
+      startApplication(
+        repositoryRoot,
+        applicationEnvironment(process.env, session),
+      ),
+    rewrite: () => writeRecord(session, now, null),
+    print: (text) => process.stdout.write(text),
+  });
 }
 
 process.exitCode = await main();

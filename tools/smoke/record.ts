@@ -4,8 +4,12 @@ import type { DocumentStep } from './document.ts';
 import { ianSourceNames, type IanSource } from './source.ts';
 
 // A step the tool did. `leftToYou` is a step the tool only started: the
-// contributor marks it.
-export type ScriptedStep = { fact?: string; leftToYou?: boolean };
+// contributor marks it. `fail` is a step the tool saw fail.
+export type ScriptedStep = {
+  fact?: string;
+  leftToYou?: boolean;
+  fail?: string;
+};
 
 export type RecordInput = {
   date: string;
@@ -95,7 +99,7 @@ export function renderRecord(input: RecordInput): string {
     const done = input.scripted.get(step.id);
     const fact = done?.fact ? ` (${done.fact})` : '';
     lines.push(
-      `- **${step.id}** ${step.hint}:${done ? (done.leftToYou ? fact : ` pass (scripted)${fact}`) : ''}`,
+      `- **${step.id}** ${step.hint}:${done ? (done.fail !== undefined ? ` fail (scripted): ${done.fail}` : done.leftToYou ? fact : ` pass (scripted)${fact}`) : ''}`,
     );
   }
   lines.push(
