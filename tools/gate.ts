@@ -51,6 +51,11 @@ const steps: Step[] = [
     command: node,
     args: ['tools/docs/check-sequence-tables.ts'],
   },
+  {
+    name: 'OpenAPI types drift check',
+    command: node,
+    args: ['tools/check-openapi-types.ts'],
+  },
   { name: 'Vitest', command: packageManager, args: ['test'] },
   { name: 'Vite production build', command: packageManager, args: ['build'] },
   {
@@ -82,6 +87,11 @@ const steps: Step[] = [
       '-D',
       'warnings',
     ],
+  },
+  {
+    name: 'Rust unit tests',
+    command: 'cargo',
+    args: ['test', '--locked', '--manifest-path', 'src-tauri/Cargo.toml'],
   },
   {
     name: 'Cargo release dependency tree excludes WebDriver',
