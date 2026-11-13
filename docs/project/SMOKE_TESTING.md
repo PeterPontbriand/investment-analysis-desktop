@@ -8,7 +8,7 @@ Provider data changes over time, so exact values are not prescribed. For each st
 
 ## Before you start
 
-Run every command in one terminal. The throwaway database setting below lasts only in that terminal, and the application passes its environment through to the engine it starts.
+With `pnpm smoke`, the throwaway database setting reaches only the commands and the application the tool starts; your terminal's environment is not changed. When you follow the steps by hand, run every command in one terminal: the setting lasts only there, and the application passes its environment through to the engine it starts.
 
 S1. Get the engine at the commit this repository vendors, and make its command available.
 
@@ -25,15 +25,17 @@ Run `pnpm smoke --engine <your engine checkout>` from this repository's root. It
 
 The setup below saves analysis runs and a watchlist. A saved run cannot be deleted, so the test runs against a dedicated throwaway SQLite file and not against your real database.
 
-S2. Open a new terminal in the root folder of this repository, and check your real database once, before you set `IAN_DATABASE_URL` for the throwaway file. Do not unset or change any `IAN_DATABASE_URL` you already use. This command only reads: `pnpm smoke` runs this step, reading the state with `ian db status --json`; it continues on `ready` or `missing`.
+S2. Open a new terminal in the root folder of this repository, and check your real database once, before you set `IAN_DATABASE_URL` for the throwaway file. Do not unset or change any `IAN_DATABASE_URL` you already use. This command only reads:
 
 ```powershell
 ian db status
 ```
 
+`pnpm smoke` runs this step, reading the state with `ian db status --json`; it continues on `ready` or `missing`.
+
 Expect `State: ready`, or `State: missing` with `Database is not initialized yet.` if you have never run an analysis (the command then exits with status 1, which is expected). If it reports `upgrade_required`, follow [First use and explicit upgrades](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md#first-use-and-explicit-upgrades) before going on. For any other state, stop and use [Local Database Operations](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md).
 
-S3. In that same terminal, point the session at a new throwaway file. This creates a new timestamped folder under this repository's ignored `.tmp/smoke/` folder, so there is nothing to prepare. PowerShell: `pnpm smoke` creates the folder and sets the variable for the commands it runs and for the application.
+S3. In that same terminal, point the session at a new throwaway file. This creates a new timestamped folder under this repository's ignored `.tmp/smoke/` folder, so there is nothing to prepare. PowerShell:
 
 ```powershell
 $smoke = Join-Path (git rev-parse --show-toplevel) ".tmp/smoke/$(Get-Date -Format yyyyMMdd-HHmmss)"
@@ -48,6 +50,8 @@ smoke="$(git rev-parse --show-toplevel)/.tmp/smoke/$(date +%Y%m%d-%H%M%S)"
 mkdir -p "$smoke"
 export IAN_DATABASE_URL="sqlite:///$smoke/smoke-test.sqlite3"
 ```
+
+`pnpm smoke` creates the folder and sets the variable for the commands it runs and for the application, and for nothing else.
 
 S4. Create the file's schema and confirm it is ready:
 
@@ -117,7 +121,7 @@ Expect five runs, and one refresh named `Smoke Test` with four runs.
 
 ### Start the application
 
-S10. From the same terminal, in this repository's root folder, start the desktop application:
+S10. Start the desktop application from this repository's root folder, in the terminal where you set `IAN_DATABASE_URL` if you are following the steps by hand:
 
 ```powershell
 pnpm tauri dev
@@ -184,7 +188,7 @@ H6. If the database already holds more than 50 runs, "Show more" appends the nex
 
 ## E. Engine problems
 
-Do these last. Each one needs the application restarted afterwards, from the terminal you set up.
+Do these last. After E1, close the application. E2 starts it from a new terminal where the engine cannot be found, so it needs no data. To see the data again afterwards, run `pnpm smoke` again, which makes a fresh throwaway database.
 
 E1. The engine stops while the application is open. The application starts the engine through the `ian` launcher, which starts a chain of processes; ending the launcher's process makes the rest of the chain exit within seconds, because the engine stops when its input closes. In a second PowerShell terminal, end the `ian.exe` that the application started:
 
@@ -218,11 +222,13 @@ L3. Narrow the window to about half the screen width. The navigation and the tab
 
 ## Clean-up
 
-Close the application window, then close the terminal you used: the throwaway `IAN_DATABASE_URL` setting goes with it, and closing the window stops the engine. Then delete the throwaway folder: the one `pnpm smoke` named in its record, `.tmp/smoke/<timestamp>` in this repository, which holds the database file with any `-wal` and `-shm` files beside it, and the record itself. Paste the record into the pull request description first.
+Close the application window; closing it stops the engine. Then delete the throwaway database files in the folder `pnpm smoke` named, `.tmp/smoke/<timestamp>` in this repository: `smoke-test.sqlite3`, and any `smoke-test.sqlite3-wal` and `smoke-test.sqlite3-shm` files beside it. Keep `SMOKE_RECORD.md` and leave the folder itself. `pnpm smoke` prints the folder and these files after the record's path.
+
+With `pnpm smoke`, the throwaway `IAN_DATABASE_URL` setting never reaches your terminal, so there is nothing to unset. When you followed the steps by hand, close the terminal you set it in: that drops the setting.
 
 ## Recording the result
 
-`pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. The setup steps (S1 to S10) are filled in as `pass (scripted)`, each with its command output under "Command output". The checks (N, W, R, H, E and L) are blank: mark each one `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
+`pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. The setup steps S1 to S9 are filled in as `pass (scripted)`, each with its command output under "Command output". S10 and the checks (N, W, R, H, E and L) are yours: the tool only started the application, so mark whether its window opened, and mark each check `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
 
 If you followed the steps by hand, write the same record yourself: the date, time zone, operating system, application commit, engine commit, the engine version and what you compared it with, the data you created, and each step with its mark.
 
@@ -236,6 +242,7 @@ It stops with a plain message instead of guessing, and writes the record so far 
 - **The folder is not a Git checkout:** pass the folder that holds the engine's `.git` folder.
 - **The engine checkout is at another commit:** the message prints both commits and the `git checkout` to run in the engine checkout. Run it, then try again.
 - **The `ian` command was not found, or `ian --help` failed:** make the command available as step S1 says, or set `IAD_IAN_PATH`.
+- **`IAD_IAN_PATH` names a `.cmd` or `.bat` file:** the application and the tool start the engine without a shell, so `IAD_IAN_PATH` must name an executable (`.exe`). Point it at the `.exe`, or unset it so `ian` is found on `PATH`.
 - **Your real database is not `ready` or `missing`:** an `upgrade_required` database needs the engine's [explicit upgrade](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md#first-use-and-explicit-upgrades) first. For any other state, use the engine's [Local Database Operations](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md).
 - **A setup command failed:** the message names the step and the command, and its output is in the record. For a provider failure, see the engine's troubleshooting guide.
 - **The refresh completed no run:** check the providers with `ian health`, then run `pnpm smoke` again, which makes a new throwaway database.
