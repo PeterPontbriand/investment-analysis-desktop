@@ -20,6 +20,7 @@
     "test:browser": "playwright test",
     "docs:check": "node tools/docs/check-doc-links.ts && node tools/docs/check-sequence-tables.ts",
     "gate": "node tools/gate.ts",
+    "smoke": "node tools/smoke/smoke.ts",
     "tauri": "tauri",
     "build:shell:e2e": "tauri build --no-bundle --debug --features e2e --config src-tauri/tauri.e2e.conf.json -- --locked",
     "test:shell": "wdio run wdio.conf.js"
