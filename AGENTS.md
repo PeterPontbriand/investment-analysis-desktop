@@ -74,3 +74,5 @@ Never add AI or tool attribution anywhere in this repository: no Co-Authored-By 
 ## Verification
 
 Run `pnpm gate` before pushing. The gate installs frozen dependencies and Playwright's Chromium and WebKit browsers, checks formatting, lint, application and tools types, Markdown links and anchors, Mermaid fences and sequence tables, runs Vitest, builds the production app, and runs the Chromium and WebKit browser tests. It writes the full output and a per-step result and duration summary to the root `gate-output.txt`, which is git-ignored. CI runs the same gate on Windows, macOS, and Linux; Linux installs Playwright's system libraries first. The `quality` check passes only when all three platform jobs succeed. Report actual command results; do not claim checks passed unless they ran successfully.
+
+A pull request that adds or changes a screen updates docs/project/SMOKE_TESTING.md, and its description records a run of it against a real engine at the vendored IAN commit.

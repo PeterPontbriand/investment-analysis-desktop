@@ -131,6 +131,7 @@
 - `tests/unit/`, `tests/browser/` and `tests/fixtures/`, including the typed API fixtures and the test-only catalog; `playwright.config.ts` and `vitest.config.ts` for the time zone only (D107).
 - `eslint.config.js`, for D109 only.
 - `tests/shell/window.spec.js`, updated to the new shell.
+- `docs/project/SMOKE_TESTING.md` and `AGENTS.md` (D113 to D115).
 - This plan and the [project charter](CHARTER.md)'s GUI.2 section.
 
 ### Acceptance criteria
@@ -147,6 +148,7 @@
 - While the connection is pending, or the engine is not ready, every screen shows the matching catalog message and the navigation stays usable (D99).
 - An extra, made-up strategy appears in the saved runs list, its filter and a watchlist's entries with no GUI code change (D94).
 - No request uses `POST`, `PATCH` or `DELETE`.
+- `docs/project/SMOKE_TESTING.md` exists (D113 to D115), and the pull request records a run of it.
 - The pull request records a manual run against a real engine at IAN `beb58a2` (D47).
 - `pnpm gate` passes on Windows, macOS and Linux.
 
@@ -267,3 +269,6 @@ Approved by the project owner on 2026-11-13.
 | D110 | Term and strategy name requests: a failed request for the help references, the help index or the strategies shows the screen's failure state (D84, D100), like a failed list request; the as-served fallback of D101 applies only to a code, term or method the engine does not list. Each screen's loader declares the term documents it needs, and the loader fetches them before the screen's own requests, so no screen can show names without them. |
 | D111 | WebKit's native select: under the app's CSP, WebKit reports a style-src-attr violation and a console error for its own styling of a native <select>, and two style-src-elem violations when the drop-down is opened. A bare-page check confirmed both and that the control looks and behaves the same, closed and open. Browser tests accept exactly the style-src-attr violation and its console error, in WebKit only, and no test opens a native drop-down; a test that does extends this exception under this decision. Rejected: loosening style-src-attr in the CSP, and a custom drop-down, which loses native accessibility and right-to-left behaviour. |
 | D112 | Intended HTTP failures in browser tests: a test that deliberately answers with a failure status lists that status in `allowedHttpStatuses`, and only the browser's own console line for that status is ignored; every other console error still fails the test. Tests that don't set it are unchanged. |
+| D113 | Smoke test: IAD's human smoke test is `docs/project/SMOKE_TESTING.md`, a contributor document, because every step needs developer tooling until GUI.5's installer. It starts in GUI.2b1, and each screen slice's pull request records a run of it against a real engine at the vendored IAN commit (D47). GUI.6 adapts it into the recorded smoke test of the installed application, and moves its user-facing part to user documentation then. |
+| D114 | Smoke test shape: it follows IAN's smoke test, with numbered steps (S1, S2… for setup, then a letter per screen group, such as W1 for Watchlists) that a run's record can name, and expectations judged as a user would see them, never exact data values. It names no slice, milestone or commit; it points to `vendor/ian/SOURCE.md` for the IAN commit. It covers the desktop application only; the browser build with a URL fragment is left to contributors. |
+| D115 | Smoke test upkeep: a pull request that adds or changes a screen updates the smoke test in the same pull request. |
