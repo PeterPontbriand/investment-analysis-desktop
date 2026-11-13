@@ -4,10 +4,20 @@ version = "0.1.0"
 description = "Investment Analysis Desktop"
 edition = "2024"
 rust-version = "1.99"
+default-run = "investment-analysis-desktop"
 
 [lib]
 name = "app_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "investment-analysis-desktop"
+path = "src/main.rs"
+
+[[bin]]
+name = "stub-engine"
+path = "src/bin/stub_engine.rs"
+required-features = ["e2e"]
 
 [build-dependencies]
 tauri-build = { version = "=2.7.4", features = [] }
