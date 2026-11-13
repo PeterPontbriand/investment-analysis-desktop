@@ -4,7 +4,75 @@
   },
   "app": {
     "name": "Investment Analysis Desktop",
-    "preReleaseNotice": "Pre-release: this application is under development and does not yet show any analysis."
+    "preReleaseNotice": "Pre-release: this application is under development."
+  },
+  "nav": {
+    "label": "Main",
+    "watchlists": "Watchlists",
+    "refreshes": "Refreshes",
+    "runs": "Saved runs",
+    "about": "About"
+  },
+  "breadcrumb": {
+    "label": "Breadcrumb"
+  },
+  "common": {
+    "showMore": "Show more",
+    "tryAgain": "Try again",
+    "noValue": "—",
+    "multiple": "{value}×"
+  },
+  "state": {
+    "defect": "Something went wrong in the analysis engine."
+  },
+  "watchlists": {
+    "columns": {
+      "name": "Name",
+      "entries": "Entries",
+      "created": "Created",
+      "updated": "Last changed"
+    },
+    "empty": "There are no watchlists yet."
+  },
+  "watchlist": {
+    "summary": "{count} entry · created {date} | {count} entries · created {date}",
+    "columns": {
+      "position": "#",
+      "ticker": "Ticker",
+      "strategy": "Strategy",
+      "asOf": "As of"
+    },
+    "latestData": "Latest data",
+    "noEntries": "This watchlist has no entries.",
+    "refreshesHeading": "Refreshes of this watchlist",
+    "noRefreshes": "This watchlist has not been refreshed yet."
+  },
+  "refreshes": {
+    "columns": {
+      "completed": "Completed",
+      "watchlist": "Watchlist",
+      "runs": "Runs"
+    },
+    "adHoc": "Ad hoc entries",
+    "empty": "There are no refreshes yet."
+  },
+  "runs": {
+    "filters": {
+      "ticker": "Ticker",
+      "strategy": "Strategy",
+      "outcome": "Outcome",
+      "allStrategies": "All strategies",
+      "allOutcomes": "All outcomes",
+      "clear": "Clear filters"
+    },
+    "columns": {
+      "completed": "Completed",
+      "ticker": "Ticker",
+      "strategy": "Strategy",
+      "outcome": "Outcome"
+    },
+    "empty": "No saved runs yet.",
+    "emptyFiltered": "No saved runs match these filters."
   },
   "engine": {
     "heading": "Analysis engine",
