@@ -13,6 +13,8 @@ export const vendoredCommit = 'beb58a23bf9b72b763ce2b260c1dcaaa6d0a884b';
 export const repositoryRoot = resolve('fake-repository');
 export const enginePath = resolve('fake-engine');
 export const ianPath = resolve('fake-bin', 'ian.exe');
+export const uvBinFolder = resolve('fake-uv-bin');
+export const uvIanPath = join(uvBinFolder, 'ian.exe');
 
 export const sourceRecord = `# Vendored IAN API description\n\n- **Commit:** \`${vendoredCommit}\`\n- **Commit date:** 2026-11-13\n`;
 
@@ -41,6 +43,8 @@ export function healthy(overrides: Script = () => undefined): Script {
     if (override) return override;
     const line = call.args.join(' ');
     if (call.file === 'git') return ok(`${vendoredCommit}\n`);
+    // uv's command folder holds no ian unless a test says so.
+    if (call.file === 'uv') return ok('', 1);
     if (line === '--help') return ok('Usage: root [OPTIONS] COMMAND\n');
     if (line === readCommands.databaseStatus.join(' '))
       return json({ state: 'ready', database_path: 'C:/private/real.sqlite3' });

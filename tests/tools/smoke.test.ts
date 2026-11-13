@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   readCommands,
@@ -10,6 +11,7 @@ import { renderRecord, scrub } from '../../tools/smoke/record.ts';
 import {
   databaseUrlFor,
   folderStamp,
+  applicationEnvironment,
   newSession,
   runSetup,
   stopMessages,
@@ -26,6 +28,8 @@ import {
   healthy,
   ianPath,
   json,
+  uvBinFolder,
+  uvIanPath,
   repositoryRoot,
   sourceRecord,
   vendoredCommit,
@@ -165,12 +169,16 @@ describe('sources', () => {
 
   it('resolves ian from IAD_IAN_PATH, else from PATH, else not at all', () => {
     const exists = (path: string) => path === 'C:\\bin\\ian.exe';
-    expect(resolveIan({ IAD_IAN_PATH: 'X:\\ian.exe' }, 'win32', exists)).toBe(
-      'X:\\ian.exe',
-    );
-    expect(resolveIan({ PATH: 'C:\\a;C:\\bin\\' }, 'win32', exists)).toBe(
-      'C:\\bin\\ian.exe',
-    );
+    expect(
+      resolveIan({ IAD_IAN_PATH: 'X:\\ian.exe' }, 'win32', exists),
+    ).toEqual({
+      path: 'X:\\ian.exe',
+      source: 'IAD_IAN_PATH',
+    });
+    expect(resolveIan({ PATH: 'C:\\a;C:\\bin\\' }, 'win32', exists)).toEqual({
+      path: 'C:\\bin\\ian.exe',
+      source: 'PATH',
+    });
     expect(
       resolveIan({ IAD_IAN_PATH: '', PATH: 'C:\\a' }, 'win32', exists),
     ).toBe(null);
@@ -189,6 +197,7 @@ describe('record', () => {
     dirty: false,
     engineCommit: 'beb58a2',
     enginePath: 'C:/tools/ian.exe',
+    ianSource: 'PATH' as const,
     engineVersion: '0.1.0',
     data: { watchlists: 2, entries: 4, runs: 5, refreshes: 1 },
     throwawayFolder: '.tmp/smoke/20261113-090507',
@@ -211,7 +220,7 @@ describe('record', () => {
         '- **Operating system:** Windows_NT 10.0 (win32 x64)',
         '- **Application commit:** abc1234',
         '- **Engine commit:** beb58a2, matches vendor/ian/SOURCE.md',
-        "- **Engine:** `ian` from C:/tools/ian.exe; version 0.1.0, from the engine checkout's pyproject.toml",
+        "- **Engine:** `ian` from `PATH`, C:/tools/ian.exe; version 0.1.0, from the engine checkout's pyproject.toml",
         '- **Data:** 2 watchlists, 4 entries, 5 runs, 1 refresh',
         '- **Throwaway folder:** .tmp/smoke/20261113-090507',
         '',
@@ -239,6 +248,16 @@ describe('record', () => {
         '**Result:** all steps passed | failing step numbers, with notes',
         '',
       ].join('\n'),
+    );
+  });
+
+  it.each([
+    ['IAD_IAN_PATH', '`IAD_IAN_PATH`'],
+    ['PATH', '`PATH`'],
+    ['uv', "uv's command folder"],
+  ] as const)('names %s as where ian came from', (ianSource, name) => {
+    expect(renderRecord({ ...base, ianSource })).toContain(
+      `- **Engine:** \`ian\` from ${name}, C:/tools/ian.exe; version 0.1.0`,
     );
   });
 
@@ -461,8 +480,94 @@ describe('setup', () => {
   );
 
   it('stops when ian cannot be found', async () => {
-    await stopsAt(() => undefined, 'Step 1', /`ian` command was not found/, {
-      pathless: true,
+    await stopsAt(
+      () => undefined,
+      'Step 1',
+      /not found on PATH or in uv's command folder/,
+      {
+        pathless: true,
+      },
+    );
+  });
+
+  describe('finding ian', () => {
+    const uvAnswers = (call: { file: string }) =>
+      call.file === 'uv'
+        ? { code: 0, stdout: `${uvBinFolder}\n`, stderr: '' }
+        : undefined;
+    const uvFiles = { [uvIanPath]: '' };
+
+    it('prefers IAD_IAN_PATH, then PATH, and asks uv only when both fail', async () => {
+      const configured = join(uvBinFolder, 'custom-ian.exe');
+      const first = dependencies(healthy(uvAnswers), uvFiles, {
+        env: { IAD_IAN_PATH: configured, PATH: resolve('fake-bin') },
+      });
+      const one = newSession();
+      await runSetup(first.deps, one);
+      expect([one.ianSource, one.ianPath]).toEqual([
+        'IAD_IAN_PATH',
+        configured,
+      ]);
+      expect(first.calls.some((call) => call.file === 'uv')).toBe(false);
+
+      const second = dependencies(healthy(uvAnswers), uvFiles);
+      const two = newSession();
+      await runSetup(second.deps, two);
+      expect([two.ianSource, two.ianPath]).toEqual(['PATH', ianPath]);
+      expect(second.calls.some((call) => call.file === 'uv')).toBe(false);
+
+      const third = dependencies(healthy(uvAnswers), uvFiles, {
+        env: { PATH: '' },
+      });
+      const three = newSession();
+      await runSetup(third.deps, three);
+      expect([three.ianSource, three.ianPath]).toEqual(['uv', uvIanPath]);
+      const uvCall = third.calls.find((call) => call.file === 'uv');
+      expect(uvCall?.args).toEqual(['tool', 'dir', '--bin']);
+      expect(three.scripted.get('Step 1')?.fact).toMatch(
+        /`ian` from uv's command folder/,
+      );
+    });
+
+    it.each([
+      ['uv is missing', { code: null, stdout: '', stderr: 'spawn uv ENOENT' }],
+      ['uv fails', { code: 2, stdout: '', stderr: 'no' }],
+      ['uv names an empty folder', { code: 0, stdout: '\n', stderr: '' }],
+    ])('stops with the not-found message when %s', async (_name, answer) => {
+      await stopsAt(
+        (call) => (call.file === 'uv' ? answer : undefined),
+        'Step 1',
+        /was not found on PATH or in uv's command folder\. Do the engine's "Make the `ian` command available" step \(Step 1 of docs\/project\/SMOKE_TESTING\.md\), then open a new terminal and try again\./,
+        { pathless: true },
+      );
+    });
+
+    it('stops when uv names a folder that holds no ian', async () => {
+      await stopsAt(uvAnswers, 'Step 1', /not found on PATH or in uv's/, {
+        pathless: true,
+      });
+    });
+
+    it('gives IAD_IAN_PATH to the application only, and only for ian from uv', async () => {
+      const { deps, calls } = dependencies(healthy(uvAnswers), uvFiles, {
+        env: { PATH: '', KEEP: 'yes' },
+      });
+      const before = process.env.IAD_IAN_PATH;
+      const session = newSession();
+      await runSetup(deps, session);
+
+      const application = applicationEnvironment({ KEEP: 'yes' }, session);
+      expect(application.IAD_IAN_PATH).toBe(uvIanPath);
+      expect(application.IAN_DATABASE_URL).toBe(session.databaseUrl);
+      // No command the tool ran, and not the tool's own environment, has it.
+      for (const call of calls)
+        expect(call.options?.env?.IAD_IAN_PATH).toBeUndefined();
+      expect(deps.env.IAD_IAN_PATH).toBeUndefined();
+      expect(process.env.IAD_IAN_PATH).toBe(before);
+
+      const onPath = newSession();
+      await runSetup(dependencies(healthy()).deps, onPath);
+      expect(applicationEnvironment({}, onPath).IAD_IAN_PATH).toBeUndefined();
     });
   });
 

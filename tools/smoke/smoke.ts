@@ -9,7 +9,12 @@ import { throwawayFile } from './commands.ts';
 import { parseSteps } from './document.ts';
 import { fileSystem, run, startApplication } from './process.ts';
 import { renderRecord, type RecordInput } from './record.ts';
-import { newSession, runSetup, type Session } from './setup.ts';
+import {
+  applicationEnvironment,
+  newSession,
+  runSetup,
+  type Session,
+} from './setup.ts';
 import { SmokeStop } from './types.ts';
 
 const repositoryRoot = resolve(
@@ -64,6 +69,7 @@ async function writeRecord(
     dirty: application.dirty,
     engineCommit: session.engineCommit,
     enginePath: session.ianPath,
+    ianSource: session.ianSource,
     engineVersion: session.engineVersion,
     data: session.data,
     throwawayFolder: session.throwawayFolder,
@@ -128,10 +134,10 @@ async function main(): Promise<number> {
   process.stdout.write(
     `The record is ${path}\nClean-up will delete these files in ${folder}, and leave the folder and the record: ${throwawayFile}, ${throwawayFile}-wal, ${throwawayFile}-shm\nStarting the application…\n`,
   );
-  return startApplication(repositoryRoot, {
-    ...process.env,
-    IAN_DATABASE_URL: session.databaseUrl ?? undefined,
-  });
+  return startApplication(
+    repositoryRoot,
+    applicationEnvironment(process.env, session),
+  );
 }
 
 process.exitCode = await main();

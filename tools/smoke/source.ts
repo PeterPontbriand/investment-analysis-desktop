@@ -1,4 +1,5 @@
 // Reads from the vendored source record and the engine checkout.
+import type { Runner } from './types.ts';
 
 // The IAN commit in vendor/ian/SOURCE.md.
 export function readVendoredCommit(sourceRecord: string): string {
@@ -15,25 +16,55 @@ export function readEngineVersion(pyproject: string): string | null {
   return match ? match[1]! : null;
 }
 
-// Where `ian` resolves from: IAD_IAN_PATH when it is set and not empty, as the
-// application chooses, otherwise the first match on PATH.
+// Where `ian` came from, in the order the tool looks.
+export type IanSource = 'IAD_IAN_PATH' | 'PATH' | 'uv';
+export type IanLocation = { path: string; source: IanSource };
+
+// How the record names each source.
+export const ianSourceNames: Record<IanSource, string> = {
+  IAD_IAN_PATH: '`IAD_IAN_PATH`',
+  PATH: '`PATH`',
+  uv: "uv's command folder",
+};
+
+function ianFileName(platform: string): string {
+  return platform === 'win32' ? 'ian.exe' : 'ian';
+}
+
+// `ian` from IAD_IAN_PATH when it is set and not empty, as the application
+// chooses, otherwise the first match on PATH.
 export function resolveIan(
   env: Record<string, string | undefined>,
   platform: string,
   exists: (path: string) => boolean,
-): string | null {
+): IanLocation | null {
   const configured = env.IAD_IAN_PATH;
-  if (configured !== undefined && configured !== '') return configured;
+  if (configured !== undefined && configured !== '')
+    return { path: configured, source: 'IAD_IAN_PATH' };
   const windows = platform === 'win32';
-  const names = windows ? ['ian.exe'] : ['ian'];
   const separator = windows ? ';' : ':';
   const joiner = windows ? '\\' : '/';
   for (const folder of (env.PATH ?? env.Path ?? '').split(separator)) {
     if (folder === '') continue;
-    for (const name of names) {
-      const candidate = `${folder.replace(/[\\/]+$/, '')}${joiner}${name}`;
-      if (exists(candidate)) return candidate;
-    }
+    const candidate = `${folder.replace(/[\\/]+$/, '')}${joiner}${ianFileName(platform)}`;
+    if (exists(candidate)) return { path: candidate, source: 'PATH' };
   }
   return null;
+}
+
+// `ian` in uv's command folder, as `uv tool dir --bin` reports it: where the
+// engine's installer puts the command. A missing uv, or a failed command, means
+// `ian` is not found there.
+export async function resolveIanInUv(
+  run: Runner,
+  env: Record<string, string | undefined>,
+  platform: string,
+  exists: (path: string) => boolean,
+): Promise<IanLocation | null> {
+  const result = await run('uv', ['tool', 'dir', '--bin'], { env });
+  const folder = result.stdout.trim().split(/\r?\n/)[0]?.trim() ?? '';
+  if (result.code !== 0 || folder === '') return null;
+  const joiner = platform === 'win32' ? '\\' : '/';
+  const candidate = `${folder.replace(/[\\/]+$/, '')}${joiner}${ianFileName(platform)}`;
+  return exists(candidate) ? { path: candidate, source: 'uv' } : null;
 }

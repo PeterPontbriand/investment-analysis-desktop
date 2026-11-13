@@ -3,7 +3,14 @@
 import { join, relative } from 'node:path';
 import { readCommands, setupCommands, throwawayFile } from './commands.ts';
 import { scrub, type ScriptedStep } from './record.ts';
-import { readEngineVersion, readVendoredCommit, resolveIan } from './source.ts';
+import {
+  ianSourceNames,
+  readEngineVersion,
+  readVendoredCommit,
+  resolveIan,
+  resolveIanInUv,
+  type IanSource,
+} from './source.ts';
 import {
   SmokeStop,
   type FileSystem,
@@ -33,6 +40,8 @@ export type Session = {
   log: { command: string; output: string }[];
   engineCommit: string | null;
   ianPath: string | null;
+  // Where `ian` was found.
+  ianSource: IanSource | null;
   engineVersion: string | null;
   throwawayFolder: string | null;
   databaseUrl: string | null;
@@ -50,6 +59,7 @@ export function newSession(): Session {
     log: [],
     engineCommit: null,
     ianPath: null,
+    ianSource: null,
     engineVersion: null,
     throwawayFolder: null,
     databaseUrl: null,
@@ -68,7 +78,7 @@ export const stopMessages = {
   ianNotExecutable: () =>
     'IAD_IAN_PATH names a .cmd or .bat file. The application and this tool start the engine without a shell, so IAD_IAN_PATH must name an executable (.exe), not a .cmd or .bat file.',
   noIan: () =>
-    "The `ian` command was not found. Make it available as the engine's installation guide describes (Step 1 of docs/project/SMOKE_TESTING.md), or point IAD_IAN_PATH at it.",
+    'The `ian` command was not found on PATH or in uv\'s command folder. Do the engine\'s "Make the `ian` command available" step (Step 1 of docs/project/SMOKE_TESTING.md), then open a new terminal and try again.',
   ianHelpFailed: (detail: string) =>
     `\`ian --help\` did not succeed (${detail}). Make the \`ian\` command available as the engine's installation guide describes (Step 1).`,
   databaseUnreadable: () =>
@@ -158,9 +168,14 @@ export async function runSetup(
   const configured = deps.env.IAD_IAN_PATH;
   if (configured !== undefined && /\.(cmd|bat)$/i.test(configured))
     throw new SmokeStop('Step 1', stopMessages.ianNotExecutable());
-  const ian = resolveIan(deps.env, deps.platform, (path) => fs.exists(path));
-  if (ian === null) throw new SmokeStop('Step 1', stopMessages.noIan());
+  const exists = (path: string) => fs.exists(path);
+  const located =
+    resolveIan(deps.env, deps.platform, exists) ??
+    (await resolveIanInUv(run, deps.env, deps.platform, exists));
+  if (located === null) throw new SmokeStop('Step 1', stopMessages.noIan());
+  const ian = located.path;
   session.ianPath = ian;
+  session.ianSource = located.source;
   const help = await run(ian, ['--help'], { env: deps.env });
   logRun('ian --help', help);
   if (help.code !== 0)
@@ -170,7 +185,7 @@ export async function runSetup(
     ? readEngineVersion(fs.readText(pyproject))
     : null;
   session.scripted.set('Step 1', {
-    fact: `engine at ${session.engineCommit}, \`ian --help\` works`,
+    fact: `engine at ${session.engineCommit}; \`ian\` from ${ianSourceNames[located.source]}; \`ian --help\` works`,
   });
 
   // Step 2: the real database, read only and with the inherited environment.
@@ -306,4 +321,20 @@ export async function runSetup(
     refreshes: refreshCount,
   };
   session.scripted.set('Step 9', { fact: summary });
+}
+
+// The environment of the application started in Step 10: the throwaway
+// database, and IAD_IAN_PATH only when `ian` came from uv's command folder, so
+// the application finds the same file. The tool's own environment is unchanged.
+export function applicationEnvironment(
+  env: Environment,
+  session: Session,
+): Environment {
+  return {
+    ...env,
+    IAN_DATABASE_URL: session.databaseUrl ?? undefined,
+    ...(session.ianSource === 'uv' && session.ianPath !== null
+      ? { IAD_IAN_PATH: session.ianPath }
+      : {}),
+  };
 }

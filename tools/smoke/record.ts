@@ -1,6 +1,7 @@
 // Renders the smoke-test record: Markdown that can be pasted into a pull
 // request description.
 import type { DocumentStep } from './document.ts';
+import { ianSourceNames, type IanSource } from './source.ts';
 
 // A step the tool did. `leftToYou` is a step the tool only started: the
 // contributor marks it.
@@ -14,6 +15,8 @@ export type RecordInput = {
   dirty: boolean;
   engineCommit: string | null;
   enginePath: string | null;
+  // Where `ian` was found: IAD_IAN_PATH, PATH or uv's command folder.
+  ianSource: IanSource | null;
   engineVersion: string | null;
   data: {
     watchlists: number;
@@ -66,7 +69,7 @@ export function renderRecord(input: RecordInput): string {
     `- **Engine:** ${
       input.enginePath === null
         ? 'not found'
-        : `\`ian\` from ${input.enginePath}; version ${input.engineVersion ?? 'unknown'}, from the engine checkout's pyproject.toml`
+        : `\`ian\` from ${input.ianSource === null ? 'an unknown place' : ianSourceNames[input.ianSource]}, ${input.enginePath}; version ${input.engineVersion ?? 'unknown'}, from the engine checkout's pyproject.toml`
     }`,
   );
   lines.push(
