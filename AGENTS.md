@@ -45,6 +45,7 @@ Use IAN's docs/project/milestones/v0.2/integration-readiness/IR_CONTRACT_AND_SLI
 - Has one short section per unit of work with labeled Problem, Decision, Scope, Branch, and Detail bullets. Each section ends with a link to the lower-level document that owns its detail, or says no slice plan exists.
 - Follows the work-unit sections with scope limits and acceptance criteria, then background and origin. Decision records, renumbering history, branching rationale, and accepted exceptions belong in a verbatim appendix.
 - Keeps detail in its lowest-level owning document; a parent summarizes and links instead of duplicating a child's inventory, decisions, or history.
+- Documentation follows the layout in docs/project/README.md: project-wide documents in docs/project/, a milestone's implementation plan at docs/project/milestones/<milestone>/IMPLEMENTATION_PLAN.md, and each unit's slice plan and records in docs/project/milestones/<milestone>/<unit>/. An index links to the owning document and never copies its status.
 
 Documentation uses no Mermaid. Draw diagrams as plain text or tables. A section reference always names its document.
 

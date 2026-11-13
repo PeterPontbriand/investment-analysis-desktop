@@ -4,7 +4,7 @@
 
 - **What GUI.1 is:** the approved technology choices, then the scaffold, tooling, tests, and CI gate built in two sub-slices.
 - **What GUI.1 is not:** an API adapter, fixtures derived from IAN, launching the engine, or screens beyond one static screen.
-- **Rules:** [AGENTS.md](../../AGENTS.md) and the [project charter](CHARTER.md) govern the work. The GUI uses IAN's versioned `/v1` API for engine content and does no financial calculations.
+- **Rules:** [AGENTS.md](../../../../../AGENTS.md) and the [project charter](../../../CHARTER.md) govern the work. The GUI uses IAN's versioned `/v1` API for engine content and does no financial calculations.
 
 ## Sequence and status
 
@@ -188,12 +188,12 @@ Status: Accepted (Peter, 2026-11-08). The decision continues the numbering of [A
 | D25 | IAD never hard-codes or parses engine text. It shows what the API serves and branches only on machine-readable codes. |
 | D26 | Every request sends the user's chosen locale as `Accept-Language`. IAD honours the locale the engine reports it served (`Content-Language`). |
 | D27 | The language picker is built from the engine's locale list, with a startup default when the engine is unreachable. |
-| D28 | IAD formats numbers and dates itself with `Intl`, from raw values the API returns. The unit still comes from the API document, as the [project charter](CHARTER.md) requires. |
+| D28 | IAD formats numbers and dates itself with `Intl`, from raw values the API returns. The unit still comes from the API document, as the [project charter](../../../CHARTER.md) requires. |
 | D29 | Every IAD string lives in a message catalog (for example vue-i18n), with a fallback locale for missing translations. |
 | D30 | Layout uses CSS logical properties and follows the locale's text direction (`dir`), so right-to-left locales work. |
 | D31 | IAD stores only term ids and document ids from help content, never section or group ids. |
 
-D29 names vue-i18n only as an example. Choosing and pinning a catalog library is a dependency addition and needs project-owner approval under [AGENTS.md](../../AGENTS.md).
+D29 names vue-i18n only as an example. Choosing and pinning a catalog library is a dependency addition and needs project-owner approval under [AGENTS.md](../../../../../AGENTS.md).
 
 ### Dependencies on IAN API.1
 

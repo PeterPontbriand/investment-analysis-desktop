@@ -4,7 +4,7 @@
 
 - **What GUI.2 is:** the first screens that show engine content: watchlists, recent refreshes, saved runs, the refresh comparison, and run detail. It also adds what every later unit needs: starting `ian serve`, the API adapter, generated API types, locale handling, and the localization retrofit of the GUI.1 code.
 - **What GUI.2 is not:** actions that change anything (GUI.3), help popups and the help panel (GUI.4), the first-run screen or the installer (GUI.5), or any financial calculation.
-- **Rules:** [AGENTS.md](../../AGENTS.md) and the [project charter](CHARTER.md) govern the work. The decisions in [Appendix A](#appendix-a-2026-11-10-decision-record) and the localization decisions in [Appendix D of the GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-d-localization-readiness-decision-2026-11-08) apply to all GUI.2 code.
+- **Rules:** [AGENTS.md](../../../../../AGENTS.md) and the [project charter](../../../CHARTER.md) govern the work. The decisions in [Appendix A](#appendix-a-2026-11-10-decision-record) and the localization decisions in [Appendix D of the GUI.1 slice plan](../gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-d-localization-readiness-decision-2026-11-08) apply to all GUI.2 code.
 
 ## Sequence and status
 
@@ -21,7 +21,7 @@
 
 - **Problem:** The GUI.1 code has literal English strings, a fixed `lang`, no text direction and no check for physical CSS properties, and GUI.2 adds the first real screens.
 - **Decision:** Retrofit the GUI.1 code before any engine work: a message catalog, locale state, `lang`, `dir` and page title that follow the locale, logical-properties linting, and tests that read text from the catalog (D52, D39 to D42, D54, D59 to D63).
-- **Scope:** vue-i18n and the message catalog (D39, D61); locale state, `lang`, `dir` and the page title (D62, D63); vue-router (D42); stylelint with a logical-properties rule (D40, D54); retrofit items R1 to R4 and R6 to R8 of [Appendix D of the GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#retrofit-items-against-the-merged-gui1-code); the test-only `ar-XB` pseudo-locale and its browser-test build (D60); and CSP enforcement in browser tests (D59).
+- **Scope:** vue-i18n and the message catalog (D39, D61); locale state, `lang`, `dir` and the page title (D62, D63); vue-router (D42); stylelint with a logical-properties rule (D40, D54); retrofit items R1 to R4 and R6 to R8 of [Appendix D of the GUI.1 slice plan](../gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#retrofit-items-against-the-merged-gui1-code); the test-only `ar-XB` pseudo-locale and its browser-test build (D60); and CSP enforcement in browser tests (D59).
 - **Branch:** `feat/gui-2a1-localization`, from the dependency commits; its own pull request.
 - **Detail:** This plan owns GUI.2a1's [file scope](#file-scope) and [acceptance criteria](#acceptance-criteria).
 
@@ -56,7 +56,7 @@
 - No pinned engine install, first-run screen or installer; the `ian` executable is found as in D35.
 - No IAN process in CI (D47).
 - No dependency beyond those named in D37, D39, D40, D42, D53 and D54.
-- No release build or bundle, as [AGENTS.md](../../AGENTS.md) requires before GUI.5.
+- No release build or bundle, as [AGENTS.md](../../../../../AGENTS.md) requires before GUI.5.
 - Choosing a locale is not persisted; persistence is decided in the slice where the language picker first becomes visible (D63).
 - IAD has no log file before GUI.5; GUI.5 decides the log file, its location and where the engine-launch lines go (D67).
 - Before GUI.2b shows the API's reason messages as given (D45), the GUI.2b decisions confirm that none of them names a command, option or environment variable (D56). Met by D78: IAN's database reason messages name no command, option or file path, and D84 still shows catalog messages for them.
@@ -89,7 +89,7 @@
 ### File scope
 
 - `src-tauri/`: the Rust code that starts and stops `ian serve`, the commands that hand the connection and status to the webview, the stub engine binary, and the CSP and capability changes (D35, D36, D55 to D57).
-- `src/platform/`: the platform module with its Tauri and browser implementations (D20 in [Appendix A of the GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record), D35, D53, D58).
+- `src/platform/`: the platform module with its Tauri and browser implementations (D20 in [Appendix A of the GUI.1 slice plan](../gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record), D35, D53, D58).
 - `vendor/ian/openapi.json`, its source record naming the IAN commit, the generated types and the drift check (D37, D65).
 - The API adapter and the placeholder screen under `src/` (D38, D64, D66).
 - `src-tauri/tauri.conf.json` and the shell test, for R5.
@@ -132,7 +132,8 @@
 - `eslint.config.js`, for D109 only.
 - `tests/shell/window.spec.js`, updated to the new shell.
 - `docs/project/SMOKE_TESTING.md` and `AGENTS.md` (D113 to D115).
-- This plan and the [project charter](CHARTER.md)'s GUI.2 section.
+- The documentation layout of D116: the moved slice plans, `docs/project/milestones/v0.1/IMPLEMENTATION_PLAN.md`, the charter's split, and the indexes `docs/README.md`, `docs/project/README.md` and `docs/project/milestones/README.md`.
+- This plan and the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md)'s GUI.2 section.
 
 ### Acceptance criteria
 
@@ -159,7 +160,7 @@
 - The comparison and run detail screens and their components under `src/`, and router entries.
 - Catalog entries for the application's own text on those screens.
 - Typed fixtures and Vitest and Playwright tests for the screens.
-- This plan's status row and the charter's GUI.2 row.
+- This plan's status row and the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md)'s GUI.2 row.
 
 ### Acceptance criteria
 
@@ -169,17 +170,17 @@
 - Every displayed number, label, status, code and unit comes from an API document; numbers and dates are formatted with `Intl` from raw values and the document's unit (D85).
 - A status, outcome or reason code is shown as its help term's name, and each such element carries its term id.
 - A made-up strategy appears in the comparison and run detail with no GUI code change (D94).
-- The comparison puts ticker and strategy first and the headline value most prominent, following the user answer to Q3 in the [project charter](CHARTER.md#questions-for-potential-users-before-gui2-scope-is-fixed).
+- The comparison puts ticker and strategy first and the headline value most prominent, following the user answer to Q3 in the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md#questions-for-potential-users-before-gui2-scope-is-fixed).
 - The pull request records a manual run against a real engine at the vendored IAN commit.
 - `pnpm gate` passes on Windows, macOS and Linux.
 
 ## Background
 
-All of IAN's API work package was complete on 2026-11-08, so the gates for GUI.2, GUI.3 and GUI.4 in the [project charter](CHARTER.md#sequence-and-status) are met. The API had no way to list past refreshes: a refresh id is stored on each run, and the watchlist the refresh ran is stored only inside each run's saved record. D34 asks IAN for a list endpoint instead of having the GUI rebuild that list.
+All of IAN's API work package was complete on 2026-11-08, so the gates for GUI.2, GUI.3 and GUI.4 in the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md#sequence-and-status) are met. The API had no way to list past refreshes: a refresh id is stored on each run, and the watchlist the refresh ran is stored only inside each run's saved record. D34 asks IAN for a list endpoint instead of having the GUI rebuild that list.
 
 ## Appendix A: 2026-11-10 decision record
 
-Approved by the project owner on 2026-11-10. The numbering continues [Appendix D of the GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-d-localization-readiness-decision-2026-11-08), D24 to D31.
+Approved by the project owner on 2026-11-10. The numbering continues [Appendix D of the GUI.1 slice plan](../gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-d-localization-readiness-decision-2026-11-08), D24 to D31.
 
 | # | Decision |
 | :--- | :--- |
@@ -272,3 +273,4 @@ Approved by the project owner on 2026-11-13.
 | D113 | Smoke test: IAD's human smoke test is `docs/project/SMOKE_TESTING.md`, a contributor document, because every step needs developer tooling until GUI.5's installer. It starts in GUI.2b1, and each screen slice's pull request records a run of it against a real engine at the vendored IAN commit (D47). GUI.6 adapts it into the recorded smoke test of the installed application, and moves its user-facing part to user documentation then. |
 | D114 | Smoke test shape: it follows IAN's smoke test, with numbered steps (S1, S2… for setup, then a letter per screen group, such as W1 for Watchlists) that a run's record can name, and expectations judged as a user would see them, never exact data values. It names no slice, milestone or commit; it points to `vendor/ian/SOURCE.md` for the IAN commit. It covers the desktop application only; the browser build with a URL fragment is left to contributors. |
 | D115 | Smoke test upkeep: a pull request that adds or changes a screen updates the smoke test in the same pull request. |
+| D116 | Documentation layout: docs/ follows IAN's hierarchy. The charter keeps the product direction and boundaries; the preview release is milestone v0.1, whose implementation plan owns the sequence and status table, the units of work, the acceptance criteria and the potential-user answers; each unit's slice plan and records live in a unit folder under docs/project/milestones/v0.1/. Indexes at docs/, docs/project/ and docs/project/milestones/ link to owners and copy no status. Done in GUI.2b1, while there were two slice plans to move. |
