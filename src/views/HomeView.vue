@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { useEngineInfo } from '../api/useEngineInfo.ts';
+import { formatList } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 
 const { t, locale } = useMessages();
 const engine = useEngineInfo();
-
-// Lists take the separator of the active locale.
-const list = (items: string[]) =>
-  new Intl.ListFormat(locale.value, { type: 'unit' }).format(items);
 </script>
 
 <template>
@@ -24,7 +21,7 @@ const list = (items: string[]) =>
         <dt>{{ t('engine.labels.version') }}</dt>
         <dd>{{ engine.info.engine_version }}</dd>
         <dt>{{ t('engine.labels.apiVersions') }}</dt>
-        <dd>{{ list(engine.info.api_versions) }}</dd>
+        <dd>{{ formatList(locale, engine.info.api_versions) }}</dd>
         <dt>{{ t('engine.labels.schemaVersion') }}</dt>
         <dd>{{ engine.info.schema_version }}</dd>
         <dt>{{ t('engine.labels.secIdentity') }}</dt>
@@ -37,7 +34,12 @@ const list = (items: string[]) =>
         </dd>
         <dt>{{ t('engine.labels.languages') }}</dt>
         <dd :lang="engine.language ?? undefined">
-          {{ list(engine.info.locales.map((item) => item.name)) }}
+          {{
+            formatList(
+              locale,
+              engine.info.locales.map((item) => item.name),
+            )
+          }}
         </dd>
       </dl>
     </section>

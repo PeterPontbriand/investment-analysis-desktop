@@ -43,6 +43,10 @@ describe('desktop shell', () => {
     ])
       assert.ok(text.includes(expected), `${expected} is shown`);
     assert.equal(await list.getAttribute('lang'), null);
-    assert.equal(await browser.$$('dd').at(-1).getAttribute('lang'), 'en');
+    const definitions = await browser.$$('dd');
+    assert.equal(
+      await definitions[definitions.length - 1].getAttribute('lang'),
+      'en',
+    );
   });
 });
