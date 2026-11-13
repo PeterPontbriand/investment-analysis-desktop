@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { platform } from 'node:process';
+import { env, platform } from 'node:process';
 
 const applicationBinaryPath =
   platform === 'win32'
@@ -9,12 +9,7 @@ const applicationBinaryPath =
 // The shell smoke test starts the stub engine instead of IAN (it runs on every
 // CI platform without IAN); the application reads this variable at launch.
 const stubEngineName = platform === 'win32' ? 'stub-engine.exe' : 'stub-engine';
-process.env.IAD_IAN_PATH = resolve(
-  'src-tauri',
-  'target',
-  'debug',
-  stubEngineName,
-);
+env.IAD_IAN_PATH = resolve('src-tauri', 'target', 'debug', stubEngineName);
 
 export const config = {
   runner: 'local',
