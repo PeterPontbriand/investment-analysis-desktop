@@ -149,6 +149,8 @@ pnpm tauri dev
 
 The first start compiles the application and takes a while. When you follow the steps by hand and `ian` is not on `PATH`, set `IAD_IAN_PATH` first, as [Before you start](#before-you-start) says; `pnpm smoke` does not need this. Expect a window to open. Leave the terminal open: it shows the application's launch line for the engine.
 
+If the start fails with "Access is denied" when removing the application's executable, an earlier copy of the application is still running. Close it, or end it with `Get-Process investment-analysis-desktop -ErrorAction SilentlyContinue | Stop-Process`, and run `pnpm smoke` again. When `pnpm smoke` starts the application and it exits with a failure status, the tool marks Step 10 `fail` in the record.
+
 ## N. Navigation and About
 
 Check N1. The window opens on the Watchlists screen. The product name and the pre-release notice show beside a navigation with Watchlists, Refreshes, Saved runs and About; the navigation sits at the start side of the window, and the current item is marked.
@@ -248,6 +250,8 @@ With `pnpm smoke`, the throwaway `IAN_DATABASE_URL` setting never reaches your t
 
 `pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. Steps 1 to 9 of the setup are filled in as `pass (scripted)`, each with its command output under "Command output". Step 10 and every check are yours: the tool only started the application, so mark whether its window opened, and mark each check `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
 
+The "Command output" section is the tool's, and is kept as written. A run whose application failed to start is not a record for a pull request: fix the cause and run `pnpm smoke` again.
+
 If you followed the steps by hand, write the same record yourself: the date, time zone, operating system, application commit, engine commit, the engine version and what you compared it with, the data you created, and each step with its mark.
 
 Record a run in the description of the pull request that adds or changes a screen, naming the engine commit from [the source record](../../vendor/ian/SOURCE.md). Keep the record as the run's record; do not summarise it as "passed".
@@ -265,6 +269,7 @@ It stops with a plain message instead of guessing, and writes the record so far 
 - **`IAD_IAN_PATH` names a `.cmd` or `.bat` file:** the application and the tool start the engine without a shell, so `IAD_IAN_PATH` must name an executable (`.exe`). Point it at the `.exe`, or unset it so `ian` is found on `PATH`.
 - **Your real database is not `ready` or `missing`:** an `upgrade_required` database needs the engine's [explicit upgrade](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md#first-use-and-explicit-upgrades) first. For any other state, use the engine's [Local Database Operations](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md).
 - **A setup command failed:** the message names the step and the command, and its output is in the record. For a provider failure, see the engine's troubleshooting guide.
+- **The start fails with "Access is denied" removing the application's executable:** an earlier copy of the application is still running. Close it, or end it with `Get-Process investment-analysis-desktop -ErrorAction SilentlyContinue | Stop-Process`, and run `pnpm smoke` again.
 - **The refresh completed no run:** check the providers with `ian health`, then run `pnpm smoke` again, which makes a new throwaway database.
 - **The counts are not the setup's:** the setup leaves 5 runs, 1 refresh of 4 runs and 2 watchlists with 4 entries in all. Run `pnpm smoke` again, which makes a new throwaway database.
 
