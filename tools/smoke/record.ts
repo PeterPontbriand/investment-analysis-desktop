@@ -86,7 +86,9 @@ export function renderRecord(input: RecordInput): string {
     '## Setup (scripted)',
     '',
   );
-  for (const step of input.steps.filter((entry) => entry.id.startsWith('S'))) {
+  for (const step of input.steps.filter((entry) =>
+    entry.id.startsWith('Step '),
+  )) {
     const done = input.scripted.get(step.id);
     const fact = done?.fact ? ` (${done.fact})` : '';
     lines.push(
@@ -109,7 +111,9 @@ export function renderRecord(input: RecordInput): string {
     '## Checks',
     '',
   );
-  for (const step of input.steps.filter((entry) => !entry.id.startsWith('S')))
+  for (const step of input.steps.filter(
+    (entry) => !entry.id.startsWith('Step '),
+  ))
     lines.push(`- **${step.id}** ${step.hint}:`);
   lines.push(
     '',

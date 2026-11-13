@@ -1,4 +1,4 @@
-// The smoke test's scripted setup steps (S1 to S9 of docs/project/SMOKE_TESTING.md).
+// The smoke test's scripted setup steps (Steps 1 to 9 of docs/project/SMOKE_TESTING.md).
 // Each step stops with a plain message instead of guessing.
 import { join, relative } from 'node:path';
 import { readCommands, setupCommands, throwawayFile } from './commands.ts';
@@ -68,9 +68,9 @@ export const stopMessages = {
   ianNotExecutable: () =>
     'IAD_IAN_PATH names a .cmd or .bat file. The application and this tool start the engine without a shell, so IAD_IAN_PATH must name an executable (.exe), not a .cmd or .bat file.',
   noIan: () =>
-    "The `ian` command was not found. Make it available as the engine's installation guide describes (step S1 of docs/project/SMOKE_TESTING.md), or point IAD_IAN_PATH at it.",
+    "The `ian` command was not found. Make it available as the engine's installation guide describes (Step 1 of docs/project/SMOKE_TESTING.md), or point IAD_IAN_PATH at it.",
   ianHelpFailed: (detail: string) =>
-    `\`ian --help\` did not succeed (${detail}). Make the \`ian\` command available as the engine's installation guide describes (step S1).`,
+    `\`ian --help\` did not succeed (${detail}). Make the \`ian\` command available as the engine's installation guide describes (Step 1).`,
   databaseUnreadable: () =>
     "The state of your real database could not be read from `ian db status --json`. Run `ian db status` yourself and use the engine's Local Database Operations guide.",
   databaseNotReady: (state: string) =>
@@ -78,21 +78,24 @@ export const stopMessages = {
       ? 'Your real database needs an upgrade. Follow "First use and explicit upgrades" in the engine\'s Local Database Operations guide before going on.'
       : `Your real database is in the state ${state}. Stop and use the engine's Local Database Operations guide.`,
   commandFailed: (step: string, command: string, detail: string) =>
-    `Step ${step} failed: \`ian ${command}\` ${detail}. Its output is in the record.`,
+    `${step} failed: \`ian ${command}\` ${detail}. Its output is in the record.`,
   noCompletedRun: () =>
     "The refresh completed no run, so the screens would have nothing to show. Check the providers with `ian health` and the engine's troubleshooting guide, then try again.",
   wrongCounts: (found: string) =>
     `The setup should leave 5 runs, 1 refresh of 4 runs and 2 watchlists with 4 entries in all, but found ${found}. Use a new throwaway database: run pnpm smoke again.`,
 } as const;
 
-// One line when each of S4 to S9 starts. Steps that call the data providers say so.
+// One line when each of Steps 4 to 9 starts. Steps that call the data providers say so.
 const progressLines: Record<string, string> = {
-  S4: "S4: creating the throwaway database's schema…",
-  S5: 'S5: creating the Smoke Test and Smoke Test Empty watchlists…',
-  S6: 'S6: adding four entries to the Smoke Test watchlist…',
-  S7: 'S7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
-  S8: 'S8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
-  S9: 'S9: reading back the saved runs, refreshes and watchlists to check their counts…',
+  'Step 4': "Step 4: creating the throwaway database's schema…",
+  'Step 5': 'Step 5: creating the Smoke Test and Smoke Test Empty watchlists…',
+  'Step 6': 'Step 6: adding four entries to the Smoke Test watchlist…',
+  'Step 7':
+    'Step 7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
+  'Step 8':
+    'Step 8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
+  'Step 9':
+    'Step 9: reading back the saved runs, refreshes and watchlists to check their counts…',
 };
 
 function describe(result: RunResult): string {
@@ -118,7 +121,7 @@ export function folderStamp(now: Date): string {
   return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 }
 
-// The URL as SMOKE_TESTING.md's S3 builds it.
+// The URL as SMOKE_TESTING.md's Step 3 builds it.
 export function databaseUrlFor(folder: string): string {
   return `sqlite:///${folder.split('\\').join('/')}/${throwawayFile}`;
 }
@@ -134,44 +137,44 @@ export async function runSetup(
       output: scrub(`${result.stdout}${result.stderr}`, repositoryRoot),
     });
 
-  // S1: the engine is the vendored commit, and `ian` runs.
-  progress('S1: checking the engine checkout and the `ian` command…');
+  // Step 1: the engine is the vendored commit, and `ian` runs.
+  progress('Step 1: checking the engine checkout and the `ian` command…');
   if (!fs.exists(deps.enginePath))
-    throw new SmokeStop('S1', stopMessages.engineMissing(deps.enginePath));
+    throw new SmokeStop('Step 1', stopMessages.engineMissing(deps.enginePath));
   const wanted = readVendoredCommit(
     fs.readText(join(repositoryRoot, 'vendor', 'ian', 'SOURCE.md')),
   );
   const head = await run('git', ['-C', deps.enginePath, 'rev-parse', 'HEAD']);
   logRun(`git -C <engine> rev-parse HEAD`, head);
   if (head.code !== 0)
-    throw new SmokeStop('S1', stopMessages.notCheckout(deps.enginePath));
+    throw new SmokeStop('Step 1', stopMessages.notCheckout(deps.enginePath));
   const found = head.stdout.trim().toLowerCase();
   if (found !== wanted)
     throw new SmokeStop(
-      'S1',
+      'Step 1',
       stopMessages.wrongCommit(deps.enginePath, found, wanted),
     );
   session.engineCommit = found.slice(0, 7);
   const configured = deps.env.IAD_IAN_PATH;
   if (configured !== undefined && /\.(cmd|bat)$/i.test(configured))
-    throw new SmokeStop('S1', stopMessages.ianNotExecutable());
+    throw new SmokeStop('Step 1', stopMessages.ianNotExecutable());
   const ian = resolveIan(deps.env, deps.platform, (path) => fs.exists(path));
-  if (ian === null) throw new SmokeStop('S1', stopMessages.noIan());
+  if (ian === null) throw new SmokeStop('Step 1', stopMessages.noIan());
   session.ianPath = ian;
   const help = await run(ian, ['--help'], { env: deps.env });
   logRun('ian --help', help);
   if (help.code !== 0)
-    throw new SmokeStop('S1', stopMessages.ianHelpFailed(describe(help)));
+    throw new SmokeStop('Step 1', stopMessages.ianHelpFailed(describe(help)));
   const pyproject = join(deps.enginePath, 'pyproject.toml');
   session.engineVersion = fs.exists(pyproject)
     ? readEngineVersion(fs.readText(pyproject))
     : null;
-  session.scripted.set('S1', {
+  session.scripted.set('Step 1', {
     fact: `engine at ${session.engineCommit}, \`ian --help\` works`,
   });
 
-  // S2: the real database, read only and with the inherited environment.
-  progress('S2: reading the state of your real database (read only)…');
+  // Step 2: the real database, read only and with the inherited environment.
+  progress('Step 2: reading the state of your real database (read only)…');
   const status = await run(ian, [...readCommands.databaseStatus], {
     env: deps.env,
   });
@@ -185,19 +188,19 @@ export async function runSetup(
         : `state: ${state} (the real database's path is not recorded)`,
   });
   if (state === null)
-    throw new SmokeStop('S2', stopMessages.databaseUnreadable());
+    throw new SmokeStop('Step 2', stopMessages.databaseUnreadable());
   const expectedExit = state === 'ready' ? 0 : state === 'missing' ? 1 : null;
   if (expectedExit === null || status.code !== expectedExit)
-    throw new SmokeStop('S2', stopMessages.databaseNotReady(state));
-  session.scripted.set('S2', { fact: `real database: ${state}` });
+    throw new SmokeStop('Step 2', stopMessages.databaseNotReady(state));
+  session.scripted.set('Step 2', { fact: `real database: ${state}` });
 
-  // S3: the throwaway database, for every later command.
+  // Step 3: the throwaway database, for every later command.
   const folder = join(repositoryRoot, '.tmp', 'smoke', folderStamp(deps.now));
   session.throwawayFolder = relative(repositoryRoot, folder)
     .split('\\')
     .join('/');
   progress(
-    `S3: creating the throwaway database folder ${session.throwawayFolder}…`,
+    `Step 3: creating the throwaway database folder ${session.throwawayFolder}…`,
   );
   fs.makeFolder(folder);
   session.databaseUrl = databaseUrlFor(folder);
@@ -205,10 +208,10 @@ export async function runSetup(
     ...deps.env,
     IAN_DATABASE_URL: session.databaseUrl,
   };
-  session.scripted.set('S3', { fact: session.throwawayFolder });
+  session.scripted.set('Step 3', { fact: session.throwawayFolder });
 
-  // S4 to S9: the document's commands, in order.
-  const allowsFailureExit = new Set(['S7', 'S8']);
+  // Steps 4 to 9: the document's commands, in order.
+  const allowsFailureExit = new Set(['Step 7', 'Step 8']);
   let announced = '';
   for (const command of setupCommands) {
     if (command.step !== announced) {
@@ -234,9 +237,9 @@ export async function runSetup(
       const text = `${result.stdout}${result.stderr}`;
       if (!/state:\s*ready/i.test(text) || !text.includes(throwawayFile))
         throw new SmokeStop(
-          'S4',
+          'Step 4',
           stopMessages.commandFailed(
-            'S4',
+            'Step 4',
             'db status',
             'did not name the throwaway file and report State: ready',
           ),
@@ -254,19 +257,19 @@ export async function runSetup(
         } | null
       )?.items;
       if (!items?.some((item) => (item.outcome_counts?.completed ?? 0) > 0))
-        throw new SmokeStop('S7', stopMessages.noCompletedRun());
+        throw new SmokeStop('Step 7', stopMessages.noCompletedRun());
     }
     const next = setupCommands[setupCommands.indexOf(command) + 1];
     if (next === undefined || next.step !== step)
       session.scripted.set(step, {
         fact:
-          step === 'S7' && result.code === 1
+          step === 'Step 7' && result.code === 1
             ? 'refresh exited 1: some entries did not complete'
             : undefined,
       });
   }
 
-  // S9: the counts, from the JSON forms and never from text.
+  // Step 9: the counts, from the JSON forms and never from text.
   const readJson = async (args: readonly string[]) => {
     const result = await run(ian, [...args], { env: childEnv });
     logRun(`ian ${args.join(' ')}`, result);
@@ -295,12 +298,12 @@ export async function runSetup(
     watchlistCount !== 2 ||
     entryCount !== 4
   )
-    throw new SmokeStop('S9', stopMessages.wrongCounts(summary));
+    throw new SmokeStop('Step 9', stopMessages.wrongCounts(summary));
   session.data = {
     watchlists: watchlistCount,
     entries: entryCount,
     runs: runCount,
     refreshes: refreshCount,
   };
-  session.scripted.set('S9', { fact: summary });
+  session.scripted.set('Step 9', { fact: summary });
 }

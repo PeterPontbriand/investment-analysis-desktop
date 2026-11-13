@@ -119,7 +119,7 @@ async function main(): Promise<number> {
     if (path) process.stderr.write(`The record so far is in ${path}\n`);
     return 1;
   }
-  session.scripted.set('S10', {
+  session.scripted.set('Step 10', {
     fact: 'the tool started the application; mark whether its window opened',
     leftToYou: true,
   });

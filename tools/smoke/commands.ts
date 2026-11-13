@@ -1,4 +1,4 @@
-// The `ian` commands of docs/project/SMOKE_TESTING.md's S4 to S9, in order. A
+// The `ian` commands of docs/project/SMOKE_TESTING.md's Steps 4 to 9, in order. A
 // unit test fails unless this list equals the command lines in that document.
 
 export type SmokeCommand = { step: string; args: string[] };
@@ -8,16 +8,16 @@ export const watchlistName = 'Smoke Test';
 export const emptyWatchlistName = 'Smoke Test Empty';
 
 export const setupCommands: SmokeCommand[] = [
-  { step: 'S4', args: ['db', 'upgrade'] },
-  { step: 'S4', args: ['db', 'status'] },
-  { step: 'S5', args: ['watchlist', 'create', watchlistName] },
-  { step: 'S5', args: ['watchlist', 'create', emptyWatchlistName] },
+  { step: 'Step 4', args: ['db', 'upgrade'] },
+  { step: 'Step 4', args: ['db', 'status'] },
+  { step: 'Step 5', args: ['watchlist', 'create', watchlistName] },
+  { step: 'Step 5', args: ['watchlist', 'create', emptyWatchlistName] },
   {
-    step: 'S6',
+    step: 'Step 6',
     args: ['watchlist', 'add-selection', 'momentum', watchlistName, 'KO'],
   },
   {
-    step: 'S6',
+    step: 'Step 6',
     args: [
       'watchlist',
       'add-selection',
@@ -29,7 +29,7 @@ export const setupCommands: SmokeCommand[] = [
     ],
   },
   {
-    step: 'S6',
+    step: 'Step 6',
     args: [
       'watchlist',
       'add-selection',
@@ -41,13 +41,13 @@ export const setupCommands: SmokeCommand[] = [
     ],
   },
   {
-    step: 'S6',
+    step: 'Step 6',
     args: ['watchlist', 'add-selection', 'graham-number', watchlistName, 'KO'],
   },
-  { step: 'S7', args: ['refresh', watchlistName] },
-  { step: 'S8', args: ['momentum', 'MSFT', '--save-run'] },
-  { step: 'S9', args: ['runs', 'list'] },
-  { step: 'S9', args: ['runs', 'refreshes'] },
+  { step: 'Step 7', args: ['refresh', watchlistName] },
+  { step: 'Step 8', args: ['momentum', 'MSFT', '--save-run'] },
+  { step: 'Step 9', args: ['runs', 'list'] },
+  { step: 'Step 9', args: ['runs', 'refreshes'] },
 ];
 
 // Reads the tool makes beyond the document's commands: machine-readable forms

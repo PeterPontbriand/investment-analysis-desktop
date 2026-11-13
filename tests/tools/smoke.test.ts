@@ -39,24 +39,24 @@ describe('smoke test document steps', () => {
       [
         '# Title',
         '',
-        'S1. Read [the guide](https://example.test/guide) first. Then more.',
+        'Step 1. Read [the guide](https://example.test/guide) first. Then more.',
         '',
-        'S2. Do this:',
+        'Step 2. Do this:',
         '',
         '```text',
         'N9. not a step',
         '```',
         '',
-        'N1. A second line',
+        'Check N1. A second line',
         'continues here.',
         '',
         'Not a step. S3. nor this.',
       ].join('\n'),
     );
     expect(steps).toEqual([
-      { id: 'S1', hint: 'Read the guide first' },
-      { id: 'S2', hint: 'Do this' },
-      { id: 'N1', hint: 'A second line continues here' },
+      { id: 'Step 1', hint: 'Read the guide first' },
+      { id: 'Step 2', hint: 'Do this' },
+      { id: 'Check N1', hint: 'A second line continues here' },
     ]);
   });
 
@@ -68,9 +68,10 @@ describe('smoke test document steps', () => {
     let lastGroup = -1;
     let lastNumber = 0;
     for (const id of ids) {
-      expect(id).toMatch(/^[SNWRHEL][1-9]\d*$/);
-      const group = groups.indexOf(id[0]!);
-      const number = Number(id.slice(1));
+      expect(id).toMatch(/^(Step [1-9]\d*|Check [NWRHEL][1-9]\d*)$/);
+      const label = id.replace(/^(Step |Check )/, '');
+      const group = groups.indexOf(id.startsWith('Step ') ? 'S' : label[0]!);
+      const number = Number(id.startsWith('Step ') ? label : label.slice(1));
       if (group === lastGroup) expect(number).toBe(lastNumber + 1);
       else {
         expect(group).toBeGreaterThan(lastGroup);
@@ -80,16 +81,16 @@ describe('smoke test document steps', () => {
       lastNumber = number;
     }
     expect(ids.slice(0, 10)).toEqual([
-      'S1',
-      'S2',
-      'S3',
-      'S4',
-      'S5',
-      'S6',
-      'S7',
-      'S8',
-      'S9',
-      'S10',
+      'Step 1',
+      'Step 2',
+      'Step 3',
+      'Step 4',
+      'Step 5',
+      'Step 6',
+      'Step 7',
+      'Step 8',
+      'Step 9',
+      'Step 10',
     ]);
     for (const step of steps) expect(step.hint).not.toBe('');
   });
@@ -144,7 +145,7 @@ describe('sources', () => {
 
 describe('record', () => {
   const steps = parseSteps(
-    'S1. Get the engine.\n\nS2. Check the database.\n\nN1. Open the app.\n\nW1. List watchlists.\n',
+    'Step 1. Get the engine.\n\nStep 2. Check the database.\n\nCheck N1. Open the app.\n\nCheck W1. List watchlists.\n',
   );
   const base = {
     date: '2026-11-13 09:05 (UTC-05:00)',
@@ -159,8 +160,8 @@ describe('record', () => {
     throwawayFolder: '.tmp/smoke/20261113-090507',
     steps,
     scripted: new Map([
-      ['S1', { fact: 'engine at beb58a2' }],
-      ['S2', {}],
+      ['Step 1', { fact: 'engine at beb58a2' }],
+      ['Step 2', {}],
     ]),
     log: [{ command: 'ian --help', output: 'Usage\n' }],
     stopped: null,
@@ -184,8 +185,8 @@ describe('record', () => {
         '',
         '## Setup (scripted)',
         '',
-        '- **S1** Get the engine: pass (scripted) (engine at beb58a2)',
-        '- **S2** Check the database: pass (scripted)',
+        '- **Step 1** Get the engine: pass (scripted) (engine at beb58a2)',
+        '- **Step 2** Check the database: pass (scripted)',
         '',
         '<details><summary>Command output</summary>',
         '',
@@ -198,8 +199,8 @@ describe('record', () => {
         '',
         '## Checks',
         '',
-        '- **N1** Open the app:',
-        '- **W1** List watchlists:',
+        '- **Check N1** Open the app:',
+        '- **Check W1** List watchlists:',
         '',
         '**Result:** all steps passed | failing step numbers, with notes',
         '',
@@ -217,9 +218,9 @@ describe('record', () => {
     const text = renderRecord({
       ...base,
       scripted: new Map([
-        ['S1', {}],
+        ['Step 1', {}],
         [
-          'S2',
+          'Step 2',
           {
             fact: 'the tool started the application; mark whether its window opened',
             leftToYou: true,
@@ -228,19 +229,19 @@ describe('record', () => {
       ]),
     });
     expect(text).toContain(
-      '- **S2** Check the database: (the tool started the application; mark whether its window opened)',
+      '- **Step 2** Check the database: (the tool started the application; mark whether its window opened)',
     );
-    expect(text).not.toContain('S2** Check the database: pass');
+    expect(text).not.toContain('Step 2** Check the database: pass');
   });
 
   it('shows where the tool stopped, and leaves later steps unmarked', () => {
     const text = renderRecord({
       ...base,
-      scripted: new Map([['S1', {}]]),
-      stopped: { step: 'S2', message: 'No.' },
+      scripted: new Map([['Step 1', {}]]),
+      stopped: { step: 'Step 2', message: 'No.' },
     });
-    expect(text).toContain('- **S2** Check the database:\n');
-    expect(text).toContain('**Result:** stopped at S2: No.');
+    expect(text).toContain('- **Step 2** Check the database:\n');
+    expect(text).toContain('**Result:** stopped at Step 2: No.');
   });
 
   it('removes tokens and the repository path, never the engine path', () => {
@@ -269,15 +270,15 @@ describe('setup', () => {
     await runSetup(deps, newSession());
 
     expect(progress).toEqual([
-      'S1: checking the engine checkout and the `ian` command…',
-      'S2: reading the state of your real database (read only)…',
-      'S3: creating the throwaway database folder .tmp/smoke/20261113-090507…',
-      "S4: creating the throwaway database's schema…",
-      'S5: creating the Smoke Test and Smoke Test Empty watchlists…',
-      'S6: adding four entries to the Smoke Test watchlist…',
-      'S7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
-      'S8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
-      'S9: reading back the saved runs, refreshes and watchlists to check their counts…',
+      'Step 1: checking the engine checkout and the `ian` command…',
+      'Step 2: reading the state of your real database (read only)…',
+      'Step 3: creating the throwaway database folder .tmp/smoke/20261113-090507…',
+      "Step 4: creating the throwaway database's schema…",
+      'Step 5: creating the Smoke Test and Smoke Test Empty watchlists…',
+      'Step 6: adding four entries to the Smoke Test watchlist…',
+      'Step 7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
+      'Step 8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
+      'Step 9: reading back the saved runs, refreshes and watchlists to check their counts…',
     ]);
     for (const line of progress) {
       expect(line).not.toContain(repositoryRoot);
@@ -293,15 +294,15 @@ describe('setup', () => {
     await runSetup(deps, session);
 
     expect([...session.scripted.keys()]).toEqual([
-      'S1',
-      'S2',
-      'S3',
-      'S4',
-      'S5',
-      'S6',
-      'S7',
-      'S8',
-      'S9',
+      'Step 1',
+      'Step 2',
+      'Step 3',
+      'Step 4',
+      'Step 5',
+      'Step 6',
+      'Step 7',
+      'Step 8',
+      'Step 9',
     ]);
     expect(session.data).toEqual({
       watchlists: 2,
@@ -314,7 +315,7 @@ describe('setup', () => {
     expect(session.ianPath).toBe(ianPath);
     expect(session.throwawayFolder).toBe('.tmp/smoke/20261113-090507');
     expect(folders).toHaveLength(1);
-    // S2 reads the real database with the inherited environment; every later
+    // Step 2 reads the real database with the inherited environment; every later
     // command gets the throwaway database.
     const statusCall = calls.find(
       (call) => call.args.join(' ') === readCommands.databaseStatus.join(' '),
@@ -358,7 +359,9 @@ describe('setup', () => {
   }
 
   it('stops when the engine folder does not exist', async () => {
-    await stopsAt(() => undefined, 'S1', /does not exist/, { noEngine: true });
+    await stopsAt(() => undefined, 'Step 1', /does not exist/, {
+      noEngine: true,
+    });
   });
 
   it('stops when the folder is not a Git checkout', async () => {
@@ -367,7 +370,7 @@ describe('setup', () => {
         call.file === 'git'
           ? { code: 128, stdout: '', stderr: 'no' }
           : undefined,
-      'S1',
+      'Step 1',
       /not a Git checkout/,
     );
   });
@@ -379,7 +382,7 @@ describe('setup', () => {
         call.file === 'git'
           ? { code: 0, stdout: `${other}\n`, stderr: '' }
           : undefined,
-      'S1',
+      'Step 1',
       new RegExp(`${other}.*${vendoredCommit}.*checkout ${vendoredCommit}`),
     );
   });
@@ -396,7 +399,7 @@ describe('setup', () => {
         () => null,
         (caught: unknown) => caught,
       );
-      expect((error as SmokeStop).step).toBe('S1');
+      expect((error as SmokeStop).step).toBe('Step 1');
       expect((error as SmokeStop).message).toMatch(
         /without a shell.*executable \(\.exe\), not a \.cmd or \.bat file/,
       );
@@ -404,7 +407,7 @@ describe('setup', () => {
   );
 
   it('stops when ian cannot be found', async () => {
-    await stopsAt(() => undefined, 'S1', /`ian` command was not found/, {
+    await stopsAt(() => undefined, 'Step 1', /`ian` command was not found/, {
       pathless: true,
     });
   });
@@ -415,7 +418,7 @@ describe('setup', () => {
         call.args.join(' ') === '--help'
           ? { code: 2, stdout: '', stderr: '' }
           : undefined,
-      'S1',
+      'Step 1',
       /ian --help. did not succeed/,
     );
   });
@@ -430,7 +433,7 @@ describe('setup', () => {
     );
     const session = newSession();
     await runSetup(deps, session);
-    expect(session.scripted.get('S2')?.fact).toBe('real database: missing');
+    expect(session.scripted.get('Step 2')?.fact).toBe('real database: missing');
   });
 
   it.each([
@@ -445,7 +448,7 @@ describe('setup', () => {
         call.args.join(' ') === readCommands.databaseStatus.join(' ')
           ? json({ state }, 1)
           : undefined,
-      'S2',
+      'Step 2',
       message,
     );
   });
@@ -456,7 +459,7 @@ describe('setup', () => {
         call.args.join(' ') === readCommands.databaseStatus.join(' ')
           ? { code: 1, stdout: 'not json', stderr: '' }
           : undefined,
-      'S2',
+      'Step 2',
       /could not be read/,
     );
   });
@@ -467,10 +470,15 @@ describe('setup', () => {
         call.args[0] === 'watchlist' && call.args[1] === 'create'
           ? { code: 1, stdout: 'x', stderr: 'y' }
           : undefined,
-      'S5',
-      /Step S5 failed/,
+      'Step 5',
+      /Step 5 failed/,
     );
-    expect([...session.scripted.keys()]).toEqual(['S1', 'S2', 'S3', 'S4']);
+    expect([...session.scripted.keys()]).toEqual([
+      'Step 1',
+      'Step 2',
+      'Step 3',
+      'Step 4',
+    ]);
     expect(session.log.at(-1)?.command).toBe(
       'ian watchlist create "Smoke Test"',
     );
@@ -486,7 +494,7 @@ describe('setup', () => {
     );
     const session = newSession();
     await runSetup(deps, session);
-    expect(session.scripted.get('S7')?.fact).toMatch(/exited 1/);
+    expect(session.scripted.get('Step 7')?.fact).toMatch(/exited 1/);
   });
 
   it('stops when the refresh completed no run', async () => {
@@ -497,7 +505,7 @@ describe('setup', () => {
               items: [{ run_count: 4, outcome_counts: { completed: 0 } }],
             })
           : undefined,
-      'S7',
+      'Step 7',
       new RegExp(stopMessages.noCompletedRun().slice(0, 30)),
     );
   });
@@ -517,12 +525,12 @@ describe('setup', () => {
       await stopsAt(
         (call) => {
           if (call.args.join(' ') !== command) return undefined;
-          // The refresh check after S7 must still pass; only the S9 read differs.
+          // The refresh check after Step 7 must still pass; only the Step 9 read differs.
           seen += 1;
           if (which === 'refreshes' && seen === 1) return undefined;
           return json(body);
         },
-        'S9',
+        'Step 9',
         /should leave 5 runs/,
       );
     },

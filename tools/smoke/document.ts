@@ -8,7 +8,9 @@ export type DocumentStep = {
   hint: string;
 };
 
-const stepStart = /^([SNWRHEL]\d+)\. (.*)$/;
+// A setup step is labelled "Step n." and a check "Check Xn." (X is the letter
+// of its group of screens); the label, without its full stop, is the step id.
+const stepStart = /^(Step \d+|Check [NWRHEL]\d+)\. (.*)$/;
 
 function firstSentence(text: string): string {
   const plain = text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
@@ -41,7 +43,10 @@ export function parseSteps(markdown: string): DocumentStep[] {
     const start = stepStart.exec(line);
     if (start) {
       finish();
-      current = { id: start[1]!, lines: [start[2]!] };
+      current = {
+        id: start[1]!,
+        lines: [start[2]!],
+      };
     } else if (line.trim() === '') {
       finish();
     } else if (current) {
@@ -52,14 +57,14 @@ export function parseSteps(markdown: string): DocumentStep[] {
   return steps;
 }
 
-// The `ian` command lines in the fenced blocks from S4 up to S10, in order,
+// The `ian` command lines in the fenced blocks from Step 4 up to Step 10, in order,
 // each as its arguments after `ian`.
 export function parseSetupCommands(markdown: string): string[][] {
   const lines = markdown.split(/\r?\n/);
-  const from = lines.findIndex((line) => line.startsWith('S4. '));
-  const to = lines.findIndex((line) => line.startsWith('S10. '));
+  const from = lines.findIndex((line) => line.startsWith('Step 4. '));
+  const to = lines.findIndex((line) => line.startsWith('Step 10. '));
   if (from < 0 || to < 0 || to < from)
-    throw new Error('SMOKE_TESTING.md has no S4 to S10 range.');
+    throw new Error('SMOKE_TESTING.md has no Steps 4 to 10 range.');
   const commands: string[][] = [];
   let fenced = false;
   for (const line of lines.slice(from, to)) {
