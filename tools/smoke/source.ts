@@ -11,8 +11,19 @@ export function readVendoredCommit(sourceRecord: string): string {
 // The engine version in the checkout's pyproject.toml: the first `version`
 // line of its [project] table.
 export function readEngineVersion(pyproject: string): string | null {
+  return readProjectValue(pyproject, 'version');
+}
+
+// The name in the [project] table of a pyproject.toml.
+export function readProjectName(pyproject: string): string | null {
+  return readProjectValue(pyproject, 'name');
+}
+
+function readProjectValue(pyproject: string, key: string): string | null {
   const table = /^\[project\]\s*$([\s\S]*?)(?=^\[|(?![\s\S]))/m.exec(pyproject);
-  const match = /^version\s*=\s*"([^"]+)"/m.exec(table?.[1] ?? '');
+  const match = new RegExp(`^${key}\\s*=\\s*"([^"]+)"`, 'm').exec(
+    table?.[1] ?? '',
+  );
   return match ? match[1]! : null;
 }
 

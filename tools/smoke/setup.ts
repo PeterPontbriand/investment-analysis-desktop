@@ -1,11 +1,12 @@
 // The smoke test's scripted setup steps (Steps 1 to 9 of docs/project/SMOKE_TESTING.md).
 // Each step stops with a plain message instead of guessing.
-import { join, relative } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 import { readCommands, setupCommands, throwawayFile } from './commands.ts';
 import { scrub, type ScriptedStep } from './record.ts';
 import {
   ianSourceNames,
   readEngineVersion,
+  readProjectName,
   readVendoredCommit,
   resolveIan,
   resolveIanInUv,
@@ -71,10 +72,14 @@ export function newSession(): Session {
 export const stopMessages = {
   engineMissing: (path: string) =>
     `The engine folder ${path} does not exist. Pass the folder of your engine checkout: pnpm smoke --engine <your engine checkout>.`,
+  pointsAtThisRepository: () =>
+    '`--engine` points at this repository. Pass the folder of your engine checkout (the investment-analysis-engine repository), not this one.',
+  notEngine: (path: string) =>
+    `${path} is not an engine checkout: its pyproject.toml does not name the investment-analysis-engine project. Pass the folder of your engine checkout.`,
   notCheckout: (path: string) =>
     `${path} is not a Git checkout of the engine. Pass the folder of your engine checkout.`,
   wrongCommit: (path: string, found: string, wanted: string) =>
-    `The engine checkout is at ${found}, but vendor/ian/SOURCE.md names ${wanted}. Run \`git -C "${path}" checkout ${wanted}\`, then try again.`,
+    `The engine checkout is at ${found}, but vendor/ian/SOURCE.md names ${wanted}. In the engine checkout, run \`git -C "${path}" fetch\` and then \`git -C "${path}" checkout ${wanted}\`, and try again. This leaves the engine checkout on that commit rather than a branch; afterwards, \`git -C "${path}" switch main\` returns it to main.`,
   ianNotExecutable: () =>
     'IAD_IAN_PATH names a .cmd or .bat file. The application and this tool start the engine without a shell, so IAD_IAN_PATH must name an executable (.exe), not a .cmd or .bat file.',
   noIan: () =>
@@ -149,8 +154,25 @@ export async function runSetup(
 
   // Step 1: the engine is the vendored commit, and `ian` runs.
   progress('Step 1: checking the engine checkout and the `ian` command…');
+  // The folder must be the engine's, not this repository, and must name the
+  // engine's project, before its commit is read.
+  const sameFolder = (a: string, b: string) =>
+    deps.platform === 'win32'
+      ? resolve(a).toLowerCase() === resolve(b).toLowerCase()
+      : resolve(a) === resolve(b);
+  if (sameFolder(deps.enginePath, repositoryRoot))
+    throw new SmokeStop('Step 1', stopMessages.pointsAtThisRepository());
   if (!fs.exists(deps.enginePath))
     throw new SmokeStop('Step 1', stopMessages.engineMissing(deps.enginePath));
+  const pyprojectPath = join(deps.enginePath, 'pyproject.toml');
+  const pyproject = fs.exists(pyprojectPath)
+    ? fs.readText(pyprojectPath)
+    : null;
+  if (
+    pyproject === null ||
+    readProjectName(pyproject) !== 'investment-analysis-engine'
+  )
+    throw new SmokeStop('Step 1', stopMessages.notEngine(deps.enginePath));
   const wanted = readVendoredCommit(
     fs.readText(join(repositoryRoot, 'vendor', 'ian', 'SOURCE.md')),
   );
@@ -180,10 +202,7 @@ export async function runSetup(
   logRun('ian --help', help);
   if (help.code !== 0)
     throw new SmokeStop('Step 1', stopMessages.ianHelpFailed(describe(help)));
-  const pyproject = join(deps.enginePath, 'pyproject.toml');
-  session.engineVersion = fs.exists(pyproject)
-    ? readEngineVersion(fs.readText(pyproject))
-    : null;
+  session.engineVersion = readEngineVersion(pyproject);
   session.scripted.set('Step 1', {
     fact: `engine at ${session.engineCommit}; \`ian\` from ${ianSourceNames[located.source]}; \`ian --help\` works`,
   });

@@ -93,13 +93,13 @@ export function fakeFileSystem(extra: Record<string, string> = {}): {
   const files: Record<string, string> = {
     [join(repositoryRoot, 'vendor', 'ian', 'SOURCE.md')]: sourceRecord,
     [join(enginePath, 'pyproject.toml')]:
-      '[build-system]\nrequires = []\n\n[project]\nname = "ian"\nversion = "0.1.0"\n',
+      '[build-system]\nrequires = []\n\n[project]\nname = "investment-analysis-engine"\nversion = "0.1.0"\n',
     ...extra,
   };
   const normal = (path: string) =>
     path.split(String.fromCharCode(92)).join('/');
   const present = new Set(
-    [enginePath, ianPath, ...Object.keys(files)].map(normal),
+    [enginePath, repositoryRoot, ianPath, ...Object.keys(files)].map(normal),
   );
   return {
     folders,

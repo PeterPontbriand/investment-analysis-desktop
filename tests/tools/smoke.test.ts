@@ -460,6 +460,73 @@ describe('setup', () => {
     );
   });
 
+  it('gives the fetch, checkout and switch commands for the wrong commit', () => {
+    const path = '/engine';
+    const message = stopMessages.wrongCommit(path, 'abc', vendoredCommit);
+    expect(message).toBe(
+      `The engine checkout is at abc, but vendor/ian/SOURCE.md names ${vendoredCommit}. In the engine checkout, run \`git -C "/engine" fetch\` and then \`git -C "/engine" checkout ${vendoredCommit}\`, and try again. This leaves the engine checkout on that commit rather than a branch; afterwards, \`git -C "/engine" switch main\` returns it to main.`,
+    );
+  });
+
+  it('stops when --engine points at this repository, before any git command', async () => {
+    for (const [path, platform] of [
+      [repositoryRoot, 'linux'],
+      [repositoryRoot.toUpperCase(), 'win32'],
+    ] as const) {
+      const { deps, calls } = dependencies(
+        healthy(),
+        {},
+        {
+          enginePath: path,
+          platform,
+        },
+      );
+      const error = await runSetup(deps, newSession()).then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+      expect((error as SmokeStop).step).toBe('Step 1');
+      expect((error as SmokeStop).message).toBe(
+        '`--engine` points at this repository. Pass the folder of your engine checkout (the investment-analysis-engine repository), not this one.',
+      );
+      expect(calls.some((call) => call.file === 'git')).toBe(false);
+    }
+  });
+
+  it.each([
+    [
+      'names another project',
+      '[project]\nname = "something-else"\nversion = "1"\n',
+    ],
+    ['has no [project] name', '[build-system]\nrequires = []\n'],
+  ])("stops when the folder's pyproject.toml %s", async (_name, pyproject) => {
+    const { deps, calls } = dependencies(healthy(), {
+      [join(enginePath, 'pyproject.toml')]: pyproject,
+    });
+    const error = await runSetup(deps, newSession()).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    expect((error as SmokeStop).message).toBe(
+      `${enginePath} is not an engine checkout: its pyproject.toml does not name the investment-analysis-engine project. Pass the folder of your engine checkout.`,
+    );
+    expect(calls.some((call) => call.file === 'git')).toBe(false);
+  });
+
+  it('stops when the folder has no pyproject.toml', async () => {
+    const { deps } = dependencies(healthy());
+    const original = deps.fs.exists;
+    deps.fs = {
+      ...deps.fs,
+      exists: (path) => !path.endsWith('pyproject.toml') && original(path),
+    };
+    const error = await runSetup(deps, newSession()).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    expect((error as SmokeStop).message).toMatch(/is not an engine checkout/);
+  });
+
   it.each(['C:/tools/ian.cmd', 'C:/tools/IAN.BAT'])(
     'stops when IAD_IAN_PATH names a batch file (%s)',
     async (path) => {
