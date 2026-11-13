@@ -8,9 +8,13 @@ export type DocumentStep = {
   hint: string;
 };
 
-// A setup step is labelled "Step n." and a check "Check Xn." (X is the letter
-// of its group of screens); the label, without its full stop, is the step id.
-const stepStart = /^(Step \d+|Check [NWRHEL]\d+)\. (.*)$/;
+// A setup step is labelled "Step n." and a check "Check Xn." (X is the capital
+// letter of its group of screens, any letter, so a new group needs no tool
+// change); the label, without its full stop, is the step id.
+const stepStart = /^(Step \d+|Check [A-Z]\d+)\. (.*)$/;
+
+// A fenced block starts and ends with a line like this, indented or not.
+const fence = /^\s*(```|~~~)/;
 
 function firstSentence(text: string): string {
   const plain = text.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
@@ -34,7 +38,7 @@ export function parseSteps(markdown: string): DocumentStep[] {
     current = null;
   };
   for (const line of markdown.split(/\r?\n/)) {
-    if (/^\s*(```|~~~)/.test(line)) {
+    if (fence.test(line)) {
       fenced = !fenced;
       finish();
       continue;
@@ -68,12 +72,12 @@ export function parseSetupCommands(markdown: string): string[][] {
   const commands: string[][] = [];
   let fenced = false;
   for (const line of lines.slice(from, to)) {
-    if (/^```/.test(line)) {
+    if (fence.test(line)) {
       fenced = !fenced;
       continue;
     }
-    if (fenced && line.startsWith('ian ')) {
-      commands.push(splitCommandLine(line).slice(1));
+    if (fenced && line.trim().startsWith('ian ')) {
+      commands.push(splitCommandLine(line.trim()).slice(1));
     }
   }
   return commands;

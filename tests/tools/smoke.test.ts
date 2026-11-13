@@ -64,35 +64,69 @@ describe('smoke test document steps', () => {
     const steps = parseSteps(smokeDocument);
     const ids = steps.map((step) => step.id);
     expect(new Set(ids).size).toBe(ids.length);
-    const groups = ['S', 'N', 'W', 'R', 'H', 'E', 'L'];
-    let lastGroup = -1;
-    let lastNumber = 0;
-    for (const id of ids) {
-      expect(id).toMatch(/^(Step [1-9]\d*|Check [NWRHEL][1-9]\d*)$/);
-      const label = id.replace(/^(Step |Check )/, '');
-      const group = groups.indexOf(id.startsWith('Step ') ? 'S' : label[0]!);
-      const number = Number(id.startsWith('Step ') ? label : label.slice(1));
-      if (group === lastGroup) expect(number).toBe(lastNumber + 1);
+    // The setup steps come first and are numbered 1 upward.
+    const setup = ids.filter((id) => id.startsWith('Step '));
+    expect(ids.slice(0, setup.length)).toEqual(setup);
+    expect(setup).toEqual(setup.map((_id, index) => `Step ${index + 1}`));
+    expect(setup.length).toBeGreaterThan(0);
+    // Each check group starts at 1 and goes up by one, in one run per letter.
+    const checks = ids.slice(setup.length);
+    const seen = new Set<string>();
+    let letter = '';
+    let last = 0;
+    for (const id of checks) {
+      const match = /^Check ([A-Z])([1-9]\d*)$/.exec(id);
+      expect(match, `${id} is a well-formed check id`).not.toBeNull();
+      const [, group, digits] = match!;
+      const number = Number(digits);
+      if (group === letter) expect(number).toBe(last + 1);
       else {
-        expect(group).toBeGreaterThan(lastGroup);
+        expect(seen.has(group!), `${group} is not in two separate runs`).toBe(
+          false,
+        );
+        seen.add(group!);
         expect(number).toBe(1);
       }
-      lastGroup = group;
-      lastNumber = number;
+      letter = group!;
+      last = number;
     }
-    expect(ids.slice(0, 10)).toEqual([
-      'Step 1',
-      'Step 2',
-      'Step 3',
-      'Step 4',
-      'Step 5',
-      'Step 6',
-      'Step 7',
-      'Step 8',
-      'Step 9',
-      'Step 10',
-    ]);
     for (const step of steps) expect(step.hint).not.toBe('');
+  });
+
+  it('reads a check of a group letter it has not seen before', () => {
+    const steps = parseSteps(
+      'Step 1. Start.\n\nCheck Q1. A new group.\n\nCheck Q2. Its second check:\n',
+    );
+    expect(steps).toEqual([
+      { id: 'Step 1', hint: 'Start' },
+      { id: 'Check Q1', hint: 'A new group' },
+      { id: 'Check Q2', hint: 'Its second check' },
+    ]);
+  });
+
+  it('detects fences, indented or tilde, the way the step reader does', () => {
+    const document = [
+      'Step 4. Do it:',
+      '',
+      '  ```powershell',
+      '  ian db upgrade',
+      '  ```',
+      '',
+      '~~~text',
+      'ian runs list',
+      '~~~',
+      '',
+      'ian not-a-command-outside-a-fence',
+      '',
+      'Step 10. Start.',
+    ].join('\n');
+    expect(parseSetupCommands(document)).toEqual([
+      ['db', 'upgrade'],
+      ['runs', 'list'],
+    ]);
+    expect(
+      parseSteps('Step 1. Real.\n\n  ```text\n  Step 2. Not a step.\n  ```\n'),
+    ).toEqual([{ id: 'Step 1', hint: 'Real' }]);
   });
 
   it('keeps the setup commands in step with the document (drift check)', () => {
@@ -242,6 +276,26 @@ describe('record', () => {
     });
     expect(text).toContain('- **Step 2** Check the database:\n');
     expect(text).toContain('**Result:** stopped at Step 2: No.');
+  });
+
+  it('marks Steps 1 to 9 pass (scripted) for the session a happy run produced', async () => {
+    const { deps } = dependencies(healthy());
+    const session = newSession();
+    await runSetup(deps, session);
+
+    const text = renderRecord({
+      ...base,
+      steps: parseSteps(smokeDocument),
+      scripted: session.scripted,
+      log: session.log,
+    });
+
+    // A key mismatch between the setup and the record fails here.
+    for (let step = 1; step <= 9; step += 1)
+      expect(text).toMatch(
+        new RegExp(`- \\*\\*Step ${step}\\*\\* [^\\n]*: pass \\(scripted\\)`),
+      );
+    expect(text).not.toMatch(/- \*\*Step 10\*\* [^\n]*pass \(scripted\)/);
   });
 
   it('removes tokens and the repository path, never the engine path', () => {
