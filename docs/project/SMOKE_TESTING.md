@@ -257,8 +257,9 @@ Record a run in the description of the pull request that adds or changes a scree
 It stops with a plain message instead of guessing, and writes the record so far beside the throwaway folder when it got that far.
 
 - **`--engine` is required, or the folder does not exist:** pass the folder of your engine checkout.
+- **`--engine` points at this repository, or the folder is not an engine checkout:** pass the folder of your engine checkout, the investment-analysis-engine repository, not this one. The tool recognises it by its `pyproject.toml`, whose `[project]` table must name `investment-analysis-engine`.
 - **The folder is not a Git checkout:** pass the folder that holds the engine's `.git` folder.
-- **The engine checkout is at another commit:** the message prints both commits and the `git checkout` to run in the engine checkout. Run it, then try again.
+- **The engine checkout is at another commit:** the message prints both commits and the commands to run in the engine checkout: `git -C "<path>" fetch`, then `git -C "<path>" checkout <commit>`. Run them, then try again. This leaves the engine checkout on that commit rather than a branch; afterwards, `git -C "<path>" switch main` returns it to main.
 - **The `ian` command was not found on `PATH` or in uv's command folder:** do the engine's "Make the `ian` command available" step (Step 1), then open a new terminal and try again. If that does not help, follow the troubleshooting entry linked in [Before you start](#before-you-start). To use a specific `ian`, set `IAD_IAN_PATH`.
 - **`ian --help` failed:** the file the tool found does not run as the engine's `ian`. The record's Engine line, or the message, names where it came from; fix that installation, or set `IAD_IAN_PATH` to the right file.
 - **`IAD_IAN_PATH` names a `.cmd` or `.bat` file:** the application and the tool start the engine without a shell, so `IAD_IAN_PATH` must name an executable (`.exe`). Point it at the `.exe`, or unset it so `ian` is found on `PATH`.
