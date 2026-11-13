@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { arch, platform, release, type } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { throwawayFile } from './commands.ts';
 import { parseSteps } from './document.ts';
 import { fileSystem, run, startApplication } from './process.ts';
 import { renderRecord, type RecordInput } from './record.ts';
@@ -102,6 +103,7 @@ async function main(): Promise<number> {
         repositoryRoot,
         enginePath,
         now,
+        progress: (line) => process.stdout.write(`${line}\n`),
       },
       session,
     );
@@ -118,10 +120,14 @@ async function main(): Promise<number> {
     return 1;
   }
   session.scripted.set('S10', {
-    fact: 'started after this record was written; mark fail if the window did not open',
+    fact: 'the tool started the application; mark whether its window opened',
+    leftToYou: true,
   });
   const path = await writeRecord(session, now, null);
-  process.stdout.write(`The record is ${path}\nStarting the application…\n`);
+  const folder = session.throwawayFolder ?? '';
+  process.stdout.write(
+    `The record is ${path}\nClean-up will delete these files in ${folder}, and leave the folder and the record: ${throwawayFile}, ${throwawayFile}-wal, ${throwawayFile}-shm\nStarting the application…\n`,
+  );
   return startApplication(repositoryRoot, {
     ...process.env,
     IAN_DATABASE_URL: session.databaseUrl ?? undefined,

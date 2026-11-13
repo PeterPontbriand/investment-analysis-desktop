@@ -2,7 +2,9 @@
 // request description.
 import type { DocumentStep } from './document.ts';
 
-export type ScriptedStep = { fact?: string };
+// A step the tool did. `leftToYou` is a step the tool only started: the
+// contributor marks it.
+export type ScriptedStep = { fact?: string; leftToYou?: boolean };
 
 export type RecordInput = {
   date: string;
@@ -88,7 +90,7 @@ export function renderRecord(input: RecordInput): string {
     const done = input.scripted.get(step.id);
     const fact = done?.fact ? ` (${done.fact})` : '';
     lines.push(
-      `- **${step.id}** ${step.hint}:${done ? ` pass (scripted)${fact}` : ''}`,
+      `- **${step.id}** ${step.hint}:${done ? (done.leftToYou ? fact : ` pass (scripted)${fact}`) : ''}`,
     );
   }
   lines.push(

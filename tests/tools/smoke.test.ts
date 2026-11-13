@@ -213,6 +213,26 @@ describe('record', () => {
     );
   });
 
+  it('leaves a step the tool only started to the contributor to mark', () => {
+    const text = renderRecord({
+      ...base,
+      scripted: new Map([
+        ['S1', {}],
+        [
+          'S2',
+          {
+            fact: 'the tool started the application; mark whether its window opened',
+            leftToYou: true,
+          },
+        ],
+      ]),
+    });
+    expect(text).toContain(
+      '- **S2** Check the database: (the tool started the application; mark whether its window opened)',
+    );
+    expect(text).not.toContain('S2** Check the database: pass');
+  });
+
   it('shows where the tool stopped, and leaves later steps unmarked', () => {
     const text = renderRecord({
       ...base,
@@ -241,6 +261,28 @@ describe('setup', () => {
     expect(databaseUrlFor('C:\\repo\\.tmp\\smoke\\x')).toBe(
       'sqlite:///C:/repo/.tmp/smoke/x/smoke-test.sqlite3',
     );
+  });
+
+  it('prints one progress line per step, in order, naming the provider steps', async () => {
+    const { deps, progress } = dependencies(healthy());
+
+    await runSetup(deps, newSession());
+
+    expect(progress).toEqual([
+      'S1: checking the engine checkout and the `ian` command…',
+      'S2: reading the state of your real database (read only)…',
+      'S3: creating the throwaway database folder .tmp/smoke/20261113-090507…',
+      "S4: creating the throwaway database's schema…",
+      'S5: creating the Smoke Test and Smoke Test Empty watchlists…',
+      'S6: adding four entries to the Smoke Test watchlist…',
+      'S7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
+      'S8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
+      'S9: reading back the saved runs, refreshes and watchlists to check their counts…',
+    ]);
+    for (const line of progress) {
+      expect(line).not.toContain(repositoryRoot);
+      expect(line).not.toMatch(/token|sqlite:/i);
+    }
   });
 
   it('runs every step on a healthy engine and records the facts', async () => {
@@ -341,6 +383,25 @@ describe('setup', () => {
       new RegExp(`${other}.*${vendoredCommit}.*checkout ${vendoredCommit}`),
     );
   });
+
+  it.each(['C:/tools/ian.cmd', 'C:/tools/IAN.BAT'])(
+    'stops when IAD_IAN_PATH names a batch file (%s)',
+    async (path) => {
+      const { deps } = dependencies(
+        healthy(),
+        {},
+        { env: { IAD_IAN_PATH: path } },
+      );
+      const error = await runSetup(deps, newSession()).then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+      expect((error as SmokeStop).step).toBe('S1');
+      expect((error as SmokeStop).message).toMatch(
+        /without a shell.*executable \(\.exe\), not a \.cmd or \.bat file/,
+      );
+    },
+  );
 
   it('stops when ian cannot be found', async () => {
     await stopsAt(() => undefined, 'S1', /`ian` command was not found/, {

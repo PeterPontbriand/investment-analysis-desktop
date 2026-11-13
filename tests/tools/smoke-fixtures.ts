@@ -120,6 +120,7 @@ export function dependencies(
   overrides: Partial<Dependencies> = {},
 ) {
   const runner = fakeRunner(script);
+  const progress: string[] = [];
   const files = fakeFileSystem(fsExtra);
   const deps: Dependencies = {
     run: runner.run,
@@ -129,9 +130,10 @@ export function dependencies(
     repositoryRoot,
     enginePath,
     now: new Date(2026, 10, 13, 9, 5, 7),
+    progress: (line) => progress.push(line),
     ...overrides,
   };
-  return { deps, ...runner, folders: files.folders };
+  return { deps, ...runner, folders: files.folders, progress };
 }
 
 export const commandCount = setupCommands.length;

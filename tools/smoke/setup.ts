@@ -22,6 +22,8 @@ export type Dependencies = {
   enginePath: string;
   // The moment the throwaway folder is named after, in local time.
   now: Date;
+  // Prints one progress line to standard output.
+  progress: (line: string) => void;
 };
 
 // What the setup learned and did so far, kept even when a step stops it, so the
@@ -63,6 +65,8 @@ export const stopMessages = {
     `${path} is not a Git checkout of the engine. Pass the folder of your engine checkout.`,
   wrongCommit: (path: string, found: string, wanted: string) =>
     `The engine checkout is at ${found}, but vendor/ian/SOURCE.md names ${wanted}. Run \`git -C "${path}" checkout ${wanted}\`, then try again.`,
+  ianNotExecutable: () =>
+    'IAD_IAN_PATH names a .cmd or .bat file. The application and this tool start the engine without a shell, so IAD_IAN_PATH must name an executable (.exe), not a .cmd or .bat file.',
   noIan: () =>
     "The `ian` command was not found. Make it available as the engine's installation guide describes (step S1 of docs/project/SMOKE_TESTING.md), or point IAD_IAN_PATH at it.",
   ianHelpFailed: (detail: string) =>
@@ -80,6 +84,16 @@ export const stopMessages = {
   wrongCounts: (found: string) =>
     `The setup should leave 5 runs, 1 refresh of 4 runs and 2 watchlists with 4 entries in all, but found ${found}. Use a new throwaway database: run pnpm smoke again.`,
 } as const;
+
+// One line when each of S4 to S9 starts. Steps that call the data providers say so.
+const progressLines: Record<string, string> = {
+  S4: "S4: creating the throwaway database's schema…",
+  S5: 'S5: creating the Smoke Test and Smoke Test Empty watchlists…',
+  S6: 'S6: adding four entries to the Smoke Test watchlist…',
+  S7: 'S7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
+  S8: 'S8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
+  S9: 'S9: reading back the saved runs, refreshes and watchlists to check their counts…',
+};
 
 function describe(result: RunResult): string {
   return result.code === null
@@ -113,7 +127,7 @@ export async function runSetup(
   deps: Dependencies,
   session: Session,
 ): Promise<void> {
-  const { run, fs, repositoryRoot } = deps;
+  const { run, fs, repositoryRoot, progress } = deps;
   const logRun = (command: string, result: RunResult) =>
     session.log.push({
       command,
@@ -121,6 +135,7 @@ export async function runSetup(
     });
 
   // S1: the engine is the vendored commit, and `ian` runs.
+  progress('S1: checking the engine checkout and the `ian` command…');
   if (!fs.exists(deps.enginePath))
     throw new SmokeStop('S1', stopMessages.engineMissing(deps.enginePath));
   const wanted = readVendoredCommit(
@@ -137,6 +152,9 @@ export async function runSetup(
       stopMessages.wrongCommit(deps.enginePath, found, wanted),
     );
   session.engineCommit = found.slice(0, 7);
+  const configured = deps.env.IAD_IAN_PATH;
+  if (configured !== undefined && /\.(cmd|bat)$/i.test(configured))
+    throw new SmokeStop('S1', stopMessages.ianNotExecutable());
   const ian = resolveIan(deps.env, deps.platform, (path) => fs.exists(path));
   if (ian === null) throw new SmokeStop('S1', stopMessages.noIan());
   session.ianPath = ian;
@@ -153,6 +171,7 @@ export async function runSetup(
   });
 
   // S2: the real database, read only and with the inherited environment.
+  progress('S2: reading the state of your real database (read only)…');
   const status = await run(ian, [...readCommands.databaseStatus], {
     env: deps.env,
   });
@@ -174,10 +193,13 @@ export async function runSetup(
 
   // S3: the throwaway database, for every later command.
   const folder = join(repositoryRoot, '.tmp', 'smoke', folderStamp(deps.now));
-  fs.makeFolder(folder);
   session.throwawayFolder = relative(repositoryRoot, folder)
     .split('\\')
     .join('/');
+  progress(
+    `S3: creating the throwaway database folder ${session.throwawayFolder}…`,
+  );
+  fs.makeFolder(folder);
   session.databaseUrl = databaseUrlFor(folder);
   const childEnv: Environment = {
     ...deps.env,
@@ -187,7 +209,12 @@ export async function runSetup(
 
   // S4 to S9: the document's commands, in order.
   const allowsFailureExit = new Set(['S7', 'S8']);
+  let announced = '';
   for (const command of setupCommands) {
+    if (command.step !== announced) {
+      announced = command.step;
+      progress(progressLines[command.step] ?? `${command.step}: running…`);
+    }
     const line = `ian ${command.args.map((arg) => (/\s/.test(arg) ? `"${arg}"` : arg)).join(' ')}`;
     const result = await run(ian, command.args, { env: childEnv });
     logRun(line, result);
