@@ -2,7 +2,7 @@
 
 ## At a glance
 
-- **What GUI.2 is:** the first screens that show engine content: watchlists, recent refreshes, the refresh comparison, and run detail. It also adds what every later unit needs: starting `ian serve`, the API adapter, generated API types, locale handling, and the localization retrofit of the GUI.1 code.
+- **What GUI.2 is:** the first screens that show engine content: watchlists, recent refreshes, saved runs, the refresh comparison, and run detail. It also adds what every later unit needs: starting `ian serve`, the API adapter, generated API types, locale handling, and the localization retrofit of the GUI.1 code.
 - **What GUI.2 is not:** actions that change anything (GUI.3), help popups and the help panel (GUI.4), the first-run screen or the installer (GUI.5), or any financial calculation.
 - **Rules:** [AGENTS.md](../../AGENTS.md) and the [project charter](CHARTER.md) govern the work. The decisions in [Appendix A](#appendix-a-2026-11-10-decision-record) and the localization decisions in [Appendix D of the GUI.1 slice plan](GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-d-localization-readiness-decision-2026-11-08) apply to all GUI.2 code.
 
@@ -12,7 +12,8 @@
 | :--- | :--- | :--- | :--- |
 | GUI.2a1 | [Localization retrofit](#gui2a1--localization-retrofit) | Complete | 2026-11-11 |
 | GUI.2a2 | [Engine launch and API adapter](#gui2a2--engine-launch-and-api-adapter) | Complete | 2026-11-13 |
-| GUI.2b | [Read-only screens](#gui2b--read-only-screens) | Next | |
+| GUI.2b1 | [Shared groundwork, watchlists, refreshes and saved runs](#gui2b1--shared-groundwork-watchlists-refreshes-and-saved-runs) | In progress | |
+| GUI.2b2 | [Comparison and run detail](#gui2b2--comparison-and-run-detail) | Planned | |
 
 ## Sub-slices
 
@@ -32,13 +33,21 @@
 - **Branch:** `feat/gui-2a2-engine-adapter`, from main after GUI.2a1 merges; its own pull request.
 - **Detail:** This plan owns GUI.2a2's [file scope](#file-scope-1) and [acceptance criteria](#acceptance-criteria-1).
 
-### GUI.2b — Read-only screens
+### GUI.2b1 — Shared groundwork, watchlists, refreshes and saved runs
 
-- **Problem:** Investors need to inspect their watchlists, refreshes and saved runs without a command line.
-- **Decision:** Build four read-only screens on the GUI.2a adapter, showing only API content (D32, D43 to D47).
-- **Scope:** the watchlists screen (the list and one watchlist's entries), the recent refreshes screen, the refresh comparison screen, and the run detail screen (concise, details and diagnostics text, and the JSON document); code display through help terms (D43); number and date formatting (D44); error and empty states (D45); typed fixtures and browser tests (D46); a recorded manual check against a real engine (D47).
-- **Branch:** `feat/gui-2b-screens`, from main after GUI.2a2 merges; IAN's refreshes list endpoint (D34) merged as IAN pull request 252; its own pull request.
-- **Detail:** This plan owns GUI.2b's [file scope](#file-scope-2) and [acceptance criteria](#acceptance-criteria-2).
+- **Problem:** Every engine screen needs the same client, term names, formatting, error states and navigation, and investors need to inspect their watchlists, refreshes and saved runs without a command line.
+- **Decision:** Build the shared groundwork and three read-only screens on the GUI.2a adapter, showing only API content (D78 to D90, D93 to D95, D98 to D109).
+- **Scope:** the IAN re-vendor (D78); the adapter extension (D81); the shared engine client (D82); term names (D83, D101); formatting (D85, D105, D106); error and empty states (D84, D99, D100); the navigation and app shell (D87, D98); the watchlists screen (D89, D102), the refreshes screen (D90) and the saved runs screen (D80, D103); paging (D88); typed fixtures and browser tests (D94, D107); TypeScript in Vue files (D109).
+- **Branch:** `feat/gui-2b1-foundation`, from main after IAN pull request 255 (API.8) merged; its own pull request.
+- **Detail:** This plan owns GUI.2b1's [file scope](#file-scope-2) and [acceptance criteria](#acceptance-criteria-2).
+
+### GUI.2b2 — Comparison and run detail
+
+- **Problem:** Investors need to compare a refresh's runs across tickers and strategies and read one run in full.
+- **Decision:** Build the refresh comparison and run detail on the GUI.2b1 groundwork (D86, D91, D92, D94).
+- **Scope:** the refresh comparison screen; the run detail screen with its header, headline cards, warnings and limitations, the concise, details and diagnostics text, and the JSON document; links from refresh and run rows to them.
+- **Branch:** `feat/gui-2b2-compare-detail`, from main after GUI.2b1 merges; its own pull request. Its own open decisions are taken before it starts (D96).
+- **Detail:** This plan owns GUI.2b2's [file scope](#file-scope-3) and [acceptance criteria](#acceptance-criteria-3).
 
 ## Scope limits
 
@@ -50,7 +59,8 @@
 - No release build or bundle, as [AGENTS.md](../../AGENTS.md) requires before GUI.5.
 - Choosing a locale is not persisted; persistence is decided in the slice where the language picker first becomes visible (D63).
 - IAD has no log file before GUI.5; GUI.5 decides the log file, its location and where the engine-launch lines go (D67).
-- Before GUI.2b shows the API's reason messages as given (D45), the GUI.2b decisions confirm that none of them names a command, option or environment variable (D56).
+- Before GUI.2b shows the API's reason messages as given (D45), the GUI.2b decisions confirm that none of them names a command, option or environment variable (D56). Met by D78: IAN's database reason messages name no command, option or file path, and D84 still shows catalog messages for them.
+- Out of scope for GUI.2b: the running refresh job view, the language picker and any per-strategy rendering of a strategy document (D93).
 
 ## GUI.2a1 detail
 
@@ -112,21 +122,49 @@
 | `timed_out` | The analysis engine did not start within 30 seconds. |
 | `exited` | The analysis engine stopped unexpectedly. Restart the application to continue. |
 
-## GUI.2b detail
+## GUI.2b1 detail
 
 ### File scope
 
-- The four screens and their components under `src/`, and router entries.
+- `vendor/ian/openapi.json`, `vendor/ian/SOURCE.md` and `src/api/schema.ts`, for the re-vendor (D78).
+- `src/`: the API adapter and client, the shared engine client, term names, formatting, the message catalogs, the router, `src/App.vue`, `src/main.ts`, and the views and components of the shell and the three screens.
+- `tests/unit/`, `tests/browser/` and `tests/fixtures/`, including the typed API fixtures and the test-only catalog; `playwright.config.ts` and `vitest.config.ts` for the time zone only (D107).
+- `eslint.config.js`, for D109 only.
+- This plan and the [project charter](CHARTER.md)'s GUI.2 section.
+
+### Acceptance criteria
+
+- The vendored API description is IAN commit `beb58a2`, and the drift check passes (D78).
+- `get(path, { path?, query? })` substitutes encoded path parameters and omits undefined query parameters, typed from the generated types (D81).
+- One engine connection and client serve every screen, and each screen reloads when the locale changes (D82).
+- Outcome and strategy names come from the help references, the help index and `/v1/strategies`, each fetched once per locale; each element keeps its term id, and a code or method the engine does not list shows as served with no term id (D83, D101).
+- Each `reason_code` group has a tested state: resource states show the API's message with its `lang`, `database_*` codes show catalog messages with "Try again" for `database_busy` only, and every other code shows one catalog message (D84, D100).
+- Every D85 unit has a unit test with the locale pinned, and both test runners use the `America/Toronto` time zone (D85, D106, D107).
+- The navigation, breadcrumb and routes follow D87 and D98; the shell lays out correctly in the `ar-XB` pseudo-locale.
+- The watchlists, refreshes and saved runs screens follow D89, D90, D102, D103 and D105, with "Show more" paging (D88) and the empty states of D108.
+- While the connection is pending, or the engine is not ready, every screen shows the matching catalog message and the navigation stays usable (D99).
+- An extra, made-up strategy appears in the saved runs list, its filter and a watchlist's entries with no GUI code change (D94).
+- No request uses `POST`, `PATCH` or `DELETE`.
+- The pull request records a manual run against a real engine at IAN `beb58a2` (D47).
+- `pnpm gate` passes on Windows, macOS and Linux.
+
+## GUI.2b2 detail
+
+### File scope
+
+- The comparison and run detail screens and their components under `src/`, and router entries.
 - Catalog entries for the application's own text on those screens.
 - Typed fixtures and Vitest and Playwright tests for the screens.
 - This plan's status row and the charter's GUI.2 row.
 
 ### Acceptance criteria
 
-- Every displayed number, label, status, code and unit comes from an API document; numbers and dates are formatted with `Intl` from raw values and the document's unit.
+- The run detail header shows the company name and ticker, the strategy name, the status as its term name and the effective as-of; headline cards come from the run overview, with `warnings` and `limitations` as lists below them (D86).
+- The comparison follows D91: a sticky ticker column, horizontally scrolling strategy groups, an outcome column only in a group with a non-completed run, "Not run" for a null run, and no "Refresh now" or "Download JSON".
+- Run detail has Summary, Details, Diagnostics and JSON views as read-only selectable blocks, with `lang` and `dir` as D92 sets them.
+- Every displayed number, label, status, code and unit comes from an API document; numbers and dates are formatted with `Intl` from raw values and the document's unit (D85).
 - A status, outcome or reason code is shown as its help term's name, and each such element carries its term id.
-- New IAN strategies appear on every screen with no GUI code change.
-- Each documented error `reason_code` the screens can receive has a tested state.
+- A made-up strategy appears in the comparison and run detail with no GUI code change (D94).
 - The comparison puts ticker and strategy first and the headline value most prominent, following the user answer to Q3 in the [project charter](CHARTER.md#questions-for-potential-users-before-gui2-scope-is-fixed).
 - The pull request records a manual run against a real engine at the vendored IAN commit.
 - `pnpm gate` passes on Windows, macOS and Linux.
@@ -187,3 +225,40 @@ Approved by the project owner on 2026-11-10. The numbering continues [Appendix D
 | D75 | Window title permission: the `default` capability gains only `core:window:allow-set-title`, for R5. The app's own commands (`engine_connection`, `engine_status`) need no capability entry. No other permission is added. |
 | D76 | Shell test warning: the shell smoke test runs without `tauri-plugin-wdio`, so `@wdio/tauri-service` 1.5.1's window-state probe logs "Tauri core.invoke not available" and costs about 5 s per probed command. The service has no setting to disable the probe. Accepted until a shell test needs `browser.tauri.execute` or mocks; that slice adds the plugin to the end-to-end build only. |
 | D77 | Placeholder messages outside the engine states: while the connection is pending, the "Analysis engine" section shows "Connecting to the analysis engine…" (`engine.loading`). A request that fails while the engine is still running, whether from a network error or an HTTP failure, shows "The analysis engine did not respond as expected." (`engine.unreachable`). Both are catalog messages, and neither shows the API's reason text. GUI.2b replaces `engine.unreachable` on its screens with D45's reason-code branches. |
+
+Approved by the project owner on 2026-11-13.
+
+| # | Decision |
+| :--- | :--- |
+| D78 | IAN prerequisite (API.8): before GUI.2b, IAN served structured cell units (a closed `CellUnit` code set of `percent`, `points`, `multiple` and `per_share`, plus a nullable ISO 4217 `currency`; a `percent` value is the percentage itself), `database_*` reason messages that name no command, option or file path, and a run overview with its headline (`GET /v1/runs/{analysis_run_id}/overview`). It merged as IAN pull request 255 (commit `beb58a2`), and GUI.2b1's first commit vendors that commit (amends D73). |
+| D79 | Split (amends D33): GUI.2b becomes GUI.2b1 (`feat/gui-2b1-foundation`: shared groundwork, the watchlists screen, the refreshes screen and the saved runs screen) and GUI.2b2 (`feat/gui-2b2-compare-detail`: the refresh comparison and run detail). The groundwork is the adapter extension, the shared engine client, term names, formatting, error and empty states, and navigation. Each has its own pull request. |
+| D80 | Saved runs screen (amends D32): a fifth screen lists `GET /v1/runs` with ticker, strategy and outcome filters. It is the only way to reach runs saved by a direct analysis. |
+| D81 | Adapter parameters: the adapter's `get(path, { path?, query? })` takes path and query parameters typed from each operation's `parameters` in the generated types. It stays a thin layer over `fetch` (D38). `GetPath` covers every GET that answers 200 with JSON. |
+| D82 | Shared engine client: the engine connection and API client are created once at startup and provided to the app, and screens obtain the client through `useApi()`. Each screen reloads its data when the locale changes. The engine information section uses the shared client. |
+| D83 | Term names (refines D43): IAD resolves term names with two requests cached in memory per locale: `GET /v1/help/references` (each code set's values to term ids) and `GET /v1/help` (the index, with every term's id, name and definition). It does not request `/v1/help/terms/{id}` per code. Each element keeps its term id. Each displayed field is bound to its code-set name, such as an outcome to `RunOutcome` and a cell's status to `CellStatusValue`. |
+| D84 | Errors (amends D45): screens branch on `reason_code` in three groups. Resource states (`watchlist_not_found`, `analysis_run_not_found`, `stored_selection_unreadable`, `unsupported_run_version`, `invalid_stored_run`, `unsupported_projection`) show the API's `reason` message as given, with `lang` from the response. `database_*` codes show catalog messages reusing the engine-state wording, with a retry button for `database_busy` only; this holds even though D78 cleaned the API's database messages, so a later message change cannot leak a command. Every other code (including `not_authenticated`, `host_not_allowed`, `origin_not_allowed`, `endpoint_not_found`, `invalid_parameter`, `execution_error` and any unknown code) shows one catalog message. Empty states (no watchlists, no refreshes, no runs) each have a catalog message. |
+| D85 | Formatting (with D78's units): `percent` uses `Intl` unit `percent` with 1 decimal place (`18.4%`). `points` is a number with 1 decimal place (`100.0`). `multiple` is a number with 1 decimal place plus a catalog suffix (`12.3×`). `per_share` with a currency uses `Intl` currency style, displayed as the currency code (`USD 36.69`). `per_share` with no currency is a number with 2 decimal places (`36.69`). An instant is shown in the user's time zone as a medium date with a short time (`Oct 30, 2026, 2:02 PM`). A date-only value (`period_end`, an as-of date) is formatted in UTC, date only, so the day never shifts (`Jun 30, 2024`). A null value shows `—`, with the cell's status term name beside it. |
+| D86 | Run detail header (GUI.2b2): the header gives company name and ticker, the strategy name (from `/v1/strategies`, keyed by method), the status as its term name and the effective as-of. Headline cards come from the run overview (D78), and `warnings` and `limitations` show as lists below them. |
+| D87 | Navigation: a persistent navigation with Watchlists, Refreshes, Saved runs and About. About holds the engine information section, and Watchlists is the start screen. Breadcrumbs (for example `Watchlists / Core`) stand in for a back button, which memory history does not have. |
+| D88 | Paging: a "Show more" button appends the next page, using `limit=50` and `has_more`. No numbered pages. |
+| D89 | Watchlists screen: the list shows name, entry count, created and last changed. One watchlist shows each entry's position, ticker, strategy and as-of only (Pydantic schema titles are not localizable and are poor labels; the full selection comes with GUI.3's selection form), followed by the refreshes of that watchlist (the D90 list, filtered by `watchlist_id`). On a 409 `stored_selection_unreadable` the screen shows the reason message; the remedy, removing the entry, comes with GUI.3. IAN's whole-watchlist refusal is kept, because a refresh of that watchlist fails too. |
+| D90 | Refreshes screen: each row shows the last completion time, plus the first completion time only when the two differ by a minute or more; the watchlist name as it was at refresh time, with no "(renamed)" marker; the run count; and one count column per outcome, headed by the `RunOutcome` term names. A refresh with no watchlist shows the catalog text "Ad hoc entries". |
+| D91 | Comparison (GUI.2b2): the preview mock-up's layout, implementing the Q3 answer and D44. The ticker column is sticky and strategy groups scroll horizontally. An outcome column appears in a strategy group only when that group has a non-completed run. A null run shows `—` with the catalog text "Not run". `headline_unavailable` shows its term name across the group. A strategy that is no longer declared shows its stored label with no term. Clicking a run's cells opens run detail. There is no "Refresh now" or "Download JSON", and the `alias` field is not shown. |
+| D92 | Run detail views (GUI.2b2): tabs for Summary, Details and Diagnostics (`/text?mode=concise\|details\|diagnostics`) and JSON (pretty-printed), all read-only, selectable `<pre>` blocks with no copy button. Engine text gets `lang` from Content-Language and `dir` from IAD's catalog for that language when IAD has one, otherwise `dir="auto"`. JSON is always `dir="ltr"`. |
+| D93 | Out of scope for GUI.2b: the running refresh job view (`GET /v1/refreshes/job`, which belongs with the refresh action in GUI.3), the language picker (D71 still holds), and any per-strategy rendering of a strategy document. |
+| D94 | Tests (adds to D46): a fixture with an extra, made-up strategy appears in the saved runs list, the comparison and run detail, proving that new strategies need no GUI code change; one browser test for each D84 group; and a unit test for each D85 unit, run with the locale pinned. |
+| D95 | Decision numbering: GUI.2b's decisions continue from D78, because D77 records GUI.2a2's placeholder messages. |
+| D96 | Plan layout: the GUI.2b row splits into GUI.2b1 and GUI.2b2, each with its own section. GUI.2b2's scope and acceptance criteria are written in GUI.2b1's pull request from D86, D91 and D92, and its own open decisions are taken before it starts. The scope limits gain D93's exclusions, and the limit asking GUI.2b to confirm that no reason message names a command, option or environment variable is recorded as met by D78. |
+| D97 | Branch: `feat/gui-2b1-foundation`, from main after API.8 merged. Its first commit re-vendors IAN `beb58a2`. |
+| D98 | App shell and routes: the navigation sits on the inline-start side under the product name, and the content area holds a breadcrumb and the screen. Routes are `/watchlists` (start screen; `/` redirects to it), `/watchlists/:watchlistId`, `/refreshes`, `/runs` and `/about`. The placeholder screen becomes the About screen, keeping the engine information section. The pre-release notice becomes "Pre-release: this application is under development." |
+| D99 | Engine not ready: the connection is obtained once (D82). While it is pending, the content area of every screen shows "Connecting to the analysis engine…". When the engine is not ready (an engine state, or no engine in the browser build, D70), the content area of every screen shows that state's existing catalog message, and the navigation stays usable. |
+| D100 | Request failures: `ApiError` also carries the failure envelope's `reason` and the response's `Content-Language`, which D84's resource-state group needs. A network failure while the engine is still running keeps D77's `engine.unreachable` message, and an exited engine keeps `engine.state.exited`. D84's third group shows "Something went wrong in the analysis engine." For `database_busy`, "Try again" reloads the screen's data. |
+| D101 | Term name elements: one `TermName` component shows a code as its term's name in an element with `data-term-id` and a `lang` from the help response's Content-Language. A strategy name shows its `/v1/strategies` `label`, with `data-term-id` set to the strategy's `term`. References, the help index and the strategies are each fetched once per locale; a failed fetch is not cached. A code with no reference, or a `method_id` that `/v1/strategies` does not list, shows as served, with no term id. Rejected: an IAN change adding a label to `RunSummaryDocument`. |
+| D102 | An entry's as-of: a date is formatted as a date-only value (D85), an instant in the user's time zone (D85), and null shows the catalog text "Latest data", as the API describes a null as-of. |
+| D103 | Saved runs filters: the ticker text is trimmed and sent only when it is not empty, and applies on Enter or when the field loses focus; the engine normalizes case. Strategy options come from `/v1/strategies` in declared order, outcome options from the `RunOutcome` code set in `/v1/help/references` in served order. Changing a filter reloads from the first page. With no filters an empty list shows "No saved runs yet."; with a filter, "No saved runs match these filters." The list has no refresh column. |
+| D104 | Linked rows: in GUI.2b1 only watchlist rows open something (the watchlist). Refresh rows and run rows stay plain until GUI.2b2 adds the comparison and run detail. |
+| D105 | Refresh time range: when the first and last completion times differ by a minute or more, the refreshes screen shows them with `Intl.DateTimeFormat.prototype.formatRange` (for example `Oct 30, 2026, 1:58 – 2:02 PM`). |
+| D106 | Formatting groundwork: every D85 formatter and its unit test lands in GUI.2b1, though number cells are first shown in GUI.2b2. |
+| D107 | Test fixtures and time zone: typed fixtures live in `tests/fixtures/api/`, shared by Vitest and Playwright. One Playwright engine mock generalizes `tests/browser/engine.spec.ts`'s route handling (CORS, Content-Language, a document per path and failure envelopes). Both runners pin the time zone to `America/Toronto`, so a date-only value wrongly formatted in local time fails. The extra strategy (D94) appears in the saved runs list, its strategy filter and a watchlist's entries. |
+| D108 | Catalog text: the English text in GUI.2b1's catalog entries table. The no-entries message is for a stored watchlist only; IAN refuses an empty list of entries before a refresh starts (rule `refresh.entries_empty`), and a listed refresh always has at least one run. |
+| D109 | TypeScript in Vue files: `eslint.config.js` gives `vue-eslint-parser` typescript-eslint's parser for `<script lang="ts">` blocks, so components can use typed props, type imports and typed refs. No new dependency; type-aware linting stays off. Rejected: untyped runtime props with typed code moved to `.ts` modules, which weakens component typing and would be copied. |
