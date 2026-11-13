@@ -1,4 +1,5 @@
 import { catalogs } from './catalogs.ts';
+import { getPlatform } from '../platform/index.ts';
 import type { AppI18n } from './index.ts';
 
 export const fallbackLocale = 'en';
@@ -25,4 +26,8 @@ export function applyLocale(i18n: AppI18n, tag: string): void {
   document.documentElement.lang = i18n.global.locale.value;
   document.documentElement.dir = catalog.meta.direction;
   document.title = catalog.app.name;
+  // The window title follows the locale through the platform module (R5).
+  getPlatform()
+    .setWindowTitle(catalog.app.name)
+    .catch(() => {});
 }
