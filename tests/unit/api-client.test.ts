@@ -1,14 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError, createApiClient } from '../../src/api/client.ts';
-import type { components } from '../../src/api/schema.ts';
-
-const info: components['schemas']['InfoDocument'] = {
-  api_versions: ['v1'],
-  engine_version: '1.2.3',
-  locales: [{ tag: 'en', name: 'English' }],
-  schema_version: 2,
-  sec_identity_configured: false,
-};
+import { info } from '../fixtures/api/data.ts';
 
 function json(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
@@ -40,6 +32,43 @@ describe('API adapter', () => {
       Authorization: 'Bearer secret',
       'Accept-Language': 'pt-BR',
     });
+  });
+
+  it('substitutes path parameters, URL-encoded', async () => {
+    const fetchStub = vi.fn().mockResolvedValue(json({}));
+
+    await client(fetchStub).get('/v1/watchlists/{watchlist_id}', {
+      path: { watchlist_id: 'a b/c' },
+    });
+
+    expect(fetchStub.mock.calls[0]?.[0]).toBe(
+      'http://127.0.0.1:5000/v1/watchlists/a%20b%2Fc',
+    );
+  });
+
+  it('sends query parameters and omits undefined ones', async () => {
+    const fetchStub = vi.fn().mockResolvedValue(json({}));
+
+    await client(fetchStub).get('/v1/runs', {
+      query: {
+        ticker: 'MSFT',
+        method_id: undefined,
+        limit: '50',
+        offset: '0',
+      },
+    });
+
+    expect(fetchStub.mock.calls[0]?.[0]).toBe(
+      'http://127.0.0.1:5000/v1/runs?ticker=MSFT&limit=50&offset=0',
+    );
+  });
+
+  it('adds no question mark when every query parameter is undefined', async () => {
+    const fetchStub = vi.fn().mockResolvedValue(json({}));
+
+    await client(fetchStub).get('/v1/runs', { query: { ticker: undefined } });
+
+    expect(fetchStub.mock.calls[0]?.[0]).toBe('http://127.0.0.1:5000/v1/runs');
   });
 
   it('returns the data with the response Content-Language', async () => {
@@ -85,12 +114,15 @@ describe('API adapter', () => {
     });
   });
 
-  it('does not ask for the engine status after an HTTP failure', async () => {
+  it('carries the envelope reason and Content-Language on a failure, without asking for the engine status', async () => {
     const status = vi.fn().mockResolvedValue('running');
     const fetchStub = vi
       .fn()
       .mockResolvedValue(
-        json({ reason_code: 'not_authenticated' }, { status: 401 }),
+        json(
+          { reason_code: 'watchlist_not_found', reason: 'No such watchlist.' },
+          { status: 404, headers: { 'Content-Language': 'en-CA' } },
+        ),
       );
 
     const error = await client(fetchStub, status)
@@ -100,9 +132,28 @@ describe('API adapter', () => {
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({
       kind: 'failure',
-      status: 401,
-      reasonCode: 'not_authenticated',
+      status: 404,
+      reasonCode: 'watchlist_not_found',
+      reason: 'No such watchlist.',
+      contentLanguage: 'en-CA',
     });
     expect(status).not.toHaveBeenCalled();
+  });
+
+  it('leaves the fields null when the failure body is not an envelope', async () => {
+    const fetchStub = vi
+      .fn()
+      .mockResolvedValue(new Response('not json', { status: 500 }));
+
+    const error = await client(fetchStub)
+      .get('/v1/info')
+      .catch((caught: unknown) => caught);
+
+    expect(error).toMatchObject({
+      kind: 'failure',
+      reasonCode: null,
+      reason: null,
+      contentLanguage: null,
+    });
   });
 });

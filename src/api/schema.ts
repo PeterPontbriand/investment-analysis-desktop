@@ -226,6 +226,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/runs/{analysis_run_id}/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Show one saved run's headline: its outcome and the cells its strategy offers for a table. */
+        get: operations["get_run_overview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/runs/{analysis_run_id}/text": {
         parameters: {
             query?: never;
@@ -553,6 +570,12 @@ export interface components {
         /** @enum {string} */
         CellStatusValue: "ok" | "unavailable" | "not_applicable" | "input_unavailable" | "invalid_input" | "provider_error";
         /**
+         * CellUnit
+         * @description The unit of a number cell's value; a client formats the value by it.
+         * @enum {string}
+         */
+        CellUnit: "percent" | "points" | "multiple" | "per_share";
+        /**
          * CheckOutcome
          * @description Outcome of one test. An unavailable test is never a fail.
          * @enum {string}
@@ -569,6 +592,11 @@ export interface components {
          * @description One headline cell of a run.
          */
         CompareCellDocument: {
+            /**
+             * Currency
+             * @description The ISO 4217 currency of a per-share amount; null for any other cell, and for a per-share cell whose run recorded no currency.
+             */
+            currency: string | null;
             /**
              * Key
              * @description The cell's stable key.
@@ -589,14 +617,11 @@ export interface components {
              * @description The id of the glossary term that explains the label.
              */
             term: string;
-            /**
-             * Unit
-             * @description The unit of a number: percent, points, multiple, or '<currency> per share'.
-             */
-            unit: string | null;
+            /** @description The unit of a number cell; null for a text cell. */
+            unit: components["schemas"]["CellUnit"] | null;
             /**
              * Value
-             * @description The number or text; null when the run has none.
+             * @description The number or text; null when the run has none. A percent value is the percentage itself: 18.4 means 18.4 %.
              */
             value: number | string | null;
         };
@@ -661,9 +686,9 @@ export interface components {
             outcome: components["schemas"]["RunOutcome"];
             /**
              * Requested As Of
-             * @description The point in time the run asked for; null means now.
+             * @description The point in time the run asked for, as it was asked: a date or an instant; null means now.
              */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
         };
         /**
          * CompareStrategyDocument
@@ -747,8 +772,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             eps_cagr: components["schemas"]["MetricResultPart"];
@@ -778,7 +802,7 @@ export interface components {
             provider_check: components["schemas"]["ProviderCheckItem"][] | null;
             provider_failure: components["schemas"]["ProviderFailure"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             /** Result Schema Version */
             result_schema_version: number;
             /** Schema Version */
@@ -1028,7 +1052,7 @@ export interface components {
         FCFResolvedInputPart: {
             accounting_scope: components["schemas"]["AccountingScope"] | null;
             /** As Of */
-            as_of: string | null;
+            as_of: (string) | null;
             /** Available At */
             available_at: string | null;
             /** Basis */
@@ -1264,8 +1288,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             inputs: components["schemas"]["GrahamGrowthInputsPart"];
@@ -1289,7 +1312,7 @@ export interface components {
             reason: string | null;
             reason_code: components["schemas"]["ReasonCode"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             result: components["schemas"]["GrahamGrowthResultPart"];
             /** Schema Version */
             schema_version: number;
@@ -1391,8 +1414,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             inputs: components["schemas"]["GrahamNumberInputsPart"];
@@ -1415,7 +1437,7 @@ export interface components {
             reason: string | null;
             reason_code: components["schemas"]["ReasonCode"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             result: components["schemas"]["GrahamNumberResultPart"];
             /** Schema Version */
             schema_version: number;
@@ -1868,8 +1890,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             instrument_kind: components["schemas"]["InstrumentKindPart"] | null;
@@ -1888,7 +1909,7 @@ export interface components {
             reason: string | null;
             reason_code: components["schemas"]["ReasonCode"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             result: components["schemas"]["MomentumResultPart"] | null;
             /** Schema Version */
             schema_version: number;
@@ -2029,8 +2050,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             industry_class: components["schemas"]["IndustryClass"] | null;
@@ -2053,7 +2073,7 @@ export interface components {
             reason: string | null;
             reason_code: components["schemas"]["ReasonCode"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             /** Result Schema Version */
             result_schema_version: number;
             /** Schema Version */
@@ -2244,7 +2264,7 @@ export interface components {
         ProviderFailureInput: {
             /**
              * Input
-             * @description The strategy input the failure was recorded against; null when the failure was raised.
+             * @description The strategy input the failure was recorded against; null when the provider failed before the failure could be tied to one input.
              */
             input: string | null;
             kind: components["schemas"]["ProviderFailureKind"];
@@ -2335,10 +2355,10 @@ export interface components {
          *     ``sequence`` counts the job's events from 1 in the order they were recorded. ``position`` is the entry's 0-based
          *     place in the refresh, the same as a saved run's ``batch_position`` and the index of an ``entries[i]`` error; it is
          *     not the 1-based ``entry_number`` of a watchlist. ``result`` and ``analysis`` are null for a started event, and
-         *     ``analysis`` is also null for a job that raised.
+         *     ``analysis`` is also null for a job that stopped because of an unexpected problem.
          */
         RefreshEventDocument: {
-            /** @description The job's analysis, as POST /v1/analyses returns it, with its provider_check element null; null for a started event and for a job that raised. */
+            /** @description The job's analysis, as POST /v1/analyses returns it, with its provider_check element null; null for a started event and for a job that stopped because of an unexpected problem. */
             analysis: components["schemas"]["AnalysisDocument"] | null;
             kind: components["schemas"]["RefreshEventKind"];
             /** Method Id */
@@ -2388,10 +2408,10 @@ export interface components {
             refresh_id: string;
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /**
              * State
              * @description running, stopping, completed, stopped or failed; treat any other value as running.
@@ -2472,9 +2492,10 @@ export interface components {
          * RefreshResultDocument
          * @description One (ticker, selection) job of a refresh.
          *
-         *     Exactly one of a saved run (``analysis_run_id``), an unsaved outcome (``status`` with no run) and a failure
-         *     (``error``) describes the job, and ``reason_code`` is set if and only if the job raised (``error``) or its
-         *     ``status`` is ``failed``. An ``unavailable`` job is an analysis outcome and carries none.
+         *     Exactly one of a saved run (``analysis_run_id``), an unsaved outcome (``outcome`` with no run) and a failure
+         *     (``error``) describes the job, and ``reason_code`` is set if and only if the job stopped because of an unexpected
+         *     problem (``error``) or its ``outcome`` is ``failed``. An ``unavailable`` job is an analysis outcome and carries
+         *     none.
          */
         RefreshResultDocument: {
             /**
@@ -2484,17 +2505,17 @@ export interface components {
             analysis_run_id: string | null;
             /**
              * Error
-             * @description The message the application wrote for the failure, chosen by its code; null unless the job raised.
+             * @description The message the application wrote for the failure, chosen by its code; null unless the job stopped because of an unexpected problem.
              */
             error: string | null;
             /** Method Id */
             method_id: string;
-            /** @description The stable code of the failure; null unless the job raised or its status is failed. */
+            /** @description How the job's run ended, whether or not it was saved; null for a job that stopped because of an unexpected problem, before it produced an outcome. */
+            outcome: components["schemas"]["RunOutcome"] | null;
+            /** @description The stable code of the failure; null unless the job stopped because of an unexpected problem or its outcome is failed. */
             reason_code: components["schemas"]["FailureReasonCode"] | null;
             /** Saved */
             saved: boolean;
-            /** @description The run's or the unsaved outcome's status; null for a raised job. */
-            status: components["schemas"]["RunOutcome"] | null;
             /** Ticker */
             ticker: string;
         };
@@ -2507,7 +2528,7 @@ export interface components {
         RefreshSummaryDocument: {
             /**
              * Counts
-             * @description Jobs per status; a job that raised counts as 'error'.
+             * @description How many jobs ended in each outcome. A job that stopped because of an unexpected problem, before it produced an outcome, is counted under the key `error`.
              */
             counts: {
                 [key: string]: number;
@@ -2526,10 +2547,10 @@ export interface components {
             results: components["schemas"]["RefreshResultDocument"][];
             /**
              * Schema Version
-             * @default 3
+             * @default 4
              * @constant
              */
-            schema_version: 3;
+            schema_version: 4;
             /**
              * Watchlist Id
              * @description The watchlist refreshed; null for a refresh of a list of entries.
@@ -2667,7 +2688,7 @@ export interface components {
          */
         ResolvedInputPart: {
             /** As Of */
-            as_of: string | null;
+            as_of: (string) | null;
             /** Available At */
             available_at: string | null;
             /** Basis */
@@ -2719,6 +2740,51 @@ export interface components {
          */
         RunOutcome: "completed" | "unavailable" | "not_applicable" | "failed";
         /**
+         * RunOverviewDocument
+         * @description The whole run overview: what a run is, how it ended and its headline, or why it has none.
+         *
+         *     ``schema_version`` is this document's own lineage and is independent of every other document's.
+         */
+        RunOverviewDocument: {
+            /**
+             * Analysis Run Id
+             * Format: uuid
+             */
+            analysis_run_id: string;
+            /**
+             * Completed At
+             * Format: date-time
+             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             */
+            completed_at: string;
+            /** @description The run's cells; null when headline_unavailable is set. */
+            headline: components["schemas"]["CompareHeadlineDocument"] | null;
+            /** @description Why the run has no headline, if it has none. */
+            headline_unavailable: components["schemas"]["HeadlineUnavailable"] | null;
+            /** @description The run's outcome, read from its stored record. */
+            outcome: components["schemas"]["RunOutcome"];
+            /**
+             * Refresh Id
+             * @description The refresh that saved the run; null for a run saved by a direct command.
+             */
+            refresh_id: string | null;
+            /**
+             * Requested As Of
+             * @description The point in time the run asked for, as it was asked: a date or an instant; null means now.
+             */
+            requested_as_of: (string) | null;
+            /**
+             * Schema Version
+             * @default 2
+             * @constant
+             */
+            schema_version: 2;
+            /** @description The strategy that produced the run. */
+            strategy: components["schemas"]["CompareStrategyDocument"];
+            /** Ticker */
+            ticker: string;
+        };
+        /**
          * RunSummaryDocument
          * @description One saved run, summarized.
          */
@@ -2736,12 +2802,12 @@ export interface components {
             completed_at: string;
             /** Method Id */
             method_id: string;
+            outcome: components["schemas"]["RunOutcome"];
             /**
              * Refresh Id
              * @description The refresh that saved the run; null for a run saved by a direct command.
              */
             refresh_id: string | null;
-            status: components["schemas"]["RunOutcome"];
             /** Ticker */
             ticker: string;
         };
@@ -2764,10 +2830,10 @@ export interface components {
             rows: components["schemas"]["CompareRowDocument"][];
             /**
              * Schema Version
-             * @default 4
+             * @default 6
              * @constant
              */
-            schema_version: 4;
+            schema_version: 6;
             /**
              * Strategies
              * @description The columns, in order.
@@ -2798,10 +2864,10 @@ export interface components {
             items: components["schemas"]["RunSummaryDocument"][];
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
         };
         /**
          * SecurityIdentityPart
@@ -3014,10 +3080,10 @@ export interface components {
             deleted: boolean;
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /** @description The first entry this version could not read; null when nothing was deleted. */
             unreadable: components["schemas"]["UnreadableEntryDocument"] | null;
             /** @description The deleted watchlist; null when an entry was unreadable or nothing was deleted. */
@@ -3043,10 +3109,10 @@ export interface components {
             entries: components["schemas"]["WatchlistEntryDocument"][];
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /**
              * Updated At
              * @description Null until the watchlist is first changed.
@@ -3070,7 +3136,7 @@ export interface components {
             index: number;
             /**
              * Selection
-             * @description The stored selection; its method_id says which strategy. Its instants (as_of) carry a UTC offset.
+             * @description The stored selection; its method_id says which strategy. Its as_of is a date when a date was given, else an instant with its UTC offset.
              */
             selection: components["schemas"]["MomentumSelection"] | components["schemas"]["GrahamNumberSelection"] | components["schemas"]["GrahamGrowthSelection"] | components["schemas"]["FCFGrowthSelection"] | components["schemas"]["PiotroskiSelection"];
             /** Ticker */
@@ -3113,10 +3179,10 @@ export interface components {
             removed: number;
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /** @description The first remaining entry this version cannot read; the removal is committed either way. */
             unreadable: components["schemas"]["UnreadableEntryDocument"] | null;
             /** @description The watchlist read back; null when an entry is unreadable. */
@@ -3129,10 +3195,10 @@ export interface components {
         WatchlistRenameDocument: {
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /** @description The first entry this version cannot read; the rename is committed either way. */
             unreadable: components["schemas"]["UnreadableEntryDocument"] | null;
             /** @description The renamed watchlist; null when an entry is unreadable. */
@@ -4458,7 +4524,7 @@ export interface operations {
                 /** @description Only runs of this method. */
                 method_id?: string;
                 /** @description Only runs with this outcome. */
-                status?: string;
+                outcome?: string;
                 /** @description Only runs saved by this refresh. */
                 refresh_id?: string;
                 /** @description Maximum rows (1 to 100); 20 when absent. */
@@ -4591,6 +4657,127 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MomentumDocument"] | components["schemas"]["GrahamNumberDocument"] | components["schemas"]["GrahamGrowthDocument"] | components["schemas"]["FCFDocument"] | components["schemas"]["PiotroskiDocument"];
+                };
+            };
+            /** @description A rejected parameter, or a Host or Origin the server does not allow. */
+            400: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description No valid bearer token. */
+            401: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    /** @description The challenge: Bearer. */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description No such resource. */
+            404: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description The endpoint does not accept this method. */
+            405: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description An unexpected failure. */
+            500: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description The database is busy. */
+            503: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+        };
+    };
+    get_run_overview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The run's ID. */
+                analysis_run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The document. */
+            200: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOverviewDocument"];
                 };
             };
             /** @description A rejected parameter, or a Host or Origin the server does not allow. */

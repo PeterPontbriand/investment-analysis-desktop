@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from './fixtures.ts';
+import { engineUrl, mockEngine } from './engine-mock.ts';
 import en from '../../src/locales/en.json' with { type: 'json' };
 
 const arXB = JSON.parse(
@@ -10,12 +11,10 @@ const tauriConf = JSON.parse(
 ) as { app: { security: { csp: string } } };
 
 test.describe('English', () => {
-  test('shows the static pre-release screen', async ({ page }) => {
+  test('sets the title, lang and dir from the catalog', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(en.app.name);
-    await expect(
-      page.getByRole('heading', { name: en.app.name }),
-    ).toBeVisible();
+    await expect(page.getByText(en.app.name, { exact: true })).toBeVisible();
     await expect(page.getByText(en.app.preReleaseNotice)).toBeVisible();
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
     await expect(page.locator('html')).toHaveAttribute(
@@ -47,13 +46,18 @@ test.describe('right-to-left pseudo-locale', () => {
         configurable: true,
       });
     });
-    await page.goto('/');
+    await mockEngine(page);
+    await page.goto(engineUrl);
     await expect(page.locator('html')).toHaveAttribute('lang', 'ar-XB');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page).toHaveTitle(arXB.app.name);
-    await expect(
-      page.getByRole('heading', { name: arXB.app.name }),
-    ).toBeVisible();
+    await expect(page.getByText(arXB.app.name, { exact: true })).toBeVisible();
     await expect(page.getByText(arXB.app.preReleaseNotice)).toBeVisible();
+    await expect(
+      page.getByRole('navigation', { name: arXB.nav.label }),
+    ).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      arXB.nav.watchlists,
+    );
   });
 });

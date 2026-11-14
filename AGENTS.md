@@ -45,6 +45,8 @@ Use IAN's docs/project/milestones/v0.2/integration-readiness/IR_CONTRACT_AND_SLI
 - Has one short section per unit of work with labeled Problem, Decision, Scope, Branch, and Detail bullets. Each section ends with a link to the lower-level document that owns its detail, or says no slice plan exists.
 - Follows the work-unit sections with scope limits and acceptance criteria, then background and origin. Decision records, renumbering history, branching rationale, and accepted exceptions belong in a verbatim appendix.
 - Keeps detail in its lowest-level owning document; a parent summarizes and links instead of duplicating a child's inventory, decisions, or history.
+- Documentation follows the layout in docs/project/README.md: project-wide documents in docs/project/, a milestone's implementation plan at docs/project/milestones/<milestone>/IMPLEMENTATION_PLAN.md, and each unit's slice plan and records in docs/project/milestones/<milestone>/<unit>/. An index links to the owning document and never copies its status.
+- IAD documentation never redefines a term IAN's glossary owns; it links to the entry by its permanent id.
 
 Documentation uses no Mermaid. Draw diagrams as plain text or tables. A section reference always names its document.
 
@@ -74,3 +76,5 @@ Never add AI or tool attribution anywhere in this repository: no Co-Authored-By 
 ## Verification
 
 Run `pnpm gate` before pushing. The gate installs frozen dependencies and Playwright's Chromium and WebKit browsers, checks formatting, lint, application and tools types, Markdown links and anchors, Mermaid fences and sequence tables, runs Vitest, builds the production app, and runs the Chromium and WebKit browser tests. It writes the full output and a per-step result and duration summary to the root `gate-output.txt`, which is git-ignored. CI runs the same gate on Windows, macOS, and Linux; Linux installs Playwright's system libraries first. The `quality` check passes only when all three platform jobs succeed. Report actual command results; do not claim checks passed unless they ran successfully.
+
+A pull request that adds or changes a screen updates docs/project/SMOKE_TESTING.md, and its description records a run of it against a real engine at the vendored IAN commit.

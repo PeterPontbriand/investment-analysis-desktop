@@ -24,6 +24,9 @@ export default defineConfig(({ mode }) => {
         ),
       },
     },
+    // The dev server does not watch the Rust build, as Tauri's Vite guide says;
+    // watching it fails while Cargo replaces files under src-tauri/target.
+    server: { watch: { ignored: ['**/src-tauri/**'] } },
     build: { outDir: browserTest ? 'dist-browser-test' : 'dist' },
     preview: {
       headers: { 'Content-Security-Policy': tauriConf.app.security.csp },

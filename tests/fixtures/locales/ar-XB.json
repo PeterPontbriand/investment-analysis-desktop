@@ -4,7 +4,75 @@
   },
   "app": {
     "name": "[ar-XB] Investment Analysis Desktop",
-    "preReleaseNotice": "[ar-XB] Pre-release: this application is under development and does not yet show any analysis."
+    "preReleaseNotice": "[ar-XB] Pre-release: this application is under development."
+  },
+  "nav": {
+    "label": "[ar-XB] Main",
+    "watchlists": "[ar-XB] Watchlists",
+    "refreshes": "[ar-XB] Refreshes",
+    "runs": "[ar-XB] Saved runs",
+    "about": "[ar-XB] About"
+  },
+  "breadcrumb": {
+    "label": "[ar-XB] Breadcrumb"
+  },
+  "common": {
+    "showMore": "[ar-XB] Show more",
+    "tryAgain": "[ar-XB] Try again",
+    "noValue": "[ar-XB] —",
+    "multiple": "[ar-XB] {value}×"
+  },
+  "state": {
+    "defect": "[ar-XB] Something went wrong in the analysis engine."
+  },
+  "watchlists": {
+    "columns": {
+      "name": "[ar-XB] Name",
+      "entries": "[ar-XB] Entries",
+      "created": "[ar-XB] Created",
+      "updated": "[ar-XB] Last changed"
+    },
+    "empty": "[ar-XB] There are no watchlists yet."
+  },
+  "watchlist": {
+    "summary": "[ar-XB] {count} entry · created {date} | {count} entries · created {date}",
+    "columns": {
+      "position": "[ar-XB] #",
+      "ticker": "[ar-XB] Ticker",
+      "strategy": "[ar-XB] Strategy",
+      "asOf": "[ar-XB] As of"
+    },
+    "latestData": "[ar-XB] Latest data",
+    "noEntries": "[ar-XB] This watchlist has no entries.",
+    "refreshesHeading": "[ar-XB] Refreshes of this watchlist",
+    "noRefreshes": "[ar-XB] This watchlist has not been refreshed yet."
+  },
+  "refreshes": {
+    "columns": {
+      "completed": "[ar-XB] Completed",
+      "watchlist": "[ar-XB] Watchlist",
+      "runs": "[ar-XB] Runs"
+    },
+    "adHoc": "[ar-XB] Ad hoc entries",
+    "empty": "[ar-XB] There are no refreshes yet."
+  },
+  "runs": {
+    "filters": {
+      "ticker": "[ar-XB] Ticker",
+      "strategy": "[ar-XB] Strategy",
+      "outcome": "[ar-XB] Outcome",
+      "allStrategies": "[ar-XB] All strategies",
+      "allOutcomes": "[ar-XB] All outcomes",
+      "clear": "[ar-XB] Clear filters"
+    },
+    "columns": {
+      "completed": "[ar-XB] Completed",
+      "ticker": "[ar-XB] Ticker",
+      "strategy": "[ar-XB] Strategy",
+      "outcome": "[ar-XB] Outcome"
+    },
+    "empty": "[ar-XB] No saved runs yet.",
+    "emptyFiltered": "[ar-XB] No saved runs match these filters."
   },
   "engine": {
     "heading": "[ar-XB] Analysis engine",

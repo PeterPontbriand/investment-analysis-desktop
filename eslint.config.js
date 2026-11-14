@@ -36,6 +36,13 @@ export default tseslint.config(
   },
   {
     files: ['**/*.vue'],
+    languageOptions: {
+      parserOptions: {
+        parser: tseslint.parser,
+        extraFileExtensions: ['.vue'],
+        sourceType: 'module',
+      },
+    },
     rules: { 'vue/no-bare-strings-in-template': 'error' },
   },
   {

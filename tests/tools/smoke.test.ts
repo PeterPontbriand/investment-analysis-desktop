@@ -1,0 +1,803 @@
+import { readFileSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import {
+  readCommands,
+  setupCommands,
+  splitCommandLine,
+} from '../../tools/smoke/commands.ts';
+import { parseSetupCommands, parseSteps } from '../../tools/smoke/document.ts';
+import { renderRecord, scrub } from '../../tools/smoke/record.ts';
+import {
+  databaseUrlFor,
+  folderStamp,
+  applicationEnvironment,
+  newSession,
+  runSetup,
+  stopMessages,
+} from '../../tools/smoke/setup.ts';
+import {
+  readEngineVersion,
+  readVendoredCommit,
+  resolveIan,
+  resolveIanInUv,
+} from '../../tools/smoke/source.ts';
+import { SmokeStop, type Runner } from '../../tools/smoke/types.ts';
+import {
+  dependencies,
+  enginePath,
+  healthy,
+  ianPath,
+  json,
+  uvBinFolder,
+  uvIanPath,
+  repositoryRoot,
+  sourceRecord,
+  vendoredCommit,
+} from './smoke-fixtures.ts';
+
+const smokeDocument = readFileSync('docs/project/SMOKE_TESTING.md', 'utf8');
+
+describe('smoke test document steps', () => {
+  it('reads steps, with links replaced by their text and fences ignored', () => {
+    const steps = parseSteps(
+      [
+        '# Title',
+        '',
+        'Step 1. Read [the guide](https://example.test/guide) first. Then more.',
+        '',
+        'Step 2. Do this:',
+        '',
+        '```text',
+        'N9. not a step',
+        '```',
+        '',
+        'Check N1. A second line',
+        'continues here.',
+        '',
+        'Not a step. S3. nor this.',
+      ].join('\n'),
+    );
+    expect(steps).toEqual([
+      { id: 'Step 1', hint: 'Read the guide first' },
+      { id: 'Step 2', hint: 'Do this' },
+      { id: 'Check N1', hint: 'A second line continues here' },
+    ]);
+  });
+
+  it('finds well-formed, unique, ordered steps in SMOKE_TESTING.md', () => {
+    const steps = parseSteps(smokeDocument);
+    const ids = steps.map((step) => step.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    // The setup steps come first and are numbered 1 upward.
+    const setup = ids.filter((id) => id.startsWith('Step '));
+    expect(ids.slice(0, setup.length)).toEqual(setup);
+    expect(setup).toEqual(setup.map((_id, index) => `Step ${index + 1}`));
+    expect(setup.length).toBeGreaterThan(0);
+    // Each check group starts at 1 and goes up by one, in one run per letter.
+    const checks = ids.slice(setup.length);
+    const seen = new Set<string>();
+    let letter = '';
+    let last = 0;
+    for (const id of checks) {
+      const match = /^Check ([A-Z])([1-9]\d*)$/.exec(id);
+      expect(match, `${id} is a well-formed check id`).not.toBeNull();
+      const [, group, digits] = match!;
+      const number = Number(digits);
+      if (group === letter) expect(number).toBe(last + 1);
+      else {
+        expect(seen.has(group!), `${group} is not in two separate runs`).toBe(
+          false,
+        );
+        seen.add(group!);
+        expect(number).toBe(1);
+      }
+      letter = group!;
+      last = number;
+    }
+    for (const step of steps) expect(step.hint).not.toBe('');
+  });
+
+  it('reads a check of a group letter it has not seen before', () => {
+    const steps = parseSteps(
+      'Step 1. Start.\n\nCheck Q1. A new group.\n\nCheck Q2. Its second check:\n',
+    );
+    expect(steps).toEqual([
+      { id: 'Step 1', hint: 'Start' },
+      { id: 'Check Q1', hint: 'A new group' },
+      { id: 'Check Q2', hint: 'Its second check' },
+    ]);
+  });
+
+  it('detects fences, indented or tilde, the way the step reader does', () => {
+    const document = [
+      'Step 4. Do it:',
+      '',
+      '  ```powershell',
+      '  ian db upgrade',
+      '  ```',
+      '',
+      '~~~text',
+      'ian runs list',
+      '~~~',
+      '',
+      'ian not-a-command-outside-a-fence',
+      '',
+      'Step 10. Start.',
+    ].join('\n');
+    expect(parseSetupCommands(document)).toEqual([
+      ['db', 'upgrade'],
+      ['runs', 'list'],
+    ]);
+    expect(
+      parseSteps('Step 1. Real.\n\n  ```text\n  Step 2. Not a step.\n  ```\n'),
+    ).toEqual([{ id: 'Step 1', hint: 'Real' }]);
+  });
+
+  it('keeps the setup commands in step with the document (drift check)', () => {
+    expect(setupCommands.map((command) => command.args)).toEqual(
+      parseSetupCommands(smokeDocument),
+    );
+  });
+
+  it('splits a command line with quoted words', () => {
+    expect(splitCommandLine('ian refresh "Smoke Test" --x')).toEqual([
+      'ian',
+      'refresh',
+      'Smoke Test',
+      '--x',
+    ]);
+  });
+});
+
+describe('sources', () => {
+  it('reads the commit from the real source record and a fixture', () => {
+    expect(readVendoredCommit(sourceRecord)).toBe(vendoredCommit);
+    expect(
+      readVendoredCommit(readFileSync('vendor/ian/SOURCE.md', 'utf8')),
+    ).toMatch(/^[0-9a-f]{40}$/);
+    expect(() => readVendoredCommit('no commit here')).toThrow();
+  });
+
+  it('reads the engine version from the [project] table only', () => {
+    expect(
+      readEngineVersion(
+        '[tool.x]\nversion = "9"\n\n[project]\nname = "n"\nversion = "1.2.3"\n\n[other]\nversion = "7"\n',
+      ),
+    ).toBe('1.2.3');
+    expect(readEngineVersion('[project]\nname = "n"\n')).toBeNull();
+  });
+
+  it('resolves ian from IAD_IAN_PATH, else from PATH, else not at all', () => {
+    const exists = (path: string) => path === 'C:\\bin\\ian.exe';
+    expect(
+      resolveIan({ IAD_IAN_PATH: 'X:\\ian.exe' }, 'win32', exists),
+    ).toEqual({
+      path: 'X:\\ian.exe',
+      source: 'IAD_IAN_PATH',
+    });
+    expect(resolveIan({ PATH: 'C:\\a;C:\\bin\\' }, 'win32', exists)).toEqual({
+      path: 'C:\\bin\\ian.exe',
+      source: 'PATH',
+    });
+    expect(
+      resolveIan({ IAD_IAN_PATH: '', PATH: 'C:\\a' }, 'win32', exists),
+    ).toBe(null);
+  });
+
+  // Literal paths: these hold on every runner, whatever the host's platform.
+  describe.each([
+    {
+      name: 'win32',
+      separator: ';',
+      folders: ['C:\\a', 'C:\\bin\\'],
+      expected: 'C:\\bin\\ian.exe',
+      uvFolder: 'C:\\Users\\x\\.local\\bin\\',
+      uvExpected: 'C:\\Users\\x\\.local\\bin\\ian.exe',
+    },
+    {
+      name: 'linux',
+      separator: ':',
+      folders: ['/a', '/usr/local/bin/'],
+      expected: '/usr/local/bin/ian',
+      uvFolder: '/home/x/.local/bin/',
+      uvExpected: '/home/x/.local/bin/ian',
+    },
+  ])('on $name', (c) => {
+    it('finds ian on PATH with the platform separator, joiner and file name', () => {
+      const exists = (path: string) => path === c.expected;
+      expect(
+        resolveIan({ PATH: c.folders.join(c.separator) }, c.name, exists),
+      ).toEqual({ path: c.expected, source: 'PATH' });
+    });
+
+    it("finds ian in uv's command folder with the platform joiner and file name", async () => {
+      const run: Runner = () =>
+        Promise.resolve({ code: 0, stdout: `${c.uvFolder}\n`, stderr: '' });
+      const exists = (path: string) => path === c.uvExpected;
+      expect(await resolveIanInUv(run, {}, c.name, exists)).toEqual({
+        path: c.uvExpected,
+        source: 'uv',
+      });
+      expect(await resolveIanInUv(run, {}, c.name, () => false)).toBeNull();
+    });
+  });
+});
+
+describe('record', () => {
+  const steps = parseSteps(
+    'Step 1. Get the engine.\n\nStep 2. Check the database.\n\nCheck N1. Open the app.\n\nCheck W1. List watchlists.\n',
+  );
+  const base = {
+    date: '2026-11-13 09:05 (UTC-05:00)',
+    timeZone: 'America/Toronto',
+    operatingSystem: 'Windows_NT 10.0 (win32 x64)',
+    applicationCommit: 'abc1234',
+    dirty: false,
+    engineCommit: 'beb58a2',
+    enginePath: 'C:/tools/ian.exe',
+    ianSource: 'PATH' as const,
+    engineVersion: '0.1.0',
+    data: { watchlists: 2, entries: 4, runs: 5, refreshes: 1 },
+    throwawayFolder: '.tmp/smoke/20261113-090507',
+    steps,
+    scripted: new Map([
+      ['Step 1', { fact: 'engine at beb58a2' }],
+      ['Step 2', {}],
+    ]),
+    log: [{ command: 'ian --help', output: 'Usage\n' }],
+    stopped: null,
+  };
+
+  it('renders the layout from fixed inputs', () => {
+    expect(renderRecord(base)).toBe(
+      [
+        '# Smoke test record',
+        '',
+        '- **Date:** 2026-11-13 09:05 (UTC-05:00)',
+        '- **Time zone:** America/Toronto',
+        '- **Operating system:** Windows_NT 10.0 (win32 x64)',
+        '- **Application commit:** abc1234',
+        '- **Engine commit:** beb58a2, matches vendor/ian/SOURCE.md',
+        "- **Engine:** `ian` from `PATH`, C:/tools/ian.exe; version 0.1.0, from the engine checkout's pyproject.toml",
+        '- **Data:** 2 watchlists, 4 entries, 5 runs, 1 refresh',
+        '- **Throwaway folder:** .tmp/smoke/20261113-090507',
+        '',
+        'Mark each step `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass. A failure note never includes private data.',
+        '',
+        '## Setup (scripted)',
+        '',
+        '- **Step 1** Get the engine: pass (scripted) (engine at beb58a2)',
+        '- **Step 2** Check the database: pass (scripted)',
+        '',
+        '<details><summary>Command output</summary>',
+        '',
+        '````text',
+        '> ian --help',
+        'Usage',
+        '````',
+        '',
+        '</details>',
+        '',
+        '## Checks',
+        '',
+        '- **Check N1** Open the app:',
+        '- **Check W1** List watchlists:',
+        '',
+        '**Result:** all steps passed | failing step numbers, with notes',
+        '',
+      ].join('\n'),
+    );
+  });
+
+  it.each([
+    ['IAD_IAN_PATH', '`IAD_IAN_PATH`'],
+    ['PATH', '`PATH`'],
+    ['uv', "uv's command folder"],
+  ] as const)('names %s as where ian came from', (ianSource, name) => {
+    expect(renderRecord({ ...base, ianSource })).toContain(
+      `- **Engine:** \`ian\` from ${name}, C:/tools/ian.exe; version 0.1.0`,
+    );
+  });
+
+  it('notes uncommitted changes', () => {
+    expect(renderRecord({ ...base, dirty: true })).toContain(
+      '- **Application commit:** abc1234 (with uncommitted changes)',
+    );
+  });
+
+  it('leaves a step the tool only started to the contributor to mark', () => {
+    const text = renderRecord({
+      ...base,
+      scripted: new Map([
+        ['Step 1', {}],
+        [
+          'Step 2',
+          {
+            fact: 'the tool started the application; mark whether its window opened',
+            leftToYou: true,
+          },
+        ],
+      ]),
+    });
+    expect(text).toContain(
+      '- **Step 2** Check the database: (the tool started the application; mark whether its window opened)',
+    );
+    expect(text).not.toContain('Step 2** Check the database: pass');
+  });
+
+  it('shows where the tool stopped, and leaves later steps unmarked', () => {
+    const text = renderRecord({
+      ...base,
+      scripted: new Map([['Step 1', {}]]),
+      stopped: { step: 'Step 2', message: 'No.' },
+    });
+    expect(text).toContain('- **Step 2** Check the database:\n');
+    expect(text).toContain('**Result:** stopped at Step 2: No.');
+  });
+
+  it('marks Steps 1 to 9 pass (scripted) for the session a happy run produced', async () => {
+    const { deps } = dependencies(healthy());
+    const session = newSession();
+    await runSetup(deps, session);
+
+    const text = renderRecord({
+      ...base,
+      steps: parseSteps(smokeDocument),
+      scripted: session.scripted,
+      log: session.log,
+    });
+
+    // A key mismatch between the setup and the record fails here.
+    for (let step = 1; step <= 9; step += 1)
+      expect(text).toMatch(
+        new RegExp(`- \\*\\*Step ${step}\\*\\* [^\\n]*: pass \\(scripted\\)`),
+      );
+    expect(text).not.toMatch(/- \*\*Step 10\*\* [^\n]*pass \(scripted\)/);
+  });
+
+  it('removes tokens and the repository path, never the engine path', () => {
+    const secret = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    const text = scrub(
+      `{"port": 1, "token": "${secret}"} at ${repositoryRoot}\\.tmp token=${secret}`,
+      repositoryRoot,
+    );
+    expect(text).not.toContain(secret);
+    expect(text).not.toContain(repositoryRoot);
+    expect(text).toContain('<repository>');
+  });
+});
+
+describe('setup', () => {
+  it('folder names and the database URL follow SMOKE_TESTING.md', () => {
+    expect(folderStamp(new Date(2026, 0, 2, 3, 4, 5))).toBe('20260102-030405');
+    expect(databaseUrlFor('C:\\repo\\.tmp\\smoke\\x')).toBe(
+      'sqlite:///C:/repo/.tmp/smoke/x/smoke-test.sqlite3',
+    );
+  });
+
+  it('prints one progress line per step, in order, naming the provider steps', async () => {
+    const { deps, progress } = dependencies(healthy());
+
+    await runSetup(deps, newSession());
+
+    expect(progress).toEqual([
+      'Step 1: checking the engine checkout and the `ian` command…',
+      'Step 2: reading the state of your real database (read only)…',
+      'Step 3: creating the throwaway database folder .tmp/smoke/20261113-090507…',
+      "Step 4: creating the throwaway database's schema…",
+      'Step 5: creating the Smoke Test and Smoke Test Empty watchlists…',
+      'Step 6: adding four entries to the Smoke Test watchlist…',
+      'Step 7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
+      'Step 8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
+      'Step 9: reading back the saved runs, refreshes and watchlists to check their counts…',
+    ]);
+    for (const line of progress) {
+      expect(line).not.toContain(repositoryRoot);
+      expect(line).not.toMatch(/token|sqlite:/i);
+    }
+  });
+
+  it('runs every step on a healthy engine and records the facts', async () => {
+    const { deps, calls, folders } = dependencies(healthy());
+    const before = process.env.IAN_DATABASE_URL;
+    const session = newSession();
+
+    await runSetup(deps, session);
+
+    expect([...session.scripted.keys()]).toEqual([
+      'Step 1',
+      'Step 2',
+      'Step 3',
+      'Step 4',
+      'Step 5',
+      'Step 6',
+      'Step 7',
+      'Step 8',
+      'Step 9',
+    ]);
+    expect(session.data).toEqual({
+      watchlists: 2,
+      entries: 4,
+      runs: 5,
+      refreshes: 1,
+    });
+    expect(session.engineVersion).toBe('0.1.0');
+    expect(session.engineCommit).toBe(vendoredCommit.slice(0, 7));
+    expect(session.ianPath).toBe(ianPath);
+    expect(session.throwawayFolder).toBe('.tmp/smoke/20261113-090507');
+    expect(folders).toHaveLength(1);
+    // Step 2 reads the real database with the inherited environment; every later
+    // command gets the throwaway database.
+    const statusCall = calls.find(
+      (call) => call.args.join(' ') === readCommands.databaseStatus.join(' '),
+    );
+    expect(statusCall?.options?.env?.IAN_DATABASE_URL).toBeUndefined();
+    const later = calls.filter((call) => call.args[0] === 'watchlist');
+    expect(later.length).toBeGreaterThan(0);
+    for (const call of later)
+      expect(call.options?.env?.IAN_DATABASE_URL).toBe(session.databaseUrl);
+    expect(session.databaseUrl).toMatch(
+      /^sqlite:\/\/\/.*\/\.tmp\/smoke\/20261113-090507\/smoke-test\.sqlite3$/,
+    );
+    expect(process.env.IAN_DATABASE_URL).toBe(before);
+    // The real database's path never reaches the log.
+    expect(JSON.stringify(session.log)).not.toContain('private');
+  });
+
+  async function stopsAt(
+    script: Parameters<typeof healthy>[0],
+    expectedStep: string,
+    message: string | RegExp,
+    options: { pathless?: boolean; noEngine?: boolean } = {},
+  ) {
+    const { deps } = dependencies(
+      healthy(script),
+      {},
+      {
+        ...(options.pathless ? { env: { PATH: '' } } : {}),
+        ...(options.noEngine ? { enginePath: `${enginePath}-missing` } : {}),
+      },
+    );
+    const session = newSession();
+    const error = await runSetup(deps, session).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    expect(error).toBeInstanceOf(SmokeStop);
+    expect((error as SmokeStop).step).toBe(expectedStep);
+    expect((error as SmokeStop).message).toMatch(message);
+    return session;
+  }
+
+  it('stops when the engine folder does not exist', async () => {
+    await stopsAt(() => undefined, 'Step 1', /does not exist/, {
+      noEngine: true,
+    });
+  });
+
+  it('stops when the folder is not a Git checkout', async () => {
+    await stopsAt(
+      (call) =>
+        call.file === 'git'
+          ? { code: 128, stdout: '', stderr: 'no' }
+          : undefined,
+      'Step 1',
+      /not a Git checkout/,
+    );
+  });
+
+  it('stops when the engine is at another commit, naming the command to run', async () => {
+    const other = 'a'.repeat(40);
+    await stopsAt(
+      (call) =>
+        call.file === 'git'
+          ? { code: 0, stdout: `${other}\n`, stderr: '' }
+          : undefined,
+      'Step 1',
+      new RegExp(`${other}.*${vendoredCommit}.*checkout ${vendoredCommit}`),
+    );
+  });
+
+  it('gives the fetch, checkout and switch commands for the wrong commit', () => {
+    const path = '/engine';
+    const message = stopMessages.wrongCommit(path, 'abc', vendoredCommit);
+    expect(message).toBe(
+      `The engine checkout is at abc, but vendor/ian/SOURCE.md names ${vendoredCommit}. In the engine checkout, run \`git -C "/engine" fetch\` and then \`git -C "/engine" checkout ${vendoredCommit}\`, and try again. This leaves the engine checkout on that commit rather than a branch; afterwards, \`git -C "/engine" switch main\` returns it to main.`,
+    );
+  });
+
+  it('stops when --engine points at this repository, before any git command', async () => {
+    for (const [path, platform] of [
+      [repositoryRoot, 'linux'],
+      [repositoryRoot.toUpperCase(), 'win32'],
+    ] as const) {
+      const { deps, calls } = dependencies(
+        healthy(),
+        {},
+        {
+          enginePath: path,
+          platform,
+        },
+      );
+      const error = await runSetup(deps, newSession()).then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+      expect((error as SmokeStop).step).toBe('Step 1');
+      expect((error as SmokeStop).message).toBe(
+        '`--engine` points at this repository. Pass the folder of your engine checkout (the investment-analysis-engine repository), not this one.',
+      );
+      expect(calls.some((call) => call.file === 'git')).toBe(false);
+    }
+  });
+
+  it.each([
+    [
+      'names another project',
+      '[project]\nname = "something-else"\nversion = "1"\n',
+    ],
+    ['has no [project] name', '[build-system]\nrequires = []\n'],
+  ])("stops when the folder's pyproject.toml %s", async (_name, pyproject) => {
+    const { deps, calls } = dependencies(healthy(), {
+      [join(enginePath, 'pyproject.toml')]: pyproject,
+    });
+    const error = await runSetup(deps, newSession()).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    expect((error as SmokeStop).message).toBe(
+      `${enginePath} is not an engine checkout: its pyproject.toml does not name the investment-analysis-engine project. Pass the folder of your engine checkout.`,
+    );
+    expect(calls.some((call) => call.file === 'git')).toBe(false);
+  });
+
+  it('stops when the folder has no pyproject.toml', async () => {
+    const { deps } = dependencies(healthy());
+    const original = deps.fs.exists;
+    deps.fs = {
+      ...deps.fs,
+      exists: (path) => !path.endsWith('pyproject.toml') && original(path),
+    };
+    const error = await runSetup(deps, newSession()).then(
+      () => null,
+      (caught: unknown) => caught,
+    );
+    expect((error as SmokeStop).message).toMatch(/is not an engine checkout/);
+  });
+
+  it.each(['C:/tools/ian.cmd', 'C:/tools/IAN.BAT'])(
+    'stops when IAD_IAN_PATH names a batch file (%s)',
+    async (path) => {
+      const { deps } = dependencies(
+        healthy(),
+        {},
+        { env: { IAD_IAN_PATH: path } },
+      );
+      const error = await runSetup(deps, newSession()).then(
+        () => null,
+        (caught: unknown) => caught,
+      );
+      expect((error as SmokeStop).step).toBe('Step 1');
+      expect((error as SmokeStop).message).toMatch(
+        /without a shell.*executable \(\.exe\), not a \.cmd or \.bat file/,
+      );
+    },
+  );
+
+  it('stops when ian cannot be found', async () => {
+    await stopsAt(
+      () => undefined,
+      'Step 1',
+      /not found on PATH or in uv's command folder/,
+      {
+        pathless: true,
+      },
+    );
+  });
+
+  describe('finding ian', () => {
+    const uvAnswers = (call: { file: string }) =>
+      call.file === 'uv'
+        ? { code: 0, stdout: `${uvBinFolder}\n`, stderr: '' }
+        : undefined;
+    const uvFiles = { [uvIanPath]: '' };
+
+    it('prefers IAD_IAN_PATH, then PATH, and asks uv only when both fail', async () => {
+      const configured = join(uvBinFolder, 'custom-ian');
+      const first = dependencies(healthy(uvAnswers), uvFiles, {
+        env: { IAD_IAN_PATH: configured, PATH: resolve('fake-bin') },
+      });
+      const one = newSession();
+      await runSetup(first.deps, one);
+      expect([one.ianSource, one.ianPath]).toEqual([
+        'IAD_IAN_PATH',
+        configured,
+      ]);
+      expect(first.calls.some((call) => call.file === 'uv')).toBe(false);
+
+      const second = dependencies(healthy(uvAnswers), uvFiles);
+      const two = newSession();
+      await runSetup(second.deps, two);
+      expect([two.ianSource, two.ianPath]).toEqual(['PATH', ianPath]);
+      expect(second.calls.some((call) => call.file === 'uv')).toBe(false);
+
+      const third = dependencies(healthy(uvAnswers), uvFiles, {
+        env: { PATH: '' },
+      });
+      const three = newSession();
+      await runSetup(third.deps, three);
+      expect([three.ianSource, three.ianPath]).toEqual(['uv', uvIanPath]);
+      const uvCall = third.calls.find((call) => call.file === 'uv');
+      expect(uvCall?.args).toEqual(['tool', 'dir', '--bin']);
+      expect(three.scripted.get('Step 1')?.fact).toMatch(
+        /`ian` from uv's command folder/,
+      );
+    });
+
+    it.each([
+      ['uv is missing', { code: null, stdout: '', stderr: 'spawn uv ENOENT' }],
+      ['uv fails', { code: 2, stdout: '', stderr: 'no' }],
+      ['uv names an empty folder', { code: 0, stdout: '\n', stderr: '' }],
+    ])('stops with the not-found message when %s', async (_name, answer) => {
+      await stopsAt(
+        (call) => (call.file === 'uv' ? answer : undefined),
+        'Step 1',
+        /was not found on PATH or in uv's command folder\. Do the engine's "Make the `ian` command available" step \(Step 1 of docs\/project\/SMOKE_TESTING\.md\), then open a new terminal and try again\./,
+        { pathless: true },
+      );
+    });
+
+    it('stops when uv names a folder that holds no ian', async () => {
+      await stopsAt(uvAnswers, 'Step 1', /not found on PATH or in uv's/, {
+        pathless: true,
+      });
+    });
+
+    it('gives IAD_IAN_PATH to the application only, and only for ian from uv', async () => {
+      const { deps, calls } = dependencies(healthy(uvAnswers), uvFiles, {
+        env: { PATH: '', KEEP: 'yes' },
+      });
+      const before = process.env.IAD_IAN_PATH;
+      const session = newSession();
+      await runSetup(deps, session);
+
+      const application = applicationEnvironment({ KEEP: 'yes' }, session);
+      expect(application.IAD_IAN_PATH).toBe(uvIanPath);
+      expect(application.IAN_DATABASE_URL).toBe(session.databaseUrl);
+      // No command the tool ran, and not the tool's own environment, has it.
+      for (const call of calls)
+        expect(call.options?.env?.IAD_IAN_PATH).toBeUndefined();
+      expect(deps.env.IAD_IAN_PATH).toBeUndefined();
+      expect(process.env.IAD_IAN_PATH).toBe(before);
+
+      const onPath = newSession();
+      await runSetup(dependencies(healthy()).deps, onPath);
+      expect(applicationEnvironment({}, onPath).IAD_IAN_PATH).toBeUndefined();
+    });
+  });
+
+  it('stops when ian --help fails', async () => {
+    await stopsAt(
+      (call) =>
+        call.args.join(' ') === '--help'
+          ? { code: 2, stdout: '', stderr: '' }
+          : undefined,
+      'Step 1',
+      /ian --help. did not succeed/,
+    );
+  });
+
+  it('continues on a missing real database, which exits 1', async () => {
+    const { deps } = dependencies(
+      healthy((call) =>
+        call.args.join(' ') === readCommands.databaseStatus.join(' ')
+          ? json({ state: 'missing' }, 1)
+          : undefined,
+      ),
+    );
+    const session = newSession();
+    await runSetup(deps, session);
+    expect(session.scripted.get('Step 2')?.fact).toBe('real database: missing');
+  });
+
+  it.each([
+    ['upgrade_required', /needs an upgrade.*explicit upgrades/],
+    [
+      'incompatible_schema',
+      /state incompatible_schema.*Local Database Operations/,
+    ],
+  ])('stops on the real database state %s', async (state, message) => {
+    await stopsAt(
+      (call) =>
+        call.args.join(' ') === readCommands.databaseStatus.join(' ')
+          ? json({ state }, 1)
+          : undefined,
+      'Step 2',
+      message,
+    );
+  });
+
+  it('stops when the real database state cannot be read', async () => {
+    await stopsAt(
+      (call) =>
+        call.args.join(' ') === readCommands.databaseStatus.join(' ')
+          ? { code: 1, stdout: 'not json', stderr: '' }
+          : undefined,
+      'Step 2',
+      /could not be read/,
+    );
+  });
+
+  it('stops, keeping the record so far, when a setup command fails', async () => {
+    const session = await stopsAt(
+      (call) =>
+        call.args[0] === 'watchlist' && call.args[1] === 'create'
+          ? { code: 1, stdout: 'x', stderr: 'y' }
+          : undefined,
+      'Step 5',
+      /Step 5 failed/,
+    );
+    expect([...session.scripted.keys()]).toEqual([
+      'Step 1',
+      'Step 2',
+      'Step 3',
+      'Step 4',
+    ]);
+    expect(session.log.at(-1)?.command).toBe(
+      'ian watchlist create "Smoke Test"',
+    );
+  });
+
+  it('allows a refresh that exits 1 when it completed a run', async () => {
+    const { deps } = dependencies(
+      healthy((call) =>
+        call.args[0] === 'refresh'
+          ? { code: 1, stdout: '', stderr: '' }
+          : undefined,
+      ),
+    );
+    const session = newSession();
+    await runSetup(deps, session);
+    expect(session.scripted.get('Step 7')?.fact).toMatch(/exited 1/);
+  });
+
+  it('stops when the refresh completed no run', async () => {
+    await stopsAt(
+      (call) =>
+        call.args.join(' ') === readCommands.refreshes.join(' ')
+          ? json({
+              items: [{ run_count: 4, outcome_counts: { completed: 0 } }],
+            })
+          : undefined,
+      'Step 7',
+      new RegExp(stopMessages.noCompletedRun().slice(0, 30)),
+    );
+  });
+
+  it.each([
+    ['runs', { items: [1, 2, 3].map((n) => ({ n })), has_more: false }],
+    [
+      'refreshes',
+      { items: [{ run_count: 3, outcome_counts: { completed: 3 } }] },
+    ],
+    ['watchlists', { items: [{ entry_count: 5 }, { entry_count: 0 }] }],
+  ] as const)(
+    "stops when the %s counts are not the setup's",
+    async (which, body) => {
+      const command = readCommands[which].join(' ');
+      let seen = 0;
+      await stopsAt(
+        (call) => {
+          if (call.args.join(' ') !== command) return undefined;
+          // The refresh check after Step 7 must still pass; only the Step 9 read differs.
+          seen += 1;
+          if (which === 'refreshes' && seen === 1) return undefined;
+          return json(body);
+        },
+        'Step 9',
+        /should leave 5 runs/,
+      );
+    },
+  );
+});
