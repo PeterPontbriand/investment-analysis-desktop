@@ -1,6 +1,7 @@
 // Fakes for the smoke-test tool: no test runs IAN or Tauri.
 import { join, resolve } from 'node:path';
 import { readCommands, setupCommands } from '../../tools/smoke/commands.ts';
+import { ianFileName } from '../../tools/smoke/source.ts';
 import type { Dependencies } from '../../tools/smoke/setup.ts';
 import type {
   FileSystem,
@@ -12,9 +13,13 @@ import type {
 export const vendoredCommit = 'beb58a23bf9b72b763ce2b260c1dcaaa6d0a884b';
 export const repositoryRoot = resolve('fake-repository');
 export const enginePath = resolve('fake-engine');
-export const ianPath = resolve('fake-bin', 'ian.exe');
+// The fixtures use the host's platform, so the paths they build with node:path
+// match what the tool builds for that platform on every runner. Behaviour that
+// depends on a fixed platform is tested with literal paths instead.
+export const platform = process.platform;
+export const ianPath = resolve('fake-bin', ianFileName(platform));
 export const uvBinFolder = resolve('fake-uv-bin');
-export const uvIanPath = join(uvBinFolder, 'ian.exe');
+export const uvIanPath = join(uvBinFolder, ianFileName(platform));
 
 export const sourceRecord = `# Vendored IAN API description\n\n- **Commit:** \`${vendoredCommit}\`\n- **Commit date:** 2026-11-13\n`;
 
@@ -130,7 +135,7 @@ export function dependencies(
     run: runner.run,
     fs: files.fs,
     env: { PATH: resolve('fake-bin'), SECRET_FOR_TEST: 'kept' },
-    platform: 'win32',
+    platform,
     repositoryRoot,
     enginePath,
     now: new Date(2026, 10, 13, 9, 5, 7),

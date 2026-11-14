@@ -38,7 +38,7 @@ export const ianSourceNames: Record<IanSource, string> = {
   uv: "uv's command folder",
 };
 
-function ianFileName(platform: string): string {
+export function ianFileName(platform: string): string {
   return platform === 'win32' ? 'ian.exe' : 'ian';
 }
 

@@ -20,8 +20,9 @@ import {
   readEngineVersion,
   readVendoredCommit,
   resolveIan,
+  resolveIanInUv,
 } from '../../tools/smoke/source.ts';
-import { SmokeStop } from '../../tools/smoke/types.ts';
+import { SmokeStop, type Runner } from '../../tools/smoke/types.ts';
 import {
   dependencies,
   enginePath,
@@ -182,6 +183,44 @@ describe('sources', () => {
     expect(
       resolveIan({ IAD_IAN_PATH: '', PATH: 'C:\\a' }, 'win32', exists),
     ).toBe(null);
+  });
+
+  // Literal paths: these hold on every runner, whatever the host's platform.
+  describe.each([
+    {
+      name: 'win32',
+      separator: ';',
+      folders: ['C:\\a', 'C:\\bin\\'],
+      expected: 'C:\\bin\\ian.exe',
+      uvFolder: 'C:\\Users\\x\\.local\\bin\\',
+      uvExpected: 'C:\\Users\\x\\.local\\bin\\ian.exe',
+    },
+    {
+      name: 'linux',
+      separator: ':',
+      folders: ['/a', '/usr/local/bin/'],
+      expected: '/usr/local/bin/ian',
+      uvFolder: '/home/x/.local/bin/',
+      uvExpected: '/home/x/.local/bin/ian',
+    },
+  ])('on $name', (c) => {
+    it('finds ian on PATH with the platform separator, joiner and file name', () => {
+      const exists = (path: string) => path === c.expected;
+      expect(
+        resolveIan({ PATH: c.folders.join(c.separator) }, c.name, exists),
+      ).toEqual({ path: c.expected, source: 'PATH' });
+    });
+
+    it("finds ian in uv's command folder with the platform joiner and file name", async () => {
+      const run: Runner = () =>
+        Promise.resolve({ code: 0, stdout: `${c.uvFolder}\n`, stderr: '' });
+      const exists = (path: string) => path === c.uvExpected;
+      expect(await resolveIanInUv(run, {}, c.name, exists)).toEqual({
+        path: c.uvExpected,
+        source: 'uv',
+      });
+      expect(await resolveIanInUv(run, {}, c.name, () => false)).toBeNull();
+    });
   });
 });
 
@@ -565,7 +604,7 @@ describe('setup', () => {
     const uvFiles = { [uvIanPath]: '' };
 
     it('prefers IAD_IAN_PATH, then PATH, and asks uv only when both fail', async () => {
-      const configured = join(uvBinFolder, 'custom-ian.exe');
+      const configured = join(uvBinFolder, 'custom-ian');
       const first = dependencies(healthy(uvAnswers), uvFiles, {
         env: { IAD_IAN_PATH: configured, PATH: resolve('fake-bin') },
       });
