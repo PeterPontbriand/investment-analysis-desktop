@@ -13,7 +13,7 @@
 | GUI.2a1 | [Localization retrofit](#gui2a1--localization-retrofit) | Complete | 2026-11-11 |
 | GUI.2a2 | [Engine launch and API adapter](#gui2a2--engine-launch-and-api-adapter) | Complete | 2026-11-13 |
 | GUI.2b1 | [Shared groundwork, watchlists, refreshes and saved runs](#gui2b1--shared-groundwork-watchlists-refreshes-and-saved-runs) | Complete | 2026-11-13 |
-| GUI.2b2 | [Styling foundation](#gui2b2--styling-foundation) | Planned | |
+| GUI.2b2 | [Styling foundation](#gui2b2--styling-foundation) | Next | |
 | GUI.2b3 | [Comparison and run detail](#gui2b3--comparison-and-run-detail) | Planned | |
 
 ## Sub-slices
@@ -47,7 +47,7 @@
 - **Problem:** The screens have layout only, with no visual design, and nothing scheduled one.
 - **Decision:** Before the comparison and run detail screens, give the application its visual design from the preview mock-ups, [docs/design/preview-mockups.html](../../../../design/preview-mockups.html) (D120).
 - **Scope:** colour and type tokens; the shell and navigation; tables; forms and the filter bar; the error, empty and loading states; and the right-to-left layout, all with logical properties.
-- **Branch:** `feat/gui-2b2-styling`, from main after GUI.2b1 merges; its own pull request. Its own open decisions are taken before it starts.
+- **Branch:** `feat/gui-2b2-styling`, from main after GUI.2b1 merges and after the smoke-test tool work in IAD issue #14 (which depends on IAN issue #260) merges, so GUI.2b2's smoke run uses the improved tool; its own pull request. Its own open decisions are taken before it starts.
 - **Detail:** This plan owns GUI.2b2's [file scope](#file-scope-3) and [acceptance criteria](#acceptance-criteria-3).
 
 ### GUI.2b3 — Comparison and run detail
