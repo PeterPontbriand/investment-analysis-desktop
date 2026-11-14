@@ -77,6 +77,7 @@ describe('dates and instants', () => {
 
   it('chooses between a date and an instant', () => {
     expect(formatDateOrInstant('en', '2025-06-30')).toBe('Jun 30, 2025');
+    expect(formatDateOrInstant('en', '2025-12-31')).toBe('Dec 31, 2025');
     expect(plain(formatDateOrInstant('en', '2026-10-30T18:02:00+00:00'))).toBe(
       'Oct 30, 2026, 2:02 PM',
     );

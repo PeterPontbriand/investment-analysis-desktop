@@ -144,7 +144,7 @@ const momentum = {
 export const watchlistDocuments: Record<string, Schemas['WatchlistDocument']> =
   {
     [coreId]: {
-      schema_version: 1,
+      schema_version: 2,
       watchlist_id: coreId,
       display_name: 'Core',
       created_at: '2026-10-30T17:00:00+00:00',
@@ -156,7 +156,7 @@ export const watchlistDocuments: Record<string, Schemas['WatchlistDocument']> =
           ticker: 'ACME',
           selection: {
             method_id: 'graham_number',
-            as_of: '2025-06-30',
+            as_of: '2025-12-31',
             bvps_override: null,
             eps_override: null,
             quote_override: null,
@@ -177,7 +177,7 @@ export const watchlistDocuments: Record<string, Schemas['WatchlistDocument']> =
       ],
     },
     [dividendsId]: {
-      schema_version: 1,
+      schema_version: 2,
       watchlist_id: dividendsId,
       display_name: 'Dividends',
       created_at: '2026-11-01T16:00:00+00:00',
@@ -185,7 +185,7 @@ export const watchlistDocuments: Record<string, Schemas['WatchlistDocument']> =
       entries: [{ index: 1, ticker: 'DIVI', selection: momentum }],
     },
     [emptyId]: {
-      schema_version: 1,
+      schema_version: 2,
       watchlist_id: emptyId,
       display_name: 'Empty',
       created_at: '2026-11-03T16:00:00+00:00',

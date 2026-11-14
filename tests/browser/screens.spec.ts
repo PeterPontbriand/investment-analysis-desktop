@@ -151,7 +151,7 @@ test.describe('watchlists', () => {
       .toEqual(['1', 'ACME', 'Momentum', en.watchlist.latestData]);
     await expect
       .poll(() => cells(entries.nth(1)))
-      .toEqual(['2', 'ACME', 'Graham Number', 'Jun 30, 2025']);
+      .toEqual(['2', 'ACME', 'Graham Number', 'Dec 31, 2025']);
     // The made-up strategy needs no GUI code.
     await expect
       .poll(() => cells(entries.nth(2)))
