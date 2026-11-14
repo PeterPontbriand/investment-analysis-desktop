@@ -13,7 +13,8 @@
 | GUI.2a1 | [Localization retrofit](#gui2a1--localization-retrofit) | Complete | 2026-11-11 |
 | GUI.2a2 | [Engine launch and API adapter](#gui2a2--engine-launch-and-api-adapter) | Complete | 2026-11-13 |
 | GUI.2b1 | [Shared groundwork, watchlists, refreshes and saved runs](#gui2b1--shared-groundwork-watchlists-refreshes-and-saved-runs) | Complete | 2026-11-13 |
-| GUI.2b2 | [Comparison and run detail](#gui2b2--comparison-and-run-detail) | Planned | |
+| GUI.2b2 | [Styling foundation](#gui2b2--styling-foundation) | Planned | |
+| GUI.2b3 | [Comparison and run detail](#gui2b3--comparison-and-run-detail) | Planned | |
 
 ## Sub-slices
 
@@ -41,13 +42,21 @@
 - **Branch:** `feat/gui-2b1-foundation`, from main after IAN pull request 255 (API.8) merged; its own pull request.
 - **Detail:** This plan owns GUI.2b1's [file scope](#file-scope-2) and [acceptance criteria](#acceptance-criteria-2).
 
-### GUI.2b2 — Comparison and run detail
+### GUI.2b2 — Styling foundation
+
+- **Problem:** The screens have layout only, with no visual design, and nothing scheduled one.
+- **Decision:** Before the comparison and run detail screens, give the application its visual design from the preview mock-ups, [docs/design/preview-mockups.html](../../../design/preview-mockups.html) (D120).
+- **Scope:** colour and type tokens; the shell and navigation; tables; forms and the filter bar; the error, empty and loading states; and the right-to-left layout, all with logical properties.
+- **Branch:** `feat/gui-2b2-styling`, from main after GUI.2b1 merges; its own pull request. Its own open decisions are taken before it starts.
+- **Detail:** This plan owns GUI.2b2's [file scope](#file-scope-3) and [acceptance criteria](#acceptance-criteria-3).
+
+### GUI.2b3 — Comparison and run detail
 
 - **Problem:** Investors need to compare a refresh's runs across tickers and strategies and read one run in full.
-- **Decision:** Build the refresh comparison and run detail on the GUI.2b1 groundwork (D86, D91, D92, D94).
+- **Decision:** Build the refresh comparison and run detail on the GUI.2b1 groundwork and the GUI.2b2 styling foundation (D86, D91, D92, D94, D120).
 - **Scope:** the refresh comparison screen; the run detail screen with its header, headline cards, warnings and limitations, the concise, details and diagnostics text, and the JSON document; links from refresh and run rows to them.
-- **Branch:** `feat/gui-2b2-compare-detail`, from main after GUI.2b1 merges; its own pull request. Its own open decisions are taken before it starts (D96).
-- **Detail:** This plan owns GUI.2b2's [file scope](#file-scope-3) and [acceptance criteria](#acceptance-criteria-3).
+- **Branch:** `feat/gui-2b3-compare-detail`, from main after GUI.2b2 merges, built on the styling foundation; its own pull request. Its own open decisions are taken before it starts (D96).
+- **Detail:** This plan owns GUI.2b3's [file scope](#file-scope-4) and [acceptance criteria](#acceptance-criteria-4).
 
 ## Scope limits
 
@@ -154,6 +163,23 @@
 - `pnpm gate` passes on Windows, macOS and Linux.
 
 ## GUI.2b2 detail
+
+### File scope
+
+- The styles and components under `src/`, and `index.html` if a font or colour-scheme setting needs it.
+- The browser tests' layout checks under `tests/browser/`.
+- This plan's status row and the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md)'s GUI.2 row.
+
+### Acceptance criteria
+
+To be completed by GUI.2b2's decisions, before it starts. Already decided:
+
+- The screens follow the look of the preview mock-ups.
+- No new dependency is added without approval.
+- Styles use CSS logical properties only; stylelint enforces this.
+- The layout is checked in the `ar-XB` pseudo-locale.
+
+## GUI.2b3 detail
 
 ### File scope
 
@@ -277,3 +303,4 @@ Approved by the project owner on 2026-11-13.
 | D117 | Smoke test tool: `pnpm smoke --engine <engine checkout>` does the smoke test's setup steps and writes a pre-filled record. It checks that the checkout is at the commit in `vendor/ian/SOURCE.md` and that `ian` resolves; runs `ian db status` read-only against the real database; creates a timestamped throwaway database under `.tmp/smoke/` with the data the setup steps describe; writes `SMOKE_RECORD.md` beside it with each scripted step marked `pass (scripted)` and its command output; and starts `pnpm tauri dev` with the throwaway database set. It stops with a plain message instead of guessing: the engine at another commit, a real database neither `ready` nor `missing`, a refresh with no completed run, or counts other than the setup's. The record's step list is read from SMOKE_TESTING.md, so a step change needs no tool change. The engine checkout is an argument because IAN's launcher does not expose its installation folder; reading package metadata inside uv's tool folder was rejected as another project's internals. Clean-up and the engine-problem restarts stay manual. |
 | D118 | Engine terms in IAD documentation: IAD documents never redefine a term IAN's glossary owns. The first mention links to IAN's user glossary entry by its permanent id, on IAN's main branch, and only IAD's own concepts are explained in place. IAN's Refresh entry does not yet cover a refresh of entries that belong to no watchlist; that is fixed in IAN (filed as an IAN issue). |
 | D119 | Finding `ian` for the smoke test (extends D117): `pnpm smoke` looks for `ian` in `IAD_IAN_PATH`, then on `PATH`, then in uv's command folder as `uv tool dir --bin` reports it, where the engine's installer puts the command. When `ian` comes from uv's folder, the tool passes `IAD_IAN_PATH` to the application it starts and to nothing else, and the record names where `ian` came from. SMOKE_TESTING.md says where the engine's installer puts `ian` and links the engine's troubleshooting entry; `IAD_IAN_PATH` is for choosing a specific `ian`. |
+| D120 | Styling foundation (amends D79 and D96): the application's visual design, taken from the preview mock-ups, is its own sub-slice, GUI.2b2, after GUI.2b1 and before the comparison and run detail screens, which become GUI.2b3 and are built on it. GUI.2b1 shipped layout only; no earlier decision scheduled styling, and the first real smoke run found its absence. |

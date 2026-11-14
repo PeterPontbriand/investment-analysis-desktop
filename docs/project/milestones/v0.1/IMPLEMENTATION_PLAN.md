@@ -45,7 +45,7 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 - **Problem:** Investors need to inspect analysis documents without learning a command line.
 - **Decision:** Build the first read-only screens on IAN API.2 and use only documented API content for all displayed values and labels.
 - **Scope:** Show watchlists, recent refreshes, saved runs and the refresh comparison; show run detail with summary, details, diagnostics, and the JSON document.
-- **Branch:** `feat/gui-2a1-localization`, then `feat/gui-2a2-engine-adapter`, then `feat/gui-2b1-foundation`, then `feat/gui-2b2-compare-detail`; GUI.2b needed IAN's refreshes list endpoint, which merged as IAN pull request 252, and IAN's API.8 changes, which merged as IAN pull request 255.
+- **Branch:** `feat/gui-2a1-localization`, then `feat/gui-2a2-engine-adapter`, then `feat/gui-2b1-foundation`, then `feat/gui-2b2-styling`, then `feat/gui-2b3-compare-detail`; GUI.2b needed IAN's refreshes list endpoint, which merged as IAN pull request 252, and IAN's API.8 changes, which merged as IAN pull request 255.
 - **Detail:** [GUI.2 read-only screens slice plan](gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md).
 
 ### GUI.3: Actions and refresh progress
