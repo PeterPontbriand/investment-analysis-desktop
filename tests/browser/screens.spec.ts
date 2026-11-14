@@ -4,10 +4,7 @@ import { engineUrl, mockEngine } from './engine-mock.ts';
 import { coreId } from '../fixtures/api/data.ts';
 import { failure, ok } from '../fixtures/api/server.ts';
 import en from '../../src/locales/en.json' with { type: 'json' };
-
-// Intl separates times and ranges with narrow spaces; compare with plain ones.
-const plain = (text: string) =>
-  text.replace(new RegExp('[\u00a0\u2009\u202f]', 'g'), ' ').trim();
+import { dateText, instantText, plain, rangeText } from './expected-text.ts';
 
 async function cells(row: Locator): Promise<string[]> {
   return (await row.locator('th, td').allInnerTexts()).map((text) =>
@@ -121,10 +118,20 @@ test.describe('watchlists', () => {
     ]);
     await expect
       .poll(() => cells(rows(page).nth(0)))
-      .toEqual(['Core', '3', 'Oct 30, 2026, 1:00 PM', 'Nov 2, 2026, 10:00 AM']);
+      .toEqual([
+        'Core',
+        '3',
+        await instantText(page, '2026-10-30T17:00:00+00:00'),
+        await instantText(page, '2026-11-02T15:00:00+00:00'),
+      ]);
     await expect
       .poll(() => cells(rows(page).nth(1)))
-      .toEqual(['Dividends', '1', 'Nov 1, 2026, 11:00 AM', en.common.noValue]);
+      .toEqual([
+        'Dividends',
+        '1',
+        await instantText(page, '2026-11-01T16:00:00+00:00'),
+        en.common.noValue,
+      ]);
   });
 
   test('shows the entries of one watchlist and its refreshes', async ({
@@ -142,20 +149,29 @@ test.describe('watchlists', () => {
     const summary = en.watchlist.summary
       .split(' | ')[1]
       ?.replace('{count}', '3')
-      .replace('{date}', 'Oct 30, 2026, 1:00 PM');
+      .replace('{date}', await instantText(page, '2026-10-30T17:00:00+00:00'));
     await expect(page.getByText(summary ?? '')).toBeVisible();
 
+    // A date as-of shows as entered, not shifted by the pinned time zone.
+    const dec31 = await dateText(page, '2025-12-31');
+    expect(dec31).toContain('31');
+    expect(dec31).toContain('2025');
     const entries = page.locator('table').first().locator('tbody tr');
     await expect
       .poll(() => cells(entries.nth(0)))
       .toEqual(['1', 'ACME', 'Momentum', en.watchlist.latestData]);
     await expect
       .poll(() => cells(entries.nth(1)))
-      .toEqual(['2', 'ACME', 'Graham Number', 'Dec 31, 2025']);
+      .toEqual(['2', 'ACME', 'Graham Number', dec31]);
     // The made-up strategy needs no GUI code.
     await expect
       .poll(() => cells(entries.nth(2)))
-      .toEqual(['3', 'ZED', 'Quality Screen', 'Oct 30, 2026, 2:02 PM']);
+      .toEqual([
+        '3',
+        'ZED',
+        'Quality Screen',
+        await instantText(page, '2026-10-30T18:02:00+00:00'),
+      ]);
     await expect(entries.nth(2).locator('[data-term-id]')).toHaveAttribute(
       'data-term-id',
       'strategy-quality-screen',
@@ -169,7 +185,11 @@ test.describe('watchlists', () => {
     await expect
       .poll(() => cells(refreshRows.nth(0)))
       .toEqual([
-        'Oct 30, 2026, 1:58 – 2:02 PM',
+        await rangeText(
+          page,
+          '2026-10-30T17:58:00+00:00',
+          '2026-10-30T18:02:00+00:00',
+        ),
         'Core (as it was)',
         '12',
         '9',
@@ -235,7 +255,11 @@ test.describe('refreshes', () => {
     await expect
       .poll(() => cells(rows(page).nth(0)))
       .toEqual([
-        'Oct 30, 2026, 1:58 – 2:02 PM',
+        await rangeText(
+          page,
+          '2026-10-30T17:58:00+00:00',
+          '2026-10-30T18:02:00+00:00',
+        ),
         'Core (as it was)',
         '12',
         '9',
@@ -247,7 +271,7 @@ test.describe('refreshes', () => {
     await expect
       .poll(() => cells(rows(page).nth(1)))
       .toEqual([
-        'Oct 29, 2026, 9:15 AM',
+        await instantText(page, '2026-10-29T13:15:30+00:00'),
         en.refreshes.adHoc,
         '3',
         '3',
@@ -297,7 +321,12 @@ test.describe('saved runs', () => {
     ]);
     await expect
       .poll(() => cells(rows(page).nth(0)))
-      .toEqual(['Nov 2, 2026, 9:41 AM', 'MSFT', 'Graham Number', 'Completed']);
+      .toEqual([
+        await instantText(page, '2026-11-02T14:41:00+00:00'),
+        'MSFT',
+        'Graham Number',
+        'Completed',
+      ]);
     await expect(
       rows(page).nth(0).locator('td').nth(1).locator('[data-term-id]'),
     ).toHaveAttribute('data-term-id', 'strategy-graham-number');
@@ -310,7 +339,12 @@ test.describe('saved runs', () => {
     // The made-up strategy needs no GUI code.
     await expect
       .poll(() => cells(rows(page).nth(2)))
-      .toEqual(['Oct 29, 2026, 2:02 PM', 'ZED', 'Quality Screen', 'Completed']);
+      .toEqual([
+        await instantText(page, '2026-10-29T18:02:00+00:00'),
+        'ZED',
+        'Quality Screen',
+        'Completed',
+      ]);
   });
 
   test('shows a method the engine does not list as served, with no term id', async ({
@@ -491,7 +525,12 @@ test.describe('errors', () => {
     await expect(rows(page)).toHaveCount(50);
     await expect
       .poll(() => cells(rows(page).nth(0)))
-      .toEqual(['Nov 2, 2026, 9:41 AM', 'MSFT', 'Graham Number', 'Completed']);
+      .toEqual([
+        await instantText(page, '2026-11-02T14:41:00+00:00'),
+        'MSFT',
+        'Graham Number',
+        'Completed',
+      ]);
     await expect(
       page.getByLabel(en.runs.filters.strategy).locator('option'),
     ).toHaveCount(4);
