@@ -56,6 +56,8 @@
 - **Decision:** Build the refresh comparison and run detail on the GUI.2b1 groundwork and the GUI.2b2 styling foundation (D86, D91, D92, D94, D120).
 - **Scope:** the refresh comparison screen; the run detail screen with its header, headline cards, warnings and limitations, the concise, details and diagnostics text, and the JSON document; links from refresh and run rows to them.
 - **Branch:** `feat/gui-2b3-compare-detail`, from main after GUI.2b2 merges, built on the styling foundation; its own pull request. Its own open decisions are taken before it starts (D96).
+- **Open decisions for this sub-slice:**
+  - Saved runs rows can look identical: runs of the same ticker, strategy and outcome completed in the same minute, such as a refresh's run and a direct analysis, show the same row. Decide whether the list shows seconds, where a run came from (a refresh or a direct analysis), or both, together with the links to run detail (found in GUI.2b1's second smoke run).
 - **Detail:** This plan owns GUI.2b3's [file scope](#file-scope-4) and [acceptance criteria](#acceptance-criteria-4).
 
 ## Scope limits

@@ -192,7 +192,7 @@ Check R3. The direct analysis from Step 8 is not a refresh and does not appear h
 
 ## H. Saved runs
 
-Check H1. Saved runs lists five runs, newest first. Each shows a completion time, ticker, strategy name and outcome. The five runs can complete within the same minute, so compare the list's order with the order of `ian runs list` (newest first), not with the times shown. The run from Step 8 is among them, which is how a run saved by a direct analysis is reached.
+Check H1. Saved runs lists five runs, newest first. Each shows a completion time, ticker, strategy name and outcome. The five runs can complete within the same minute, and the refresh's MSFT run and the direct analysis of MSFT show the same ticker, strategy, outcome and minute, so the first and last rows look the same. Check the order by the three middle rows instead: after the newest run, KO with Graham Number, then AAPL with Momentum, then KO with Momentum, matching `ian runs list` (newest first). The run from Step 8 is among the five, which is how a run saved by a direct analysis is reached.
 
 Check H2. Filter by ticker. Type `msft` in lower case and press Enter: only the MSFT runs remain. Clear the field, type `ko` and move to another control instead of pressing Enter: the filter applies.
 
