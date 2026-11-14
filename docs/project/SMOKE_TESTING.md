@@ -8,7 +8,7 @@ At present, every step in this guide needs developer tooling, so this is a contr
 
 The test checks that the application starts the engine, that each screen shows what the engine holds, and that the application reports an engine that stops or is missing. It does not try to cover every control. This repository's automated browser tests cover what a real engine cannot easily produce: paging through many results, a stored [selection](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#selection) the engine cannot read, a busy database, and a [refresh](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#refresh) of [entries](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#entry) that belong to no [watchlist](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#watchlist).
 
-[Provider data](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#data-provider), the market and filing data the engine fetches live from Yahoo Finance and [SEC](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#sec) [EDGAR](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#edgar), changes over time, so exact values are not prescribed. For each step, judge whether the screen shows what the engine's own commands show, in readable words, with no raw code, traceback or `NaN` where a name or value belongs. Every step has a number (Step 1, Step 2, ... for setup, then Check N1, Check W1, ... for the checks, with a letter for each group of screens: N, W, R, H, E and L) so that [the record](#recording-the-result), the written account of a run, can refer to it.
+[Provider data](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#data-provider), the market and filing data the engine fetches live from Yahoo Finance and [SEC](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#sec) [EDGAR](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#edgar), changes over time, so exact values are not prescribed. For each step, judge whether the screen shows what the engine's own commands show, in readable words, with no raw code, traceback or `NaN` where a name or value belongs. Every step has a number (Step 1, Step 2, ... for setup, then Check N1, Check W1, ... for the checks, with a letter for each group of screens: N, W, R, H, L and E) so that [the record](#recording-the-result), the written account of a run, can refer to it.
 
 ## How the test runs
 
@@ -157,7 +157,7 @@ Check N1. The window opens on the Watchlists screen. The product name and the pr
 
 Check N2. Each navigation link opens its screen. The breadcrumb above each screen, the trail of names that shows where you are (such as Watchlists / Smoke Test), names it, and the current navigation item follows.
 
-Check N3. About shows the engine's details: its version, API versions, schema version, SEC identity and languages. Compare them with the engine:
+Check N3. About shows the engine's details. They are its version, API versions, schema version, SEC identity and languages; compare them with the engine:
 
 - The engine's commands offer no way to print its version, and its documents name no place to check it. Compare the engine version with the `version` in `pyproject.toml` in the engine checkout, and say in the record that this is what you compared with.
 - SEC identity shows configured when the engine's configuration holds an SEC EDGAR identification, and not configured otherwise.
@@ -168,19 +168,19 @@ Check W1. The Watchlists screen lists both watchlists. `Smoke Test` has 4 entrie
 
 Check W2. Times are in your time zone. They agree with the clock of the moment you ran the setup commands.
 
-Check W3. Open `Smoke Test`. It shows the breadcrumb Watchlists / Smoke Test, a line with the entry count and created time, and the entries numbered 1 to 4 with ticker, strategy name and as-of. The tickers and numbering agree with `ian watchlist show "Smoke Test"`.
+Check W3. Open `Smoke Test` to see its entries. It shows the breadcrumb Watchlists / Smoke Test, a line with the entry count and created time, and the entries numbered 1 to 4 with ticker, strategy name and as-of. The tickers and numbering agree with `ian watchlist show "Smoke Test"`.
 
 Check W4. Strategy names are the engine's names for the strategies. No raw method code such as `sma_crossover` shows.
 
-Check W5. The three as-of forms read as follows:
+Check W5. The four entries show their three as-of forms correctly. Two entries have no as-of (KO's momentum entry and its Graham number entry), one has a date (MSFT) and one has a timestamp (AAPL):
 
-- The entry with no as-of reads as the latest data, not as an empty cell.
+- The two entries with no as-of read as the latest data, not as an empty cell.
 - The entry with a date shows that calendar day, 31 December 2025, with no time and not a day earlier or later. If it shows a time instead, note it.
 - The entry with a timestamp shows that instant as a local time, for 16:00 at UTC-5 on 31 December 2025.
 
 Check W6. The watchlist's refreshes are listed under its entries. They show the refresh from Step 7 with its time, its four runs and its outcome counts.
 
-Check W7. Open `Smoke Test Empty`. It shows that it has no entries and that it has not been refreshed yet. The breadcrumb leads back to Watchlists.
+Check W7. Open `Smoke Test Empty` to see that it has no entries. It shows that it has no entries and that it has not been refreshed yet. The breadcrumb leads back to Watchlists.
 
 ## R. Refreshes
 
@@ -190,11 +190,9 @@ Check R2. The outcome column headings are names the engine gives its outcomes. T
 
 Check R3. The direct analysis from Step 8 is not a refresh and does not appear here.
 
-Check R4. Paging applies only when the database already holds more than 50 refreshes. In that case "Show more" appends the next page and then disappears at the end. Otherwise mark this check N/A: browser tests cover paging.
-
 ## H. Saved runs
 
-Check H1. Saved runs lists five runs, newest first. Each shows a completion time, ticker, strategy name and outcome. The run from Step 8 is among them, which is how a run saved by a direct analysis is reached.
+Check H1. Saved runs lists five runs, newest first. Each shows a completion time, ticker, strategy name and outcome. The five runs can complete within the same minute, so compare the list's order with the order of `ian runs list` (newest first), not with the times shown. The run from Step 8 is among them, which is how a run saved by a direct analysis is reached.
 
 Check H2. Filter by ticker. Type `msft` in lower case and press Enter: only the MSFT runs remain. Clear the field, type `ko` and move to another control instead of pressing Enter: the filter applies.
 
@@ -204,17 +202,25 @@ Check H4. Filter by outcome. The choices are the engine's outcomes, led by "All 
 
 Check H5. A filter that matches nothing says that no saved runs match the filters. Use a ticker the setup never used. "Clear filters" empties all three filters and shows all five runs again.
 
-Check H6. Paging applies only when the database already holds more than 50 runs. In that case "Show more" appends the next page, and changing a filter starts again at the first page. Otherwise mark this check N/A: browser tests cover paging.
+## L. Language and layout
+
+Check L1. Engine text carries its language. With the application running from `pnpm tauri dev`, open the developer tools (right-click a screen and choose Inspect, or press `Ctrl+Shift+I`, or `Cmd+Option+I` on macOS), and inspect a strategy name in Saved runs and an outcome heading in Refreshes. Each sits in an element with a `lang` attribute holding the engine's language, such as `en`, and a `data-term-id` attribute, which names the help term that explains the text.
+
+Check L2. No screen shows a raw code, such as a method identifier or an outcome code, where a name should be.
+
+Check L3. A narrow window stays usable. Narrow the window to about half the screen width. The navigation and the tables stay usable, and a wide table scrolls instead of being cut off.
 
 ## E. Engine problems
 
 Do these last. After Check E1, close the application. Check E2 starts it from a new terminal where the engine cannot be found, so it needs no data. To see the data again afterwards, run `pnpm smoke` again, which makes a fresh throwaway database.
 
-Check E1. The engine stops while the application is open. The [`ian` command](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#make-the-ian-command-available) is a launcher that starts the engine, and the application starts the engine through it, so a chain of processes runs; ending the launcher's process makes the rest of the chain exit within seconds, because the engine stops when its input closes. In a second PowerShell terminal, end the `ian.exe` that the application started:
+Check E1. The engine stops while the application is open. The [`ian` command](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#make-the-ian-command-available) is a launcher that starts the engine, and the application starts the engine through it, so a chain of processes runs; ending the launcher's process makes the rest of the chain exit within seconds, because the engine stops when its input closes. End the `ian.exe` that the application started, in one of two ways. Only the application starts `ian.exe` with `serve` and `--allow-origin` in its command line, so that is how to tell it from any other `ian.exe`.
+
+- In Task Manager, open the Details tab, right-click a column heading, choose "Select columns" and add "Command line". End the `ian.exe` process whose command line contains `serve`.
+- Or, in a second PowerShell terminal, find it by its command line and end it:
 
 ```powershell
-$app = Get-Process investment-analysis-desktop
-Get-CimInstance Win32_Process -Filter "ParentProcessId=$($app.Id) AND Name='ian.exe'" | ForEach-Object { Stop-Process -Id $_.ProcessId }
+Get-CimInstance Win32_Process -Filter "Name='ian.exe'" | Where-Object { $_.CommandLine -match '\sserve\s' -and $_.CommandLine -match '--allow-origin' } | ForEach-Object { Stop-Process -Id $_.ProcessId }
 ```
 
 Then open another screen, such as Refreshes. Expect a message that the analysis engine stopped unexpectedly and that the application must be restarted, with no traceback and no process name. The navigation still works.
@@ -230,16 +236,6 @@ pnpm tauri dev
 
 `Get-Command` must print nothing. Expect every screen to say that the analysis engine is not installed or could not be found, and the navigation to keep working. The message names no command and no environment variable.
 
-Check E3. A busy database is not checked here. The engine's documents give no safe way to cause it, so browser tests cover it.
-
-## L. Language and layout
-
-Check L1. Engine text carries its language. With the application running from `pnpm tauri dev`, open the developer tools (right-click a screen and choose Inspect, or press `Ctrl+Shift+I`, or `Cmd+Option+I` on macOS), and inspect a strategy name in Saved runs and an outcome heading in Refreshes. Each sits in an element with a `lang` attribute holding the engine's language, such as `en`, and a `data-term-id` attribute, which names the help term that explains the text.
-
-Check L2. No screen shows a raw code, such as a method identifier or an outcome code, where a name should be.
-
-Check L3. Narrow the window to about half the screen width. The navigation and the tables stay usable, and a wide table scrolls instead of being cut off.
-
 ## Clean-up
 
 Close the application window; closing it stops the engine. Then delete the throwaway database files in the folder `pnpm smoke` named, `.tmp/smoke/<timestamp>` in this repository: `smoke-test.sqlite3`, and any `smoke-test.sqlite3-wal` and `smoke-test.sqlite3-shm` files beside it. Keep `SMOKE_RECORD.md` and leave the folder itself. `pnpm smoke` prints the folder and these files after the record's path.
@@ -248,7 +244,7 @@ With `pnpm smoke`, the throwaway `IAN_DATABASE_URL` setting never reaches your t
 
 ## Recording the result
 
-`pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. Steps 1 to 9 of the setup are filled in as `pass (scripted)`, each with its command output under "Command output". Step 10 and every check are yours: the tool only started the application, so mark whether its window opened, and mark each check `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
+`pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. Steps 1 to 9 of the setup are filled in as `pass (scripted)`, each with its command output under "Command output". Step 10 and every check are yours: the tool only started the application, so mark whether its window opened, and mark each check `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. Use `note` for something worth reporting that is neither a pass nor a fail, such as a difference you cannot judge or an oddity outside the check. A check that this document says cannot be made here no longer exists, so it has no line in the record and is not marked `n/a`; [What smoke testing does not cover](#what-smoke-testing-does-not-cover) lists what browser tests cover instead. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
 
 The "Command output" section is the tool's, and is kept as written. A run whose application failed to start is not a record for a pull request: fix the cause and run `pnpm smoke` again.
 
@@ -287,4 +283,6 @@ Do not treat a changed market value, an outcome that depends on live data or a s
 
 ## What smoke testing does not cover
 
-A smoke test shows that the application works against a real engine on one day. It proves nothing about boundaries that a real engine cannot easily force, such as paging beyond one page, a stored selection the engine cannot read, a refresh of entries that belong to no watchlist, or a busy database. Browser tests cover those. The check for such a refresh is added to this document when the application can start refreshes itself, because the command line cannot start one.
+A smoke test shows that the application works against a real engine on one day. It proves nothing about boundaries that a real engine cannot easily force, such as paging beyond one page, a stored selection the engine cannot read, a refresh of entries that belong to no watchlist, or a busy database. Browser tests cover those.
+
+No run of this setup can check three things, so this document has no check for them and browser tests cover them: a busy database (the engine's documents give no safe way to cause one), paging of refreshes (it needs more than 50 refreshes) and paging of runs (it needs more than 50 runs). The setup creates one refresh and five runs. The check for such a refresh is added to this document when the application can start refreshes itself, because the command line cannot start one.
