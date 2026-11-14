@@ -147,7 +147,7 @@
 
 ### Acceptance criteria
 
-- The vendored API description is IAN commit `beb58a2`, and the drift check passes (D78).
+- The vendored API description is IAN commit `210d472`, and the drift check passes (D78, D121).
 - `get(path, { path?, query? })` substitutes encoded path parameters and omits undefined query parameters, typed from the generated types (D81).
 - One engine connection and client serve every screen, and each screen reloads when the locale changes (D82).
 - Outcome and strategy names come from the help references, the help index and `/v1/strategies`, each fetched once per locale; each element keeps its term id, and a code or method the engine does not list shows as served with no term id (D83, D101).
@@ -159,7 +159,7 @@
 - While the connection is pending, or the engine is not ready, every screen shows the matching catalog message and the navigation stays usable (D99).
 - An extra, made-up strategy appears in the saved runs list, its filter and a watchlist's entries with no GUI code change (D94).
 - No request uses `POST`, `PATCH` or `DELETE`.
-- `docs/project/SMOKE_TESTING.md` exists (D113 to D115), and the pull request records a run of it against a real engine at IAN `beb58a2`, using the record `pnpm smoke` generates (D47, D117).
+- `docs/project/SMOKE_TESTING.md` exists (D113 to D115), and the pull request records a run of it against a real engine at IAN `210d472`, using the record `pnpm smoke` generates (D47, D117, D121).
 - `pnpm gate` passes on Windows, macOS and Linux.
 
 ## GUI.2b2 detail
@@ -304,3 +304,4 @@ Approved by the project owner on 2026-11-13.
 | D118 | Engine terms in IAD documentation: IAD documents never redefine a term IAN's glossary owns. The first mention links to IAN's user glossary entry by its permanent id, on IAN's main branch, and only IAD's own concepts are explained in place. IAN's Refresh entry does not yet cover a refresh of entries that belong to no watchlist; that is fixed in IAN (filed as an IAN issue). |
 | D119 | Finding `ian` for the smoke test (extends D117): `pnpm smoke` looks for `ian` in `IAD_IAN_PATH`, then on `PATH`, then in uv's command folder as `uv tool dir --bin` reports it, where the engine's installer puts the command. When `ian` comes from uv's folder, the tool passes `IAD_IAN_PATH` to the application it starts and to nothing else, and the record names where `ian` came from. SMOKE_TESTING.md says where the engine's installer puts `ian` and links the engine's troubleshooting entry; `IAD_IAN_PATH` is for choosing a specific `ian`. |
 | D120 | Styling foundation (amends D79 and D96): the application's visual design, taken from the preview mock-ups, is its own sub-slice, GUI.2b2, after GUI.2b1 and before the comparison and run detail screens, which become GUI.2b3 and are built on it. GUI.2b1 shipped layout only; no earlier decision scheduled styling, and the first real smoke run found its absence. In D86, D91, D92 and D104, written before this split, GUI.2b2 means the comparison and run detail sub-slice, now GUI.2b3. |
+| D121 | Re-vendor for API.9 (amends D78 and D97): GUI.2b1's first real smoke run found a date as-of served as an end-of-day UTC instant (Check W5). IAN fixed it in API.9 (IAN pull request 259, issue 258): a served as-of boundary is a date when it was given as a date. GUI.2b1 re-vendors IAN commit `210d472` (2026-11-14); D102's date-only rule then shows such a date as entered, and no IAD code change was needed beyond the regenerated types and fixtures. |
