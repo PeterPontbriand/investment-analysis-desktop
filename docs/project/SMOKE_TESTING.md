@@ -214,13 +214,13 @@ Check L3. A narrow window stays usable. Narrow the window to about half the scre
 
 Do these last. After Check E1, close the application. Check E2 starts it from a new terminal where the engine cannot be found, so it needs no data. To see the data again afterwards, run `pnpm smoke` again, which makes a fresh throwaway database.
 
-Check E1. The engine stops while the application is open. The [`ian` command](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#make-the-ian-command-available) is a launcher that starts the engine, and the application starts the engine through it, so a chain of processes runs; ending the launcher's process makes the rest of the chain exit within seconds, because the engine stops when its input closes. End the `ian.exe` that the application started, in one of two ways. Only the application starts `ian.exe` with `serve` and `--allow-origin` in its command line, so that is how to tell it from any other `ian.exe`.
+Check E1. The engine stops while the application is open. The [`ian` command](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#make-the-ian-command-available) is a launcher that starts the engine, and the application starts the engine through it. Two `ian.exe` processes therefore run, both with `serve` and `--allow-origin` in their command lines: the launcher, which is the `ian` command in uv's command folder, and the engine itself, which is `ian.exe` inside the engine checkout's `.venv\Scripts` folder and which the launcher runs through `uv run`. End the engine, the one inside the engine checkout's `.venv`, in one of two ways. Within a few seconds the launcher exits too; if it stays, note that in the record.
 
-- In Task Manager, open the Details tab, right-click a column heading, choose "Select columns" and add "Command line". End the `ian.exe` process whose command line contains `serve`.
-- Or, in a second PowerShell terminal, find it by its command line and end it:
+- In Task Manager, open the Details tab, right-click a column heading, choose "Select columns" and add "Command line". End the `ian.exe` whose command line starts with the engine checkout's `.venv\Scripts\ian.exe` path.
+- Or, in a second PowerShell terminal, find it by its command line and end it. This ends only the process whose command line contains `\.venv\Scripts\ian.exe`, `serve` and `--allow-origin`. The syntax was checked, but it cannot be tested without a running application, so this command has not been run:
 
 ```powershell
-Get-CimInstance Win32_Process -Filter "Name='ian.exe'" | Where-Object { $_.CommandLine -match '\sserve\s' -and $_.CommandLine -match '--allow-origin' } | ForEach-Object { Stop-Process -Id $_.ProcessId }
+Get-CimInstance Win32_Process -Filter "Name='ian.exe'" | Where-Object { $_.CommandLine.Contains('\.venv\Scripts\ian.exe') -and $_.CommandLine -match '\sserve\s' -and $_.CommandLine -match '--allow-origin' } | ForEach-Object { Stop-Process -Id $_.ProcessId }
 ```
 
 Then open another screen, such as Refreshes. Expect a message that the analysis engine stopped unexpectedly and that the application must be restarted, with no traceback and no process name. The navigation still works.
