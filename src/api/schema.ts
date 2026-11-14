@@ -686,9 +686,9 @@ export interface components {
             outcome: components["schemas"]["RunOutcome"];
             /**
              * Requested As Of
-             * @description The point in time the run asked for; null means now.
+             * @description The point in time the run asked for, as it was asked: a date or an instant; null means now.
              */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
         };
         /**
          * CompareStrategyDocument
@@ -772,8 +772,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             eps_cagr: components["schemas"]["MetricResultPart"];
@@ -803,7 +802,7 @@ export interface components {
             provider_check: components["schemas"]["ProviderCheckItem"][] | null;
             provider_failure: components["schemas"]["ProviderFailure"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             /** Result Schema Version */
             result_schema_version: number;
             /** Schema Version */
@@ -1053,7 +1052,7 @@ export interface components {
         FCFResolvedInputPart: {
             accounting_scope: components["schemas"]["AccountingScope"] | null;
             /** As Of */
-            as_of: string | null;
+            as_of: (string) | null;
             /** Available At */
             available_at: string | null;
             /** Basis */
@@ -1289,8 +1288,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             inputs: components["schemas"]["GrahamGrowthInputsPart"];
@@ -1314,7 +1312,7 @@ export interface components {
             reason: string | null;
             reason_code: components["schemas"]["ReasonCode"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             result: components["schemas"]["GrahamGrowthResultPart"];
             /** Schema Version */
             schema_version: number;
@@ -1416,8 +1414,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             inputs: components["schemas"]["GrahamNumberInputsPart"];
@@ -1440,7 +1437,7 @@ export interface components {
             reason: string | null;
             reason_code: components["schemas"]["ReasonCode"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             result: components["schemas"]["GrahamNumberResultPart"];
             /** Schema Version */
             schema_version: number;
@@ -1893,8 +1890,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             instrument_kind: components["schemas"]["InstrumentKindPart"] | null;
@@ -1913,7 +1909,7 @@ export interface components {
             reason: string | null;
             reason_code: components["schemas"]["ReasonCode"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             result: components["schemas"]["MomentumResultPart"] | null;
             /** Schema Version */
             schema_version: number;
@@ -2054,8 +2050,7 @@ export interface components {
             diagnostics: (components["schemas"]["DiagnosticPart"] | components["schemas"]["ProviderDiagnosticPart"])[];
             /**
              * Effective As Of
-             * Format: date-time
-             * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
+             * @description A date (YYYY-MM-DD) when the boundary was given as a date, else an ISO 8601 instant with its UTC offset.
              */
             effective_as_of: string;
             industry_class: components["schemas"]["IndustryClass"] | null;
@@ -2078,7 +2073,7 @@ export interface components {
             reason: string | null;
             reason_code: components["schemas"]["ReasonCode"] | null;
             /** Requested As Of */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             /** Result Schema Version */
             result_schema_version: number;
             /** Schema Version */
@@ -2693,7 +2688,7 @@ export interface components {
          */
         ResolvedInputPart: {
             /** As Of */
-            as_of: string | null;
+            as_of: (string) | null;
             /** Available At */
             available_at: string | null;
             /** Basis */
@@ -2775,15 +2770,15 @@ export interface components {
             refresh_id: string | null;
             /**
              * Requested As Of
-             * @description The point in time the run asked for; null means now.
+             * @description The point in time the run asked for, as it was asked: a date or an instant; null means now.
              */
-            requested_as_of: string | null;
+            requested_as_of: (string) | null;
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /** @description The strategy that produced the run. */
             strategy: components["schemas"]["CompareStrategyDocument"];
             /** Ticker */
@@ -2835,10 +2830,10 @@ export interface components {
             rows: components["schemas"]["CompareRowDocument"][];
             /**
              * Schema Version
-             * @default 5
+             * @default 6
              * @constant
              */
-            schema_version: 5;
+            schema_version: 6;
             /**
              * Strategies
              * @description The columns, in order.
@@ -3085,10 +3080,10 @@ export interface components {
             deleted: boolean;
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /** @description The first entry this version could not read; null when nothing was deleted. */
             unreadable: components["schemas"]["UnreadableEntryDocument"] | null;
             /** @description The deleted watchlist; null when an entry was unreadable or nothing was deleted. */
@@ -3114,10 +3109,10 @@ export interface components {
             entries: components["schemas"]["WatchlistEntryDocument"][];
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /**
              * Updated At
              * @description Null until the watchlist is first changed.
@@ -3141,7 +3136,7 @@ export interface components {
             index: number;
             /**
              * Selection
-             * @description The stored selection; its method_id says which strategy. Its instants (as_of) carry a UTC offset.
+             * @description The stored selection; its method_id says which strategy. Its as_of is a date when a date was given, else an instant with its UTC offset.
              */
             selection: components["schemas"]["MomentumSelection"] | components["schemas"]["GrahamNumberSelection"] | components["schemas"]["GrahamGrowthSelection"] | components["schemas"]["FCFGrowthSelection"] | components["schemas"]["PiotroskiSelection"];
             /** Ticker */
@@ -3184,10 +3179,10 @@ export interface components {
             removed: number;
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /** @description The first remaining entry this version cannot read; the removal is committed either way. */
             unreadable: components["schemas"]["UnreadableEntryDocument"] | null;
             /** @description The watchlist read back; null when an entry is unreadable. */
@@ -3200,10 +3195,10 @@ export interface components {
         WatchlistRenameDocument: {
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /** @description The first entry this version cannot read; the rename is committed either way. */
             unreadable: components["schemas"]["UnreadableEntryDocument"] | null;
             /** @description The renamed watchlist; null when an entry is unreadable. */
