@@ -5,6 +5,8 @@ import { createAppI18n } from './i18n/index.ts';
 import { applyLocale, chooseStartingLocale } from './i18n/locale.ts';
 import { getPlatform } from './platform/index.ts';
 import { createAppRouter } from './router.ts';
+import './styles/tokens.css';
+import './styles/base.css';
 
 const i18n = createAppI18n();
 applyLocale(i18n, chooseStartingLocale(navigator.languages));

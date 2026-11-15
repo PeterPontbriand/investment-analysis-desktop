@@ -23,10 +23,15 @@ const { t } = useMessages();
 </template>
 
 <style scoped>
+.breadcrumb {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+}
+
 .breadcrumb ol {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--space-2);
   list-style: none;
   margin: 0;
   padding: 0;
@@ -34,6 +39,6 @@ const { t } = useMessages();
 
 .breadcrumb li + li::before {
   content: '/';
-  margin-inline-end: 0.5rem;
+  margin-inline-end: var(--space-2);
 }
 </style>

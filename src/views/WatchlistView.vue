@@ -4,8 +4,10 @@ import { useRoute } from 'vue-router';
 import { useScreenData } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import RefreshesTable from '../components/RefreshesTable.vue';
+import EmptyMessage from '../components/EmptyMessage.vue';
 import ScreenState from '../components/ScreenState.vue';
 import StrategyName from '../components/StrategyName.vue';
+import TableScroll from '../components/TableScroll.vue';
 import { formatDateOrInstant, formatInstant } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 
@@ -42,31 +44,35 @@ const { state, reload } = useScreenData(
         })
       }}
     </p>
-    <p v-if="state.data.entries.length === 0">{{ t('watchlist.noEntries') }}</p>
-    <table v-else>
-      <thead>
-        <tr>
-          <th scope="col">{{ t('watchlist.columns.position') }}</th>
-          <th scope="col">{{ t('watchlist.columns.ticker') }}</th>
-          <th scope="col">{{ t('watchlist.columns.strategy') }}</th>
-          <th scope="col">{{ t('watchlist.columns.asOf') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="entry in state.data.entries" :key="entry.index">
-          <th scope="row">{{ entry.index }}</th>
-          <td>{{ entry.ticker }}</td>
-          <td><StrategyName :method-id="entry.selection.method_id" /></td>
-          <td>
-            {{
-              entry.selection.as_of
-                ? formatDateOrInstant(locale, entry.selection.as_of)
-                : t('watchlist.latestData')
-            }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <EmptyMessage v-if="state.data.entries.length === 0">{{
+      t('watchlist.noEntries')
+    }}</EmptyMessage>
+    <TableScroll v-else>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">{{ t('watchlist.columns.position') }}</th>
+            <th scope="col">{{ t('watchlist.columns.ticker') }}</th>
+            <th scope="col">{{ t('watchlist.columns.strategy') }}</th>
+            <th scope="col">{{ t('watchlist.columns.asOf') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="entry in state.data.entries" :key="entry.index">
+            <th scope="row">{{ entry.index }}</th>
+            <td>{{ entry.ticker }}</td>
+            <td><StrategyName :method-id="entry.selection.method_id" /></td>
+            <td>
+              {{
+                entry.selection.as_of
+                  ? formatDateOrInstant(locale, entry.selection.as_of)
+                  : t('watchlist.latestData')
+              }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </TableScroll>
     <section aria-labelledby="watchlist-refreshes-heading">
       <h2 id="watchlist-refreshes-heading">
         {{ t('watchlist.refreshesHeading') }}

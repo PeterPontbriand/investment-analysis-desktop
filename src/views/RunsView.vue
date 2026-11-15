@@ -4,9 +4,11 @@ import { useEngine } from '../api/engine.ts';
 import type { ResolvedName } from '../api/terms.ts';
 import { pageSize, usePagedList } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
+import EmptyMessage from '../components/EmptyMessage.vue';
+import OutcomePill from '../components/OutcomePill.vue';
 import ScreenState from '../components/ScreenState.vue';
 import StrategyName from '../components/StrategyName.vue';
-import TermName from '../components/TermName.vue';
+import TableScroll from '../components/TableScroll.vue';
 import { formatInstant } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 
@@ -121,31 +123,33 @@ const list = usePagedList(
     :state="list.state.value"
     @retry="list.reload()"
   />
-  <p v-else-if="list.state.value.data.items.length === 0">
+  <EmptyMessage v-else-if="list.state.value.data.items.length === 0">
     {{ filtered ? t('runs.emptyFiltered') : t('runs.empty') }}
-  </p>
+  </EmptyMessage>
   <template v-else>
-    <table>
-      <thead>
-        <tr>
-          <th scope="col">{{ t('runs.columns.completed') }}</th>
-          <th scope="col">{{ t('runs.columns.ticker') }}</th>
-          <th scope="col">{{ t('runs.columns.strategy') }}</th>
-          <th scope="col">{{ t('runs.columns.outcome') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="run in list.state.value.data.items"
-          :key="run.analysis_run_id"
-        >
-          <th scope="row">{{ formatInstant(locale, run.completed_at) }}</th>
-          <td>{{ run.ticker }}</td>
-          <td><StrategyName :method-id="run.method_id" /></td>
-          <td><TermName code-set="RunOutcome" :code="run.outcome" /></td>
-        </tr>
-      </tbody>
-    </table>
+    <TableScroll>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">{{ t('runs.columns.completed') }}</th>
+            <th scope="col">{{ t('runs.columns.ticker') }}</th>
+            <th scope="col">{{ t('runs.columns.strategy') }}</th>
+            <th scope="col">{{ t('runs.columns.outcome') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="run in list.state.value.data.items"
+            :key="run.analysis_run_id"
+          >
+            <th scope="row">{{ formatInstant(locale, run.completed_at) }}</th>
+            <td>{{ run.ticker }}</td>
+            <td><StrategyName :method-id="run.method_id" /></td>
+            <td><OutcomePill :code="run.outcome" /></td>
+          </tr>
+        </tbody>
+      </table>
+    </TableScroll>
     <ScreenState
       v-if="list.moreError.value"
       :state="{ kind: 'error', error: list.moreError.value }"
@@ -166,13 +170,15 @@ const list = usePagedList(
   align-items: end;
   display: flex;
   flex-wrap: wrap;
-  gap: 1rem;
-  margin-block-end: 1rem;
+  gap: var(--space-4);
+  margin-block-end: var(--space-4);
 }
 
 .filters label {
+  color: var(--color-text-secondary);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  font-size: var(--font-size-small);
+  gap: var(--space-1);
 }
 </style>

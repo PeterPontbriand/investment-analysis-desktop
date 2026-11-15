@@ -45,20 +45,21 @@ const { t } = useMessages();
 }
 
 .sidebar {
-  border-inline-end: 1px solid #c8c8c8;
-  flex: 0 0 14rem;
-  padding: 1.5rem 1rem;
+  border-inline-end: var(--border-width) solid var(--color-border);
+  flex: 0 0 var(--sidebar-size);
+  padding: var(--space-4) var(--space-3);
 }
 
 .product {
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin-block: 0 0.5rem;
+  font-size: var(--font-size-large);
+  font-weight: var(--font-weight-medium);
+  margin-block: 0 var(--space-1);
 }
 
 .notice {
-  font-size: 0.875rem;
-  margin-block: 0 1.5rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  margin-block: 0 var(--space-6);
 }
 
 .sidebar ul {
@@ -68,16 +69,26 @@ const { t } = useMessages();
 }
 
 .sidebar li {
-  margin-block-end: 0.5rem;
+  margin-block-end: var(--space-1);
+}
+
+.sidebar a {
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--color-text-secondary);
+  display: block;
+  padding: var(--space-1) var(--space-2);
+  text-decoration: none;
 }
 
 .sidebar a[aria-current='page'] {
-  font-weight: 700;
+  background: var(--color-surface-raised);
+  color: var(--color-text);
 }
 
 .content {
   flex: 1;
   min-inline-size: 0;
-  padding: 1.5rem;
+  padding: var(--space-4) var(--space-6);
 }
 </style>

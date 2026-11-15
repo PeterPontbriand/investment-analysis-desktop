@@ -1,0 +1,92 @@
+/* Defaults for the elements every screen uses. Values come from tokens.css. */
+body {
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--line-height-body);
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: var(--font-weight-medium);
+  margin-block: var(--space-4) var(--space-2);
+}
+
+h1 {
+  font-size: var(--font-size-title);
+}
+
+h2 {
+  font-size: var(--font-size-large);
+}
+
+h3 {
+  font-size: var(--font-size-body);
+}
+
+p {
+  margin-block: 0 var(--space-3);
+}
+
+a {
+  color: var(--color-accent);
+}
+
+table {
+  border-collapse: collapse;
+  inline-size: 100%;
+}
+
+th,
+td {
+  border-block-end: var(--border-width) solid var(--color-border);
+  font-weight: var(--font-weight-regular);
+  padding: var(--space-1) var(--space-2);
+  text-align: start;
+  white-space: nowrap;
+}
+
+th {
+  color: var(--color-text-secondary);
+}
+
+tbody th {
+  color: var(--color-text);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+button,
+input,
+select {
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-control-border);
+  border-radius: var(--radius-control);
+  color: var(--color-text);
+  font: inherit;
+}
+
+button {
+  padding: var(--space-1) var(--space-3);
+}
+
+button:disabled {
+  color: var(--color-text-muted);
+}
+
+input,
+select {
+  padding: var(--space-1) var(--space-2);
+}
+
+:focus-visible {
+  outline: var(--focus-width) solid var(--color-accent);
+  outline-offset: var(--focus-offset);
+}

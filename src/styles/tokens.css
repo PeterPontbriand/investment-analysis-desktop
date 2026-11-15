@@ -1,0 +1,63 @@
+/* Design tokens: custom properties only. Colour literals live in this file
+   alone (stylelint enforces it). Light values follow the preview mock-ups,
+   with the two WCAG AA corrections recorded in D140. */
+:root {
+  color-scheme: light dark;
+
+  --color-surface: #fafaf8;
+  --color-surface-raised: #f1efe8;
+  --color-text: #1f1f1d;
+  --color-text-secondary: #5f5e5a;
+  --color-text-muted: #6e6d68;
+  --color-border: #d3d1c7;
+  --color-control-border: #8b8a83;
+  --color-accent: #185fa5;
+  --color-positive: #3b6d11;
+  --color-positive-bg: #eaf3de;
+  --color-caution: #854f0b;
+  --color-caution-bg: #faeeda;
+  --color-negative: #a32d2d;
+  --color-negative-bg: #fcebeb;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+
+  --radius-control: 0.5rem;
+
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, consolas, monospace;
+  --font-size-small: 0.75rem;
+  --font-size-body: 0.875rem;
+  --font-size-large: 1.125rem;
+  --font-size-title: 1.25rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --line-height-body: 1.5;
+
+  --border-width: 1px;
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --sidebar-size: 14rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-surface: #1c1c1a;
+    --color-surface-raised: #2c2c2a;
+    --color-text: #f1efe8;
+    --color-text-secondary: #b4b2a9;
+    --color-text-muted: #94938c;
+    --color-border: #444441;
+    --color-control-border: #757570;
+    --color-accent: #85b7eb;
+    --color-positive: #c0dd97;
+    --color-positive-bg: #27500a;
+    --color-caution: #fac775;
+    --color-caution-bg: #633806;
+    --color-negative: #f7c1c1;
+    --color-negative-bg: #791f1f;
+  }
+}
