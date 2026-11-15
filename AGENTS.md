@@ -26,6 +26,7 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - Dependabot pull requests are never merged; reapply dependency bumps on a project branch.
 - `pnpm gate` must pass before pushing.
 - The required CI check is `quality`, fed by Windows, macOS, and Linux jobs.
+- CI runner labels stay `-latest` (`windows-latest`, `macos-latest`, `ubuntu-latest`); do not pin them. When GitHub moves a label to a new image and CI breaks, fix it in the pull request it breaks, with a decision row in the slice plan.
 - This repository contains no Python. Its tooling, including documentation checks, is written in the repository's own language.
 
 ## Approval gates
