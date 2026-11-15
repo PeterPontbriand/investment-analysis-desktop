@@ -7,13 +7,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseSteps } from './document.ts';
 import { fileSystem, run, startApplication } from './process.ts';
-import {
-  recordLines,
-  renderRecord,
-  replaceRecordLine,
-  type LineInput,
-  type RecordInput,
-} from './record.ts';
+import { renderRecord, type RecordInput } from './record.ts';
 import { runSmoke } from './run.ts';
 import type { Session } from './setup.ts';
 
@@ -46,48 +40,6 @@ async function applicationCommit(): Promise<{
   };
 }
 
-function smokeSteps() {
-  return parseSteps(
-    readFileSync(
-      join(repositoryRoot, 'docs', 'project', 'SMOKE_TESTING.md'),
-      'utf8',
-    ),
-  );
-}
-
-function lineInput(session: Session): LineInput {
-  return {
-    engineCommit: session.engineCommit,
-    ianSource: session.ianSource,
-    engineVersion: session.engineVersion,
-    engineUncommitted: session.engineUncommitted,
-    engineSwitch:
-      session.engineSwitch === null
-        ? null
-        : {
-            start: session.engineSwitch.start,
-            state: session.engineSwitch.state,
-          },
-    steps: smokeSteps(),
-    scripted: session.scripted,
-  };
-}
-
-// Replaces one line of the record in place, with every other byte unchanged.
-// Returns the record's path, or null when the line was not found exactly once.
-function updateRecord(
-  session: Session,
-  from: string,
-  to: string,
-): string | null {
-  if (session.throwawayFolder === null) return null;
-  const path = join(repositoryRoot, session.throwawayFolder, 'SMOKE_RECORD.md');
-  const replaced = replaceRecordLine(readFileSync(path), from, to);
-  if (replaced === null) return null;
-  writeFileSync(path, replaced);
-  return path;
-}
-
 async function writeRecord(
   session: Session,
   now: Date,
@@ -108,13 +60,15 @@ async function writeRecord(
     engineSwitch:
       session.engineSwitch === null
         ? null
-        : {
-            start: session.engineSwitch.start,
-            state: session.engineSwitch.state,
-          },
+        : { start: session.engineSwitch.start },
     data: session.data,
     throwawayFolder: session.throwawayFolder,
-    steps: smokeSteps(),
+    steps: parseSteps(
+      readFileSync(
+        join(repositoryRoot, 'docs', 'project', 'SMOKE_TESTING.md'),
+        'utf8',
+      ),
+    ),
     scripted: session.scripted,
     log: session.log,
     stopped,
@@ -141,9 +95,6 @@ process.exitCode = await runSmoke(
     signals: process,
     startApplication: (env) => startApplication(repositoryRoot, env),
     writeRecord: (session, stopped) => writeRecord(session, now, stopped),
-    recordLines: (session) => recordLines(lineInput(session)),
-    updateRecord: (session, from, to) =>
-      Promise.resolve(updateRecord(session, from, to)),
     print: (text) => process.stdout.write(text),
     printError: (text) => process.stderr.write(text),
     exit: (code) => process.exit(code),
