@@ -87,6 +87,7 @@ process.exitCode = await runSmoke(
   {
     setup: {
       run,
+      runToCompletion: run,
       fs: fileSystem,
       env: process.env,
       platform: process.platform,

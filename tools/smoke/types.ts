@@ -10,6 +10,8 @@ export type RunResult = {
 export type RunOptions = {
   cwd?: string;
   env?: Record<string, string | undefined>;
+  // Ends the command's process when it aborts.
+  signal?: AbortSignal;
 };
 
 export type Runner = (

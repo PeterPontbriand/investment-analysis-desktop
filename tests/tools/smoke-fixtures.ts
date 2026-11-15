@@ -150,6 +150,7 @@ export function dependencies(
   const files = fakeFileSystem(fsExtra);
   const deps: Dependencies = {
     run: runner.run,
+    runToCompletion: runner.run,
     fs: files.fs,
     env: { PATH: resolve('fake-bin'), SECRET_FOR_TEST: 'kept' },
     platform,

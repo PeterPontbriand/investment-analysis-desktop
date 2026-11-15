@@ -14,7 +14,7 @@ import {
   type Environment,
   type Session,
 } from './setup.ts';
-import { SmokeStop } from './types.ts';
+import { SmokeStop, type Runner } from './types.ts';
 
 export type StopSignal = 'SIGINT' | 'SIGTERM' | 'SIGHUP';
 
@@ -56,37 +56,75 @@ const signalNumbers: Record<StopSignal, number> = {
   SIGTERM: 15,
 };
 
+// Thrown by the setup's commands once a stop signal has arrived: no further
+// command starts.
+class Interrupted extends Error {}
+
 export async function runSmoke(
   deps: RunDependencies,
   args: string[],
 ): Promise<number> {
-  const { setup, print, printError } = deps;
+  const { print, printError } = deps;
   const message = checkArguments(args);
   if (message !== null) {
-    printError(`${message}\n`);
+    printError(`${message}
+`);
     return 1;
   }
   const session = newSession();
-  let applicationRunning = false;
-  let interrupted = false;
+  // 'setup' until the application starts, then 'application', then 'ending'.
+  let phase: 'setup' | 'application' | 'ending' = 'setup';
+  let interrupted: StopSignal | null = null;
+  let interruption: Promise<void> | null = null;
+  let setupSettled: Promise<unknown> = Promise.resolve();
+  const abort = new AbortController();
   const restore = () =>
-    restoreEngine(setup.run, session.engineSwitch, print, (command, output) =>
-      session.log.push({
-        command,
-        output: scrub(output, setup.repositoryRoot, session.engineFolder),
-      }),
+    restoreEngine(
+      deps.setup.run,
+      session.engineSwitch,
+      print,
+      (command, output) =>
+        session.log.push({
+          command,
+          output: scrub(
+            output,
+            deps.setup.repositoryRoot,
+            session.engineFolder,
+          ),
+        }),
     );
+  // The setup's commands end with the stop signal and start no more after it.
+  const guard =
+    (run: Runner, abortable: boolean): Runner =>
+    (file, commandArgs, options) =>
+      abort.signal.aborted
+        ? Promise.reject(new Interrupted())
+        : run(file, commandArgs, {
+            ...options,
+            ...(abortable ? { signal: abort.signal } : {}),
+          });
+  const setup: Dependencies = {
+    ...deps.setup,
+    run: guard(deps.setup.run, true),
+    runToCompletion: guard(deps.setup.runToCompletion, false),
+  };
 
   // Setup stops, thrown errors, application exits and signals all restore.
   const handlers = new Map<StopSignal, () => void>();
   for (const signal of Object.keys(signalNumbers) as StopSignal[]) {
     const handler = () => {
       // Ctrl+C reaches the application too, which then exits on its own.
-      if (signal === 'SIGINT' && applicationRunning) return;
-      if (interrupted) return;
-      interrupted = true;
-      printError(`\nStopped by ${signal}.\n`);
-      void (async () => {
+      if (signal === 'SIGINT' && phase === 'application') return;
+      if (interrupted !== null) return;
+      interrupted = signal;
+      printError(`
+Stopped by ${signal}.
+`);
+      // One path: end the running command, let setup finish (it starts no
+      // more), then restore, write the record once and exit.
+      abort.abort();
+      interruption = (async () => {
+        await setupSettled;
         await restore();
         await deps
           .writeRecord(session, {
@@ -102,17 +140,32 @@ export async function runSmoke(
   }
 
   try {
-    try {
-      await runSetup(setup, session);
-    } catch (error) {
-      if (!(error instanceof SmokeStop)) throw error;
-      printError(`Smoke test stopped at ${error.step}: ${error.message}\n`);
+    let failure: unknown = null;
+    setupSettled = runSetup(setup, session).then(
+      () => undefined,
+      (error: unknown) => {
+        failure = error;
+      },
+    );
+    await setupSettled;
+    const stopped = (): StopSignal | null => interrupted;
+    const interruptedBy = stopped();
+    if (interruptedBy !== null) {
+      await interruption;
+      return 128 + signalNumbers[interruptedBy];
+    }
+    if (failure !== null) {
+      if (!(failure instanceof SmokeStop)) throw failure;
+      printError(`Smoke test stopped at ${failure.step}: ${failure.message}
+`);
       await restore();
       const path = await deps.writeRecord(session, {
-        step: error.step,
-        message: error.message,
+        step: failure.step,
+        message: failure.message,
       });
-      if (path) printError(`The record so far is in ${path}\n`);
+      if (path)
+        printError(`The record so far is in ${path}
+`);
       return 1;
     }
     session.scripted.set('Step 10', {
@@ -129,7 +182,13 @@ export async function runSmoke(
           : `The engine checkout is switched; it is restored when the application exits. If this terminal closes first, restore it with: ${restoreCommand(engine.folder, engine.start)}\n`
       }Starting the application…\n`,
     );
-    applicationRunning = true;
+    // A signal during the lines above leaves the application unstarted.
+    const lateSignal = stopped();
+    if (lateSignal !== null) {
+      await interruption;
+      return 128 + signalNumbers[lateSignal];
+    }
+    phase = 'application';
     let code: number;
     try {
       code = await startAndFinish({
@@ -140,7 +199,7 @@ export async function runSmoke(
         print,
       });
     } finally {
-      applicationRunning = false;
+      phase = 'ending';
     }
     await restore();
     // The record's engine line now says whether the checkout was restored.

@@ -35,7 +35,7 @@ export const engineMessages = {
   noIan: () =>
     'The `ian` command was not found on PATH or in uv\'s command folder. Do the engine\'s "Make the `ian` command available" step (Step 1 of docs/project/SMOKE_TESTING.md), then open a new terminal and try again.',
   aboutUnknown: () =>
-    'This engine does not know `ian about`, so it is older than the engine change that added it (API.10). Update your engine checkout to the vendored commit or a later one, then try again.',
+    'This engine does not know `ian about`, so it is older than the vendored commit. Update it by pulling main in your engine checkout, then try again.',
   aboutFailed: (detail: string) =>
     `\`ian about --json\` did not succeed (${detail}). Make the \`ian\` command available as the engine's installation guide describes (Step 1 of docs/project/SMOKE_TESTING.md).`,
   installedAsPackage: () =>

@@ -34,6 +34,9 @@ export type Environment = Record<string, string | undefined>;
 
 export type Dependencies = {
   run: Runner;
+  // Like `run`, but a command already started is left to finish when setup is
+  // told to stop. The switch uses it, so Git is never killed half-way.
+  runToCompletion: Runner;
   fs: FileSystem;
   env: Environment;
   platform: string;
@@ -87,6 +90,9 @@ export function newSession(): Session {
     data: null,
   };
 }
+
+// The label of a stop after the switch, which happens between Step 3 and Step 4.
+export const switchStep = 'Engine switch';
 
 // The stop messages, which docs/project/SMOKE_TESTING.md lists with what to do.
 export const stopMessages = {
@@ -183,11 +189,14 @@ export async function runSetup(
       command,
       output: scrub(output, repositoryRoot, session.engineFolder),
     });
-  const engineStop = (error: unknown): never => {
-    if (error instanceof EngineProblem)
-      throw new SmokeStop('Step 1', error.message);
-    throw error;
-  };
+  const engineStopAt =
+    (step: string) =>
+    (error: unknown): never => {
+      if (error instanceof EngineProblem)
+        throw new SmokeStop(step, error.message);
+      throw error;
+    };
+  const engineStop = engineStopAt('Step 1');
   const located = await locateEngine(deps, logAbout).catch(engineStop);
   const ian = located.ian.path;
   const engineFolder = located.about.installationFolder;
@@ -277,20 +286,25 @@ export async function runSetup(
       `Switching the engine checkout to the vendored commit ${short}. If this terminal closes before the test ends, restore it with: ${restoreCommand(engineFolder, plannedStart)}`,
     );
     session.engineSwitch = engine;
-    const failure = await switchDetached(run, engineFolder, wanted, logEngine);
+    const failure = await switchDetached(
+      deps.runToCompletion,
+      engineFolder,
+      wanted,
+      logEngine,
+    );
     if (failure !== null) {
       session.engineSwitch = null;
-      throw new SmokeStop('Step 1', stopMessages.switchFailed(failure));
+      throw new SmokeStop(switchStep, stopMessages.switchFailed(failure));
     }
     progress(
       "The engine's environment may take a minute to sync after the switch…",
     );
     const after = await readAbout(run, ian, childEnv, logAbout).catch(
-      engineStop,
+      engineStopAt(switchStep),
     );
     if (after.commit !== wanted)
       throw new SmokeStop(
-        'Step 1',
+        switchStep,
         stopMessages.switchedToWrongCommit(
           after.commit.slice(0, 7),
           wanted.slice(0, 7),

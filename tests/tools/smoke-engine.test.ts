@@ -142,7 +142,10 @@ describe('finding the engine through ian about', () => {
     );
     expect(error.step).toBe('Step 1');
     expect(error.message).toBe(engineMessages.aboutUnknown());
-    expect(error.message).toMatch(/older than .*API\.10.*Update your engine/);
+    expect(error.message).toBe(
+      'This engine does not know `ian about`, so it is older than the vendored commit. Update it by pulling main in your engine checkout, then try again.',
+    );
+    expect(error.message).not.toContain('API.');
   });
 
   it('stops when the engine is installed as a package', async () => {
@@ -330,6 +333,7 @@ describe('switching the engine checkout', () => {
     const fake = engine({ switchCode: 1 });
     const session = newSession();
     const { error } = await stopOf(session, fake.script);
+    expect(error.step).toBe('Engine switch');
     expect(error.message).toBe(stopMessages.switchFailed('fatal: cannot'));
     expect(session.engineSwitch).toBeNull();
   });
@@ -344,6 +348,7 @@ describe('switching the engine checkout', () => {
         ? aboutJson({ commit: other })
         : answer;
     });
+    expect(error.step).toBe('Engine switch');
     expect(error.message).toBe(
       stopMessages.switchedToWrongCommit('aaaaaaa', vendoredCommit.slice(0, 7)),
     );
@@ -472,32 +477,112 @@ describe('restoring the engine checkout', () => {
     expect(restoreCalls(run.calls)).toEqual([`switch --detach ${other}`]);
   });
 
-  it.each([
+  const signals = [
     ['SIGTERM', 143],
     ['SIGHUP', 129],
     ['SIGINT', 130],
-  ] as const)(
-    'restores on %s while the application waits for setup to end',
+  ] as const;
+
+  // Sends the signal while the command matching `during` runs, and checks that
+  // setup ends there.
+  async function interruptDuring(
+    during: (call: Call) => boolean,
+    signal: StopSignal,
+    options: EngineOptions = {},
+    answer?: (call: Call) => ReturnType<Script>,
+    // The switch is left to finish rather than killed half-way.
+    killed = true,
+  ) {
+    const fake = engine(options);
+    let triggered: Call | null = null;
+    const run = machine((call) => {
+      if (triggered === null && during(call)) {
+        triggered = call;
+        run.signals.emit(signal);
+        return answer?.(call) ?? fake.script(call);
+      }
+      return fake.script(call);
+    });
+    const code = await runSmoke(run.deps, []);
+    await flush();
+    const at = run.calls.findIndex((call) => call === triggered);
+    expect(at).toBeGreaterThan(-1);
+    // The command that was running was told to stop.
+    expect(triggered!.options?.signal?.aborted).toBe(killed ? true : undefined);
+    // Nothing ran after the signal but the restore.
+    const after = run.calls.slice(at + 1);
+    expect(after.every((call) => call.file === 'git')).toBe(true);
+    expect(gitCalls(after).filter((line) => line !== 'switch main')).toEqual(
+      [],
+    );
+    expect(run.started()).toBe(false);
+    // One record, with the Interrupted stop.
+    expect(run.writes).toHaveLength(1);
+    expect(run.writes[0]?.stopped).toBe('Interrupted');
+    expect(restoreCalls(run.calls)).toHaveLength(1);
+    neverForced(run.calls);
+    return { run, code };
+  }
+
+  it.each(signals)(
+    'stops setup on %s during a setup command, restores once and exits',
     async (signal, status) => {
-      const fake = engine();
-      // The signal arrives during Step 4, as a contributor's Ctrl+C would.
-      let sent = false;
-      const run = machine((call) => {
-        if (!sent && call.args.join(' ') === 'db upgrade') {
-          sent = true;
-          run.signals.emit(signal);
-        }
-        return fake.script(call);
-      });
-      run.deps.startApplication = () => Promise.resolve(0);
-      await runSmoke(run.deps, []);
-      await flush();
+      const { run, code } = await interruptDuring(
+        (call) => call.args[0] === 'watchlist',
+        signal,
+      );
+      expect(code).toBe(status);
       expect(run.exits).toEqual([status]);
-      // One restore, though the run's own end asks for one too.
-      expect(restoreCalls(run.calls)).toEqual(['switch main']);
-      expect(run.writes.some((w) => w.stopped === 'Interrupted')).toBe(true);
+      expect(run.writes[0]).toEqual({
+        state: 'restored',
+        stopped: 'Interrupted',
+      });
     },
   );
+
+  it.each(signals)(
+    'does not let Step 8 start when %s kills the Step 7 refresh',
+    async (signal, status) => {
+      const { run } = await interruptDuring(
+        (call) => call.args[0] === 'refresh',
+        signal,
+        {},
+        // The killed refresh exits 1, which Step 7 would otherwise accept.
+        () => ({ code: 1, stdout: '', stderr: '' }),
+      );
+      expect(run.exits).toEqual([status]);
+      expect(run.calls.some((call) => call.args.includes('--save-run'))).toBe(
+        false,
+      );
+    },
+  );
+
+  it('attempts one unforced restore when the signal arrives during the switch', async () => {
+    const { run } = await interruptDuring(
+      (call) => call.args.includes('--detach'),
+      'SIGTERM',
+      {},
+      undefined,
+      false,
+    );
+    expect(run.exits).toEqual([143]);
+    expect(run.writes[0]?.state).toBe('restored');
+  });
+
+  it('says "not restored" when the restore after a signal fails', async () => {
+    const { run } = await interruptDuring(
+      (call) => call.args.includes('--detach'),
+      'SIGHUP',
+      { restoreCode: 1 },
+      undefined,
+      false,
+    );
+    expect(run.out.join('')).toContain('The engine checkout was NOT restored');
+    expect(run.writes[0]).toEqual({
+      state: 'not-restored',
+      stopped: 'Interrupted',
+    });
+  });
 
   it('restores on SIGTERM and SIGHUP while the application runs', async () => {
     for (const [signal, status] of [

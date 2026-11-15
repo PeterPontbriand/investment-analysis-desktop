@@ -41,14 +41,14 @@ Step 1. Get the engine at the commit this repository vendors, and make its comma
 
 ### The engine checkout and `pnpm smoke`
 
-`pnpm smoke` leaves your engine checkout as it found it. It reads the checkout's branch and commit from `ian about`, and does one of two things:
+`pnpm smoke` leaves your engine checkout as it found it. It reads the checkout's commit from `ian about` and, when it must switch, its branch from `git symbolic-ref` (`ian about` reports no branch), and does one of two things:
 
 - **The checkout is at the vendored commit:** nothing is switched. If the checkout has uncommitted changes, the run continues and the record notes them.
 - **The checkout is at another commit:** the tool refuses a checkout with uncommitted changes (commit, stash or discard them first). Otherwise it makes sure the checkout has the vendored commit, running `git fetch origin` only when it does not, and after Step 3 switches the checkout to that commit with `git switch --detach`. A detached checkout is at a commit rather than on a branch, which is how the test pins the engine. Before it switches, the tool notes whether the checkout was on a branch or detached.
 
 The tool never uses `--force` and never uses `reset`. Step 2 reads your real database with your own engine before the switch, and after the switch nothing touches the real database: every later step uses the throwaway database.
 
-The tool puts the checkout back, with `git switch <branch>` or `git switch --detach <commit>`, when setup stops, when it hits an error, when the application exits (with any status) and when you press Ctrl+C or the terminal sends it a stop signal. If you close the terminal window, Windows allows the tool about 10 seconds to do it. When it switches the checkout, it prints the one command that restores it at the start, and the record carries the same command, so you can restore the checkout yourself if the terminal itself is closed. If the restore fails, the tool does not force it: it prints the message and that command, and the record says the checkout was not restored.
+The tool puts the checkout back, with `git switch <branch>` or `git switch --detach <commit>`, when setup stops, when it hits an error, when the application exits (with any status) and when you press Ctrl+C or the terminal sends it a stop signal. A stop signal during setup ends the command that is running (on Windows with its whole process tree), starts no further command, does not start the application, and then restores the checkout, writes the record once with the stop recorded as "Interrupted", and exits. A switch already under way is left to finish before the restore, so Git is never killed half-way. While the application runs, Ctrl+C is left to the application, which exits, and the tool then restores. If you close the terminal window, Windows allows the tool about 10 seconds to do it. When it switches the checkout, it prints the one command that restores it at the start, and the record carries the same command, so you can restore the checkout yourself if the terminal itself is closed. If the restore fails, the tool does not force it: it prints the message and that command, and the record says the checkout was not restored.
 
 The first engine command after a switch, and the first one after a restore, can take about a minute while the engine's environment syncs.
 
@@ -270,13 +270,13 @@ Record a run in the description of the pull request that adds or changes a scree
 It stops with a plain message instead of guessing, and writes the record so far beside the throwaway folder when it got that far.
 
 - **`--engine` was passed:** the option no longer exists, because the tool finds the engine through `ian about`. Run `pnpm smoke` without it.
-- **`ian about` is unknown:** the engine is older than the engine change that added it. Update your engine checkout to the vendored commit or a later one.
+- **`ian about` is unknown:** the engine is older than the vendored commit. Update it by pulling main in your engine checkout, then run `pnpm smoke` again.
 - **The engine is installed as a package:** `ian about` reports no installation folder. The smoke test needs the engine installed from a source checkout of the engine repository; follow the engine's installation guide from a checkout.
 - **The engine's folder is not a Git checkout:** `ian about` reports no commit. Install the engine from a Git checkout of the engine repository.
 - **`ian about` failed:** the file the tool found does not run as the engine's `ian`. The record's Engine line, or the message, names where it came from; fix that installation, or set `IAD_IAN_PATH` to the right file.
 - **The engine checkout is at another commit and has uncommitted changes:** the tool will not switch it. Commit, stash or discard the changes in the engine checkout, then run `pnpm smoke` again.
 - **The engine checkout does not have the vendored commit, even after a fetch:** nothing was switched. Check that the commit is on the engine's origin, then run `pnpm smoke` again.
-- **The switch failed, or `ian` does not run the switched checkout:** the checkout was not changed, or the tool restored it. The message says what Git reported.
+- **The run stopped at "Engine switch":** the switch itself failed, or `ian` does not run the switched checkout. The stop is labelled "Engine switch" rather than a step number because it happens between Step 3 and Step 4. In the first case the checkout was not changed; in the second the tool restored it. The message says what Git reported.
 - **The engine checkout was not restored:** the tool printed the one command that restores it, and the record carries it too. Run it in the engine checkout. A failed restore is usually a file that changed while the checkout was switched; the tool never forces it.
 - **The `ian` command was not found on `PATH` or in uv's command folder:** do the engine's "Make the `ian` command available" step (Step 1), then open a new terminal and try again. If that does not help, follow the troubleshooting entry linked in [Before you start](#before-you-start). To use a specific `ian`, set `IAD_IAN_PATH`.
 - **`IAD_IAN_PATH` names a `.cmd` or `.bat` file:** the application and the tool start the engine without a shell, so `IAD_IAN_PATH` must name an executable (`.exe`). Point it at the `.exe`, or unset it so `ian` is found on `PATH`.
