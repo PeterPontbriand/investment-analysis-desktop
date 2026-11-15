@@ -162,7 +162,7 @@ pnpm tauri dev
 
 The first start compiles the application and takes a while. When you follow the steps by hand and `ian` is not on `PATH`, set `IAD_IAN_PATH` first, as [Before you start](#before-you-start) says; `pnpm smoke` does not need this. Expect a window to open. Leave the terminal open: it shows the application's launch line for the engine.
 
-If the start fails with "Access is denied" when removing the application's executable, an earlier copy of the application is still running. Close it, or end it with `Get-Process investment-analysis-desktop -ErrorAction SilentlyContinue | Stop-Process`, and run `pnpm smoke` again. When `pnpm smoke` starts the application and it exits with a failure status, the terminal tells you to mark Step 10 `fail` in the record, with the exit status.
+If the start fails with "Access is denied" when removing the application's executable, an earlier copy of the application is still running. Close it, or end it with `Get-Process investment-analysis-desktop -ErrorAction SilentlyContinue | Stop-Process`, and run `pnpm smoke` again. When `pnpm smoke` starts the application and it exits with a failure status, the terminal tells you to mark Step 10 `fail` in the record, with the exit status. When you close the window normally, the terminal may print `[ELIFECYCLE] Command failed with exit code -1.` This is pnpm reporting that the development server was stopped along with the application, not a failure of the application, and the exit status stays 0, so you can ignore it.
 
 ## N. Navigation and About
 
