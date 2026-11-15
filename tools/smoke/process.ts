@@ -1,7 +1,7 @@
 // Real process and file access for the smoke-test tool, spawning the way
 // tools/gate.ts does: no shell, and pnpm through npm_execpath.
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import type { FileSystem, RunOptions, RunResult, Runner } from './types.ts';
 
 export const run: Runner = (file, args, options: RunOptions = {}) =>
@@ -27,6 +27,9 @@ export const fileSystem: FileSystem = {
   readText: (path) => readFileSync(path, 'utf8'),
   makeFolder: (path) => {
     mkdirSync(path, { recursive: true });
+  },
+  writeText: (path, text) => {
+    writeFileSync(path, text, 'utf8');
   },
 };
 
