@@ -48,6 +48,18 @@ export type RecordInput = {
   stopped: { step: string; message: string } | null;
 };
 
+// What the lines the tool updates in place are made from.
+export type LineInput = Pick<
+  RecordInput,
+  | 'engineCommit'
+  | 'ianSource'
+  | 'engineVersion'
+  | 'engineUncommitted'
+  | 'engineSwitch'
+  | 'steps'
+  | 'scripted'
+>;
+
 // A secret never reaches the record, whatever the output held.
 export function scrub(
   text: string,
@@ -80,7 +92,7 @@ function plural(count: number, one: string, many: string): string {
 // The engine line: the commit, the version `ian about` reports, where `ian`
 // came from, and what happened to the checkout. It never names the
 // installation folder, because the record is pasted into public pull requests.
-function engineLine(input: RecordInput): string {
+function engineLine(input: LineInput): string {
   if (input.engineCommit === null) return 'not checked';
   const parts = [
     `${input.engineCommit}, matches vendor/ian/SOURCE.md`,
@@ -102,6 +114,57 @@ function engineLine(input: RecordInput): string {
   return parts.join('; ');
 }
 
+// The Engine line exactly as the record has it. After the application starts,
+// the tool replaces this line in place and touches nothing else.
+export function engineRecordLine(input: LineInput): string {
+  return `- **Engine:** ${engineLine(input)}`;
+}
+
+export function setupStepLine(
+  step: DocumentStep,
+  done: ScriptedStep | undefined,
+): string {
+  const fact = done?.fact ? ` (${done.fact})` : '';
+  return `- **${step.id}** ${step.hint}:${done ? (done.fail !== undefined ? ` fail (scripted): ${done.fail}` : done.leftToYou ? fact : ` pass (scripted)${fact}`) : ''}`;
+}
+
+// The lines of the record that the tool may update in place once it has
+// handed the record over.
+export type RecordLines = { engine: string; step10: string | null };
+
+export function recordLines(input: LineInput): RecordLines {
+  const step = input.steps.find((entry) => entry.id === 'Step 10');
+  return {
+    engine: engineRecordLine(input),
+    step10:
+      step === undefined
+        ? null
+        : setupStepLine(step, input.scripted.get(step.id)),
+  };
+}
+
+// Replaces the one line that is exactly `from` with `to`, and returns the
+// whole file with every other byte unchanged, line endings included. Returns
+// null, changing nothing, when `from` is not exactly one whole line.
+export function replaceRecordLine(
+  content: Uint8Array,
+  from: string,
+  to: string,
+): Uint8Array | null {
+  // Latin-1 maps each byte to one character, so the bytes round-trip exactly.
+  const bytes = (text: string) => Buffer.from(text, 'utf8').toString('latin1');
+  const parts = Buffer.from(content)
+    .toString('latin1')
+    .split(/(\r\n|\n)/);
+  const wanted = bytes(from);
+  const found: number[] = [];
+  for (let index = 0; index < parts.length; index += 2)
+    if (parts[index] === wanted) found.push(index);
+  if (found.length !== 1) return null;
+  parts[found[0]!] = bytes(to);
+  return Buffer.from(parts.join(''), 'latin1');
+}
+
 export function renderRecord(input: RecordInput): string {
   const lines: string[] = ['# Smoke test record', ''];
   lines.push(`- **Date:** ${input.date}`);
@@ -110,7 +173,7 @@ export function renderRecord(input: RecordInput): string {
   lines.push(
     `- **Application commit:** ${input.applicationCommit}${input.dirty ? ' (with uncommitted changes)' : ''}`,
   );
-  lines.push(`- **Engine:** ${engineLine(input)}`);
+  lines.push(engineRecordLine(input));
   if (input.engineSwitch !== null)
     lines.push(
       `- **Restore command:** \`${restoreCommandForRecord(input.engineSwitch.start)}\``,
@@ -135,11 +198,7 @@ export function renderRecord(input: RecordInput): string {
   for (const step of input.steps.filter((entry) =>
     entry.id.startsWith('Step '),
   )) {
-    const done = input.scripted.get(step.id);
-    const fact = done?.fact ? ` (${done.fact})` : '';
-    lines.push(
-      `- **${step.id}** ${step.hint}:${done ? (done.fail !== undefined ? ` fail (scripted): ${done.fail}` : done.leftToYou ? fact : ` pass (scripted)${fact}`) : ''}`,
-    );
+    lines.push(setupStepLine(step, input.scripted.get(step.id)));
   }
   lines.push(
     '',

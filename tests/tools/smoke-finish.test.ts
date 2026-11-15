@@ -46,7 +46,7 @@ describe('starting the application', () => {
     const code = await startAndFinish({
       session: made,
       start: () => Promise.resolve(101),
-      rewrite: () => {
+      update: () => {
         rewritten = recordOf(made);
         return Promise.resolve('.tmp/smoke/x/SMOKE_RECORD.md');
       },
@@ -70,7 +70,7 @@ describe('starting the application', () => {
     const code = await startAndFinish({
       session: made,
       start: () => Promise.resolve(0),
-      rewrite: () => {
+      update: () => {
         rewrites += 1;
         return Promise.resolve(null);
       },

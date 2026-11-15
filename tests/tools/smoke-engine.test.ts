@@ -4,7 +4,12 @@ import {
   engineMessages,
   parseAbout,
 } from '../../tools/smoke/engine.ts';
-import { renderRecord } from '../../tools/smoke/record.ts';
+import {
+  recordLines,
+  renderRecord,
+  replaceRecordLine,
+  type LineInput,
+} from '../../tools/smoke/record.ts';
 import { parseSteps } from '../../tools/smoke/document.ts';
 import {
   checkArguments,
@@ -357,6 +362,28 @@ describe('switching the engine checkout', () => {
   });
 });
 
+const recordSteps = parseSteps(
+  'Step 10. Start the desktop application.\n\nCheck A1. First check.\n\nCheck A2. Second check.\n',
+);
+
+function lineInput(session: Session): LineInput {
+  return {
+    engineCommit: session.engineCommit,
+    ianSource: session.ianSource,
+    engineVersion: session.engineVersion,
+    engineUncommitted: session.engineUncommitted,
+    engineSwitch:
+      session.engineSwitch === null
+        ? null
+        : {
+            start: session.engineSwitch.start,
+            state: session.engineSwitch.state,
+          },
+    steps: recordSteps,
+    scripted: session.scripted,
+  };
+}
+
 // A fake machine for the whole run: signals the test can send, an application
 // the test controls, and a record that remembers the engine state each time it
 // was written.
@@ -366,6 +393,8 @@ function machine(
     exitCode?: number;
     // Runs when the nth record write starts; the write ends when it settles.
     duringWrite?: (index: number) => Promise<void> | void;
+    // The line ending the fake record file is written with.
+    eol?: '\n' | '\r\n';
   } = {},
 ) {
   const made = dependencies(healthy(script));
@@ -388,6 +417,9 @@ function machine(
   const writes: { state: string | null; stopped: string | null }[] = [];
   const exits: number[] = [];
   const events: string[] = [];
+  // The record file, as bytes: whole writes render it, and in-place updates
+  // replace a line. A test edits it as the contributor would.
+  const record = { file: null as Buffer | null, updates: 0 };
   let application: ((code: number) => void) | null = null;
   let started = false;
   const deps: RunDependencies = {
@@ -411,7 +443,32 @@ function machine(
       events.push(`start ${index}`);
       await options.duringWrite?.(index);
       events.push(`end ${index}`);
+      record.file = Buffer.from(
+        renderRecord({
+          date: 'd',
+          timeZone: 'z',
+          operatingSystem: 'o',
+          applicationCommit: 'c',
+          dirty: false,
+          data: null,
+          throwawayFolder: '.tmp/smoke/x',
+          log: [],
+          stopped: stopped
+            ? { step: stopped.step, message: stopped.message }
+            : null,
+          ...lineInput(session),
+        }).replace(/\n/g, options.eol ?? '\n'),
+      );
       return 'record.md';
+    },
+    recordLines: (session) => recordLines(lineInput(session)),
+    updateRecord: (_session, from, to) => {
+      const replaced =
+        record.file === null ? null : replaceRecordLine(record.file, from, to);
+      if (replaced === null) return Promise.resolve(null);
+      record.file = Buffer.from(replaced);
+      record.updates += 1;
+      return Promise.resolve('record.md');
     },
     print: (text) => out.push(text),
     printError: (text) => err.push(text),
@@ -425,12 +482,14 @@ function machine(
     err,
     writes,
     events,
+    record,
     exits,
     started: () => started,
     endApplication: (code: number) => application?.(code),
   };
 }
 
+const fileText = (file: Buffer | null) => file?.toString('utf8') ?? '';
 const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 const restoreCalls = (calls: Call[]) =>
   gitCalls(calls).filter(
@@ -456,17 +515,18 @@ describe('restoring the engine checkout', () => {
   });
 
   it.each([0, 1, 137])(
-    'restores when the application exits with status %i, and rewrites the record',
+    'restores when the application exits with status %i, and updates the Engine line',
     async (exitCode) => {
       const fake = engine();
       const run = machine(fake.script, { exitCode });
       const code = await runSmoke(run.deps, []);
       expect(code).toBe(exitCode);
       expect(restoreCalls(run.calls)).toEqual(['switch main']);
-      // Written once before the application, with the restore still to come,
-      // and last after the restore.
-      expect(run.writes.at(0)?.state).toBe('switched');
-      expect(run.writes.at(-1)?.state).toBe('restored');
+      // Written once, before the application, with the restore still to come;
+      // the restore then updates the Engine line in place.
+      expect(run.writes).toEqual([{ state: 'switched', stopped: null }]);
+      expect(fileText(run.record.file)).toContain('and restored');
+      expect(fileText(run.record.file)).not.toContain('to be restored');
       expect(run.out.join('')).toContain(
         `restore it with: git -C "${enginePath}" switch main`,
       );
@@ -606,9 +666,11 @@ describe('restoring the engine checkout', () => {
     run.endApplication(1);
     await done;
     await flush();
-    // The normal write before the application, then only the Interrupted one:
-    // neither the failure rewrite nor the final write follows the signal.
-    expect(run.writes.map((w) => w.stopped)).toEqual([null, 'Interrupted']);
+    // Only the write before the application: nothing follows the signal but
+    // the Engine line's update, and no Interrupted stop is recorded.
+    expect(run.writes.map((w) => w.stopped)).toEqual([null]);
+    expect(fileText(run.record.file)).not.toContain('Interrupted');
+    expect(run.record.updates).toBe(1);
   });
 
   it('attempts one unforced restore when the signal arrives during the switch', async () => {
@@ -683,7 +745,7 @@ describe('restoring the engine checkout', () => {
     expect(text).toContain(
       `Restore it yourself with:\ngit -C "${enginePath}" switch main`,
     );
-    expect(run.writes.at(-1)?.state).toBe('not-restored');
+    expect(fileText(run.record.file)).toContain('switched and not restored');
     // One attempt, no retry, nothing forced.
     expect(restoreCalls(run.calls)).toEqual(['switch main']);
     neverForced(run.calls);
@@ -694,6 +756,227 @@ describe('restoring the engine checkout', () => {
     await runSmoke(run.deps, []);
     expect(run.calls.some((call) => call.file === 'git')).toBe(false);
     expect(run.writes.map((w) => w.state)).toEqual([null]);
+  });
+});
+
+describe('the record after it is handed over', () => {
+  const engineLineOf = (file: Buffer | null) =>
+    /^- \*\*Engine:\*\*.*$/m.exec(fileText(file))![0];
+  const step10LineOf = (file: Buffer | null) =>
+    /^- \*\*Step 10\*\*.*$/m.exec(fileText(file))![0];
+
+  // What the contributor does to the record while the application runs: marks
+  // on several checks, a note and an extra line.
+  function contributorEdits(file: Buffer, eol = '\n'): Buffer {
+    return Buffer.from(
+      fileText(file)
+        .replace(
+          '- **Check A1** First check:',
+          '- **Check A1** First check: pass',
+        )
+        .replace(
+          '- **Check A2** Second check:',
+          '- **Check A2** Second check: note, a slow table (naïve “quotes” — ok)',
+        ) + `${eol}My own line: the window opened.${eol}`,
+    );
+  }
+
+  // Starts a run, lets the contributor edit the record, then ends the run the
+  // way `end` says.
+  async function run(
+    end: (run: ReturnType<typeof machine>) => Promise<void> | void,
+    options: {
+      restoreCode?: number;
+      eol?: '\n' | '\r\n';
+      edit?: (file: Buffer) => Buffer;
+    } = {},
+  ) {
+    const fake = engine({ restoreCode: options.restoreCode });
+    const made = machine(fake.script, { eol: options.eol });
+    const done = runSmoke(made.deps, []);
+    await flush();
+    expect(made.started()).toBe(true);
+    const handed = made.record.file!;
+    const edited = (
+      options.edit ?? ((file) => contributorEdits(file, options.eol))
+    )(handed);
+    made.record.file = edited;
+    await end(made);
+    await done;
+    await flush();
+    return { run: made, handed, edited, final: made.record.file! };
+  }
+
+  // The final file is the edited one with only the given lines replaced.
+  function onlyThese(final: Buffer, edited: Buffer, lines: [string, string][]) {
+    let restored = fileText(final);
+    for (const [before, after] of lines) {
+      expect(restored.split(after)).toHaveLength(2);
+      restored = restored.replace(after, () => before);
+    }
+    expect(Buffer.from(restored).equals(edited)).toBe(true);
+  }
+
+  it.each([
+    ['restored', undefined, 'and restored'],
+    ['not restored', 1, 'switched and not restored'],
+  ])(
+    'keeps every edit after a normal exit, %s',
+    async (_name, restoreCode, said) => {
+      const {
+        run: made,
+        handed,
+        edited,
+        final,
+      } = await run((m) => m.endApplication(0), { restoreCode });
+      expect(made.writes).toHaveLength(1);
+      expect(made.record.updates).toBe(1);
+      expect(fileText(final)).toContain(said);
+      onlyThese(final, edited, [[engineLineOf(handed), engineLineOf(final)]]);
+    },
+  );
+
+  it('updates only the Step 10 and Engine lines after a failure exit', async () => {
+    const {
+      run: made,
+      handed,
+      edited,
+      final,
+    } = await run((m) => m.endApplication(101));
+    expect(made.writes).toHaveLength(1);
+    expect(fileText(final)).toContain(
+      'fail (scripted): `pnpm tauri dev` exited with status 101',
+    );
+    onlyThese(final, edited, [
+      [engineLineOf(handed), engineLineOf(final)],
+      [step10LineOf(handed), step10LineOf(final)],
+    ]);
+  });
+
+  it.each([
+    ['SIGTERM', 143],
+    ['SIGHUP', 129],
+  ] as const)(
+    'updates only the Engine line when %s arrives while the application runs',
+    async (signal, status) => {
+      const {
+        run: made,
+        handed,
+        edited,
+        final,
+      } = await run(async (m) => {
+        m.signals.emit(signal);
+        await flush();
+        m.endApplication(1);
+      });
+      expect(made.exits).toEqual([status]);
+      expect(made.err.join('')).toContain(`Stopped by ${signal}.`);
+      expect(made.writes).toHaveLength(1);
+      expect(fileText(final)).not.toContain('Interrupted');
+      // The Step 10 line is still the tool's own: nothing marked it failed.
+      expect(step10LineOf(final)).toBe(step10LineOf(handed));
+      onlyThese(final, edited, [[engineLineOf(handed), engineLineOf(final)]]);
+    },
+  );
+
+  it('leaves the file unchanged and prints the line when the Engine line was edited', async () => {
+    const {
+      run: made,
+      handed,
+      edited,
+      final,
+    } = await run((m) => m.endApplication(0), {
+      edit: (file) =>
+        Buffer.from(
+          fileText(contributorEdits(file)).replace(
+            engineLineOf(file),
+            (line) => `${line} (my note)`,
+          ),
+        ),
+    });
+    expect(final.equals(edited)).toBe(true);
+    expect(made.record.updates).toBe(0);
+    const said = made.err.join('');
+    expect(said).toContain('The record was not changed');
+    expect(said).toContain('Paste this line into the record yourself');
+    expect(said).toContain('and restored');
+    expect(said).not.toContain(engineLineOf(handed));
+  });
+
+  it('leaves the file unchanged and prints the line when the Engine line appears twice', async () => {
+    const {
+      run: made,
+      edited,
+      final,
+    } = await run((m) => m.endApplication(0), {
+      edit: (file) =>
+        Buffer.from(
+          `${fileText(contributorEdits(file))}${engineLineOf(file)}\n`,
+        ),
+    });
+    expect(final.equals(edited)).toBe(true);
+    expect(made.err.join('')).toContain('The record was not changed');
+    expect(made.err.join('')).toContain('and restored');
+  });
+
+  it('updates the Engine line but prints the Step 10 line when the contributor marked it', async () => {
+    const {
+      run: made,
+      handed,
+      edited,
+      final,
+    } = await run((m) => m.endApplication(101), {
+      edit: (file) =>
+        Buffer.from(
+          fileText(contributorEdits(file)).replace(
+            step10LineOf(file),
+            '- **Step 10** Start the desktop application: pass',
+          ),
+        ),
+    });
+    expect(made.err.join('')).toContain('fail (scripted)');
+    expect(made.err.join('')).toContain('The record was not changed');
+    expect(fileText(final)).toContain('Start the desktop application: pass');
+    onlyThese(final, edited, [[engineLineOf(handed), engineLineOf(final)]]);
+  });
+
+  it('keeps CRLF line endings byte for byte', async () => {
+    const { handed, edited, final } = await run((m) => m.endApplication(101), {
+      eol: '\r\n',
+    });
+    expect(fileText(handed)).toContain('\r\n');
+    expect(/(?<!\r)\n/.test(fileText(final))).toBe(false);
+    onlyThese(final, edited, [
+      [engineLineOf(handed), engineLineOf(final)],
+      [step10LineOf(handed), step10LineOf(final)],
+    ]);
+  });
+
+  it('writes the record whole only before the handover', async () => {
+    const fake = engine();
+    const made = machine(fake.script, { exitCode: 1 });
+    await runSmoke(made.deps, []);
+    expect(made.writes).toHaveLength(1);
+    expect(made.record.updates).toBe(2);
+  });
+});
+
+describe('replacing one line of a record', () => {
+  const file = Buffer.from('a\r\nb\nline\nc\r\n');
+  it('changes one whole line and nothing else', () => {
+    expect(
+      Buffer.from(replaceRecordLine(file, 'line', 'new')!).toString(),
+    ).toBe('a\r\nb\nnew\nc\r\n');
+  });
+  it('does not match part of a line', () => {
+    expect(replaceRecordLine(file, 'lin', 'new')).toBeNull();
+  });
+  it('keeps bytes that are not valid text', () => {
+    const odd = Buffer.concat([Buffer.from([0xff, 0xfe, 0x0a]), file]);
+    const out = Buffer.from(replaceRecordLine(odd, 'line', 'new')!);
+    expect(out.subarray(0, 3).equals(Buffer.from([0xff, 0xfe, 0x0a]))).toBe(
+      true,
+    );
   });
 });
 

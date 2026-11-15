@@ -6,8 +6,10 @@ export type FinishOptions = {
   session: Session;
   // Starts the application and resolves with its exit status.
   start: () => Promise<number>;
-  // Writes the record again and returns its path.
-  rewrite: () => Promise<string | null>;
+  // Updates the Step 10 line of the record in place, and returns the record's
+  // path when the line was replaced. The rest of the record is never rewritten,
+  // because the contributor is marking it while the application runs.
+  update: () => Promise<string | null>;
   print: (text: string) => void;
 };
 
@@ -18,9 +20,11 @@ export async function startAndFinish(options: FinishOptions): Promise<number> {
     options.session.scripted.set('Step 10', {
       fail: `\`pnpm tauri dev\` exited with status ${code}; see the terminal`,
     });
-    const path = await options.rewrite();
+    const path = await options.update();
     options.print(
-      `The application exited with status ${code}. The record was updated, with Step 10 marked fail: ${path}\n`,
+      path === null
+        ? `The application exited with status ${code}.\n`
+        : `The application exited with status ${code}. The record was updated, with Step 10 marked fail: ${path}\n`,
     );
   }
   return code;

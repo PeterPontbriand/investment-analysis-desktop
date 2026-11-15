@@ -4,7 +4,7 @@
 import { restoreCommand, restoreEngine } from './checkout.ts';
 import { throwawayFile } from './commands.ts';
 import { startAndFinish } from './finish.ts';
-import { scrub } from './record.ts';
+import { scrub, type RecordLines } from './record.ts';
 import {
   applicationEnvironment,
   newSession,
@@ -36,6 +36,17 @@ export type RunDependencies = {
   writeRecord: (
     session: Session,
     stopped: { step: string; message: string } | null,
+  ) => Promise<string | null>;
+  // The lines of the record the tool may update in place, as the record has
+  // them for the session's current state.
+  recordLines: (session: Session) => RecordLines;
+  // Replaces the one line that is exactly `from` in the record with `to`, and
+  // changes nothing else. Returns the record's path, or null when the line was
+  // not found exactly once and the record was left as it is.
+  updateRecord: (
+    session: Session,
+    from: string,
+    to: string,
   ) => Promise<string | null>;
   print: (text: string) => void;
   printError: (text: string) => void;
@@ -77,22 +88,56 @@ export async function runSmoke(
   let interruption: Promise<void> | null = null;
   let setupSettled: Promise<unknown> = Promise.resolve();
   const abort = new AbortController();
+  // The record's lines as the tool wrote them when it handed the record over
+  // (the pre-application write). Null until then. From then on the contributor
+  // is marking the record, so the tool never rewrites it: it only replaces
+  // one of these lines in place, and only while it is still as written.
+  let handed: RecordLines | null = null;
   // Every record write goes through this queue, so writes happen one at a
   // time in the order they were asked for. A normal write is skipped once a
-  // stop signal has arrived, so the "Interrupted" write is always the last.
+  // stop signal has arrived, so the last write of an interrupted run is the
+  // interruption's own.
   let writes: Promise<unknown> = Promise.resolve();
-  const writeRecord = (
-    stopped: { step: string; message: string } | null,
-    interruption = false,
-  ): Promise<string | null> => {
+  const enqueue = <T>(
+    task: () => Promise<T>,
+    skipped: T,
+    interruption: boolean,
+  ): Promise<T> => {
     const next = writes.then(() =>
-      !interruption && interrupted !== null
-        ? null
-        : deps.writeRecord(session, stopped),
+      !interruption && interrupted !== null ? skipped : task(),
     );
     writes = next.catch(() => null);
     return next;
   };
+  const writeRecord = (
+    stopped: { step: string; message: string } | null,
+    interruption = false,
+  ): Promise<string | null> =>
+    enqueue(() => deps.writeRecord(session, stopped), null, interruption);
+  // Updates one of the handed-over lines in place. Returns the record's path
+  // when the line was replaced. When the line was edited, removed or appears
+  // more than once, the record is left as it is and the new line is printed.
+  const updateLine = (
+    kind: keyof RecordLines,
+    interruption = false,
+  ): Promise<string | null> =>
+    enqueue(
+      async () => {
+        const from = handed?.[kind] ?? null;
+        const to = deps.recordLines(session)[kind];
+        if (handed === null || from === null || to === null || from === to)
+          return null;
+        const path = await deps.updateRecord(session, from, to);
+        if (path === null)
+          printError(
+            `The record was not changed, because its ${kind === 'engine' ? 'Engine' : 'Step 10'} line is no longer as the tool wrote it. Paste this line into the record yourself:\n${to}\n`,
+          );
+        else handed[kind] = to;
+        return path;
+      },
+      null,
+      interruption,
+    );
   const restore = () =>
     restoreEngine(
       deps.setup.run,
@@ -134,17 +179,23 @@ export async function runSmoke(
       interrupted = signal;
       printError(`\nStopped by ${signal}.\n`);
       // One path: end the running command, let setup finish (it starts no
-      // more), then restore, write the record once and exit.
+      // more), then restore, record it and exit. Before the handover the
+      // record is written once with the stop; after it, only the Engine line
+      // is updated, with the restore's result.
       abort.abort();
       interruption = (async () => {
         await setupSettled;
         await restore();
-        await writeRecord(
-          {
-            step: 'Interrupted',
-            message: `The run was stopped by ${signal}.`,
-          },
-          true,
+        await (
+          handed === null
+            ? writeRecord(
+                {
+                  step: 'Interrupted',
+                  message: `The run was stopped by ${signal}.`,
+                },
+                true,
+              )
+            : updateLine('engine', true)
         ).catch(() => null);
         deps.exit(128 + signalNumbers[signal]);
       })();
@@ -183,6 +234,7 @@ export async function runSmoke(
       fact: 'the tool started the application; mark whether its window opened',
       leftToYou: true,
     });
+    const lines = deps.recordLines(session);
     const path = await writeRecord(null);
     // A signal before or during that write leaves the application unstarted.
     const lateSignal = stopped();
@@ -190,6 +242,8 @@ export async function runSmoke(
       await interruption;
       return 128 + signalNumbers[lateSignal];
     }
+    // The handover: the record is the contributor's from here on.
+    handed = lines;
     const folder = session.throwawayFolder ?? '';
     const engine = session.engineSwitch;
     print(
@@ -206,15 +260,16 @@ export async function runSmoke(
         session,
         start: () =>
           deps.startApplication(applicationEnvironment(setup.env, session)),
-        rewrite: () => writeRecord(null),
+        update: () => updateLine('step10'),
         print,
       });
     } finally {
       phase = 'ending';
     }
     await restore();
-    // The record's engine line now says whether the checkout was restored.
-    if (session.engineSwitch !== null) await writeRecord(null);
+    // The record's Engine line now says whether the checkout was restored.
+    if (session.engineSwitch !== null) await updateLine('engine');
+    if (interruption !== null) await interruption;
     return code;
   } finally {
     for (const [signal, handler] of handlers) deps.signals.off(signal, handler);
