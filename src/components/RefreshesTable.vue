@@ -4,7 +4,9 @@ import { useEngine } from '../api/engine.ts';
 import { pageSize, usePagedList } from '../api/useScreenData.ts';
 import { formatCompletion, formatCount } from '../i18n/format.ts';
 import { useMessages, type MessageKey } from '../i18n/index.ts';
+import EmptyMessage from './EmptyMessage.vue';
 import ScreenState from './ScreenState.vue';
+import TableScroll from './TableScroll.vue';
 import TermName from './TermName.vue';
 
 const props = defineProps<{ watchlistId?: string; emptyKey: MessageKey }>();
@@ -52,43 +54,45 @@ function countOf(counts: Record<string, number>, code: string): string {
     :state="list.state.value"
     @retry="list.reload()"
   />
-  <p v-else-if="list.state.value.data.items.length === 0">
+  <EmptyMessage v-else-if="list.state.value.data.items.length === 0">
     {{ t(emptyKey) }}
-  </p>
+  </EmptyMessage>
   <template v-else>
-    <table>
-      <thead>
-        <tr>
-          <th scope="col">{{ t('refreshes.columns.completed') }}</th>
-          <th scope="col">{{ t('refreshes.columns.watchlist') }}</th>
-          <th scope="col">{{ t('refreshes.columns.runs') }}</th>
-          <th v-for="code in columns" :key="code" scope="col">
-            <TermName code-set="RunOutcome" :code="code" />
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="refresh in list.state.value.data.items"
-          :key="refresh.refresh_id"
-        >
-          <th scope="row">
-            {{
-              formatCompletion(
-                locale,
-                refresh.first_completed_at,
-                refresh.last_completed_at,
-              )
-            }}
-          </th>
-          <td>{{ refresh.watchlist_name ?? t('refreshes.adHoc') }}</td>
-          <td>{{ formatCount(locale, refresh.run_count) }}</td>
-          <td v-for="code in columns" :key="code">
-            {{ countOf(refresh.outcome_counts, code) }}
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <TableScroll>
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">{{ t('refreshes.columns.completed') }}</th>
+            <th scope="col">{{ t('refreshes.columns.watchlist') }}</th>
+            <th class="num" scope="col">{{ t('refreshes.columns.runs') }}</th>
+            <th v-for="code in columns" :key="code" class="num" scope="col">
+              <TermName code-set="RunOutcome" :code="code" />
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="refresh in list.state.value.data.items"
+            :key="refresh.refresh_id"
+          >
+            <th scope="row">
+              {{
+                formatCompletion(
+                  locale,
+                  refresh.first_completed_at,
+                  refresh.last_completed_at,
+                )
+              }}
+            </th>
+            <td>{{ refresh.watchlist_name ?? t('refreshes.adHoc') }}</td>
+            <td class="num">{{ formatCount(locale, refresh.run_count) }}</td>
+            <td v-for="code in columns" :key="code" class="num">
+              {{ countOf(refresh.outcome_counts, code) }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </TableScroll>
     <ScreenState
       v-if="list.moreError.value"
       :state="{ kind: 'error', error: list.moreError.value }"

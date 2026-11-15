@@ -49,11 +49,11 @@ const { state, reload } = useScreenData((client) => client.get('/v1/info'), []);
 
 <style scoped>
 dt {
-  font-weight: 600;
+  font-weight: var(--font-weight-medium);
 }
 
 dd {
-  margin-block-end: 0.75rem;
+  margin-block-end: var(--space-3);
   margin-inline-start: 0;
 }
 </style>

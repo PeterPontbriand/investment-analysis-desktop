@@ -15,13 +15,13 @@ const failure = computed(() =>
 </script>
 
 <template>
-  <p v-if="state.kind === 'connecting'" role="status">
+  <p v-if="state.kind === 'connecting'" role="status" class="connecting">
     {{ t('engine.loading') }}
   </p>
-  <p v-else-if="state.kind === 'engine'" role="status">
-    {{ t(state.key) }}
-  </p>
-  <div v-else-if="failure" role="status">
+  <div v-else-if="state.kind === 'engine'" role="status" class="panel">
+    <p>{{ t(state.key) }}</p>
+  </div>
+  <div v-else-if="failure" role="status" class="panel">
     <p v-if="failure.kind === 'reason'" :lang="failure.lang ?? undefined">
       {{ failure.text }}
     </p>
@@ -35,3 +35,25 @@ const failure = computed(() =>
     </button>
   </div>
 </template>
+
+<style scoped>
+.connecting {
+  color: var(--color-text-secondary);
+}
+
+.panel {
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  margin-block-end: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+}
+
+.panel p {
+  margin-block-end: var(--space-2);
+}
+
+.panel p:last-child {
+  margin-block-end: 0;
+}
+</style>
