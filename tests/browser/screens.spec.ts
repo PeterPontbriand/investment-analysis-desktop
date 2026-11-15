@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures.ts';
 import { engineUrl, mockEngine } from './engine-mock.ts';
@@ -596,5 +597,149 @@ test.describe('right-to-left pseudo-locale shell', () => {
     expect(nav).not.toBeNull();
     expect(content).not.toBeNull();
     expect((nav?.x ?? 0) > (content?.x ?? 0)).toBe(true);
+  });
+});
+
+// Geometric checks of the styling foundation: boxes, computed styles and
+// scroll sizes, never screenshots.
+const tokensCss = readFileSync('src/styles/tokens.css', 'utf8');
+const darkSurface = (() => {
+  const dark = /prefers-color-scheme: dark\)\s*\{\s*:root\s*\{([^}]*)\}/.exec(
+    tokensCss,
+  )?.[1];
+  const hex = /--color-surface:\s*#([0-9a-f]{6})/.exec(dark ?? '')?.[1] ?? '';
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return `rgb(${r}, ${g}, ${b})`;
+})();
+
+async function pretendRightToLeft(page: Page) {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, 'languages', {
+      get: () => ['ar-XB'],
+      configurable: true,
+    });
+    Object.defineProperty(navigator, 'language', {
+      get: () => 'ar-XB',
+      configurable: true,
+    });
+  });
+}
+
+async function openRefreshes(page: Page) {
+  await open(page);
+  await page
+    .getByRole('navigation', { name: en.nav.label })
+    .getByRole('link', { name: en.nav.refreshes })
+    .click();
+  await expect(rows(page)).toHaveCount(2);
+}
+
+// How far the text of the first number cell sits from each edge of its cell.
+function numberCellGaps(page: Page) {
+  return page
+    .locator('tbody td.num')
+    .first()
+    .evaluate((cell) => {
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      const text = range.getBoundingClientRect();
+      const box = cell.getBoundingClientRect();
+      return {
+        left: text.left - box.left,
+        right: box.right - text.right,
+        padding: parseFloat(getComputedStyle(cell).paddingLeft),
+      };
+    });
+}
+
+test.describe('styling layout', () => {
+  test('mirrors the sidebar border and keeps number cells at the inline end in left-to-right', async ({
+    page,
+  }) => {
+    await openRefreshes(page);
+    const border = await page.locator('.sidebar').evaluate((el) => {
+      const style = getComputedStyle(el);
+      return { left: style.borderLeftWidth, right: style.borderRightWidth };
+    });
+    expect(border).toEqual({ left: '0px', right: '1px' });
+    const nav = await page.locator('.sidebar').boundingBox();
+    const content = await page.locator('.content').boundingBox();
+    expect((nav?.x ?? 0) < (content?.x ?? 0)).toBe(true);
+    const gaps = await numberCellGaps(page);
+    expect(gaps.right).toBeLessThanOrEqual(gaps.padding + 1);
+    expect(gaps.left).toBeGreaterThan(gaps.padding + 4);
+  });
+
+  test('mirrors the sidebar, its border and the current item, and aligns number cells to the inline end in right-to-left', async ({
+    page,
+  }) => {
+    await pretendRightToLeft(page);
+    await openRefreshes(page);
+    await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    const border = await page.locator('.sidebar').evaluate((el) => {
+      const style = getComputedStyle(el);
+      return { left: style.borderLeftWidth, right: style.borderRightWidth };
+    });
+    expect(border).toEqual({ left: '1px', right: '0px' });
+    const sidebar = await page.locator('.sidebar').boundingBox();
+    const content = await page.locator('.content').boundingBox();
+    expect((sidebar?.x ?? 0) > (content?.x ?? 0)).toBe(true);
+    // The current item fills the sidebar's width, inside the sidebar.
+    const current = await page
+      .locator('.sidebar a[aria-current="page"]')
+      .boundingBox();
+    expect(current?.x ?? 0).toBeGreaterThanOrEqual(sidebar?.x ?? 0);
+    expect((current?.x ?? 0) + (current?.width ?? 0)).toBeLessThanOrEqual(
+      (sidebar?.x ?? 0) + (sidebar?.width ?? 0),
+    );
+    const gaps = await numberCellGaps(page);
+    expect(gaps.left).toBeLessThanOrEqual(gaps.padding + 1);
+    expect(gaps.right).toBeGreaterThan(gaps.padding + 4);
+  });
+
+  test('follows a dark system colour scheme', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await open(page);
+    await expect(page.locator('body')).toHaveCSS(
+      'background-color',
+      darkSurface,
+    );
+  });
+
+  test('scrolls a wide table inside its container, not the page', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 480, height: 700 });
+    await openRefreshes(page);
+    const sizes = await page.evaluate(() => {
+      const box = document.querySelector('.table-scroll');
+      const root = document.documentElement;
+      return {
+        boxScroll: box?.scrollWidth ?? 0,
+        boxClient: box?.clientWidth ?? 0,
+        pageScroll: root.scrollWidth,
+        pageClient: root.clientWidth,
+        bodyScroll: document.body.scrollWidth,
+      };
+    });
+    expect(sizes.boxScroll).toBeGreaterThan(sizes.boxClient);
+    expect(sizes.pageScroll).toBeLessThanOrEqual(sizes.pageClient);
+    expect(sizes.bodyScroll).toBeLessThanOrEqual(sizes.pageClient);
+  });
+
+  test('shows an outline on a navigation link reached by keyboard', async ({
+    page,
+  }) => {
+    await open(page);
+    // WebKit does not Tab to links by default, so a key press marks keyboard
+    // use and the link is then focused by script, as Tab does in Chromium.
+    await page.keyboard.press('Tab');
+    const link = page
+      .getByRole('navigation', { name: en.nav.label })
+      .getByRole('link', { name: en.nav.watchlists });
+    await link.focus();
+    await expect(link).toBeFocused();
+    await expect(link).toHaveCSS('outline-style', 'solid');
+    await expect(link).toHaveCSS('outline-width', '2px');
   });
 });
