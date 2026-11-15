@@ -175,6 +175,8 @@ Check N3. About shows the engine's details. They are its version, API versions, 
 - Compare the engine version with the version `ian about` prints on its first line, and say in the record that this is what you compared with. `pnpm smoke` records the version `ian about` reported.
 - SEC identity shows configured when the engine's configuration holds an SEC EDGAR identification, and not configured otherwise.
 
+Check N4. The shell follows the look of the preview mock-ups. The navigation at the start side has a thin rule on its inner edge; the current item has a raised background with rounded corners; the product name and the pre-release notice sit above the navigation; the content area fills the rest of the window with the breadcrumb as a small line above the heading.
+
 ## W. Watchlists
 
 Check W1. The Watchlists screen lists both watchlists. `Smoke Test` has 4 entries and `Smoke Test Empty` has 0, each with its created time. A watchlist that was never changed shows a dash for its last change; the one you added entries to shows a time.
@@ -195,6 +197,8 @@ Check W6. The watchlist's refreshes are listed under its entries. They show the 
 
 Check W7. Open `Smoke Test Empty` to see that it has no entries. It shows that it has no entries and that it has not been refreshed yet. The breadcrumb leads back to Watchlists.
 
+Check W8. Tables follow the mock-ups: a thin rule under every row, secondary-coloured column headings, and the watchlist names as links in the accent colour. The entry counts are aligned to the end of their column.
+
 ## R. Refreshes
 
 Check R1. Refreshes lists the refresh from Step 7. It shows its completion time (a range when its first and last runs completed a minute or more apart), the watchlist name `Smoke Test`, a run count of 4, and a count for each outcome. The counts agree with `ian runs refreshes`.
@@ -202,6 +206,8 @@ Check R1. Refreshes lists the refresh from Step 7. It shows its completion time 
 Check R2. The outcome column headings are names the engine gives its outcomes. They come in the engine's order, and the counts add up to the run count.
 
 Check R3. The direct analysis from Step 8 is not a refresh and does not appear here.
+
+Check R4. The count columns line up at the end of the column, and their digits are the same width, so counts of different sizes stay in line.
 
 ## H. Saved runs
 
@@ -215,6 +221,10 @@ Check H4. Filter by outcome. The choices are the engine's outcomes, led by "All 
 
 Check H5. A filter that matches nothing says that no saved runs match the filters. Use a ticker the setup never used. "Clear filters" empties all three filters and shows all five runs again.
 
+Check H6. The outcome column shows each outcome as a pill: green for completed, amber for unavailable, red for failed and grey for not applicable. The pill's words are the engine's outcome names, and the Refreshes headings stay plain text.
+
+Check H7. Keyboard focus is visible. Press Tab to move through the navigation links and then through the Saved runs filters and buttons: each control shows a clear outline when it has focus, and the order follows the screen from the start side to the end side and top to bottom. On macOS, if Tab skips links, turn on "Press Tab to highlight each item on a webpage" in Safari's settings, or use Option+Tab.
+
 ## L. Language and layout
 
 Check L1. Engine text carries its language. With the application running from `pnpm tauri dev`, open the developer tools (right-click a screen and choose Inspect, or press `Ctrl+Shift+I`, or `Cmd+Option+I` on macOS), and inspect a strategy name in Saved runs and an outcome heading in Refreshes. Each sits in an element with a `lang` attribute holding the engine's language, such as `en`, and a `data-term-id` attribute, which names the help term that explains the text.
@@ -222,6 +232,10 @@ Check L1. Engine text carries its language. With the application running from `p
 Check L2. No screen shows a raw code, such as a method identifier or an outcome code, where a name should be.
 
 Check L3. A narrow window stays usable. Narrow the window to about half the screen width. The navigation and the tables stay usable, and a wide table scrolls instead of being cut off.
+
+Check L4. The application follows the operating system's colour theme while it runs. Switch the system between light and dark in the system's settings: the window changes with it, with no restart, and text stays readable in both. Note any white flash when the application starts in dark mode.
+
+Check L5. Forms and states look settled. Saved runs' filter labels sit above their fields in small grey text, and a drop-down keeps the platform's own arrow. The "Connecting to the analysis engine…" message, if you catch it at start-up, is plain grey text.
 
 ## E. Engine problems
 
@@ -239,7 +253,7 @@ $engine = @($all | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('\
 if ($engine.Count -eq 1) { Stop-Process -Id $engine[0].ProcessId; "Stopped the engine, process $($engine[0].ProcessId)." } else { "Stopped nothing: $($engine.Count) processes look like the engine, and exactly one was expected." }
 ```
 
-Then open another screen, such as Refreshes. Expect a message that the analysis engine stopped unexpectedly and that the application must be restarted, with no traceback and no process name. The navigation still works.
+Then open another screen, such as Refreshes. Expect a message that the analysis engine stopped unexpectedly and that the application must be restarted, with no traceback and no process name. The message sits in a neutral panel with a raised background and a thin border, not in red, with no spinner or animation. The navigation still works.
 
 Check E2. The engine cannot be found. Close the application, then in a terminal where `ian` is not on `PATH` and `IAD_IAN_PATH` is not set, start it again. This removes every folder holding `ian.exe` from this terminal's `PATH`, so use a new terminal and do not run the smoke test's other steps in it:
 

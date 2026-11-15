@@ -14,8 +14,8 @@
 | GUI.2a2 | [Engine launch and API adapter](#gui2a2--engine-launch-and-api-adapter) | Complete | 2026-11-13 |
 | GUI.2b1 | [Shared groundwork, watchlists, refreshes and saved runs](#gui2b1--shared-groundwork-watchlists-refreshes-and-saved-runs) | Complete | 2026-11-13 |
 | GUI.2b1a | [Smoke tool follows `ian`](#gui2b1a--smoke-tool-follows-ian) | Complete | 2026-11-14 |
-| GUI.2b2 | [Styling foundation](#gui2b2--styling-foundation) | Next | |
-| GUI.2b3 | [Comparison and run detail](#gui2b3--comparison-and-run-detail) | Planned | |
+| GUI.2b2 | [Styling foundation](#gui2b2--styling-foundation) | Complete | 2026-11-15 |
+| GUI.2b3 | [Comparison and run detail](#gui2b3--comparison-and-run-detail) | Next | |
 
 ## Sub-slices
 
@@ -56,7 +56,7 @@
 - **Problem:** The screens have layout only, with no visual design, and nothing scheduled one.
 - **Decision:** Before the comparison and run detail screens, give the application its visual design from the preview mock-ups, [docs/design/preview-mockups.html](../../../../design/preview-mockups.html) (D120).
 - **Scope:** colour and type tokens; the shell and navigation; tables; forms and the filter bar; the error, empty and loading states; and the right-to-left layout, all with logical properties.
-- **Branch:** `feat/gui-2b2-styling`, from main after GUI.2b1 and GUI.2b1a merge, so GUI.2b2's smoke run uses the improved tool; its own pull request. Its own open decisions are taken before it starts.
+- **Branch:** `feat/gui-2b2-styling`, from main after GUI.2b1 and GUI.2b1a merge, so GUI.2b2's smoke run uses the improved tool; its own pull request. Its decisions are D139 to D154.
 - **Detail:** This plan owns GUI.2b2's [file scope](#file-scope-4) and [acceptance criteria](#acceptance-criteria-4).
 
 ### GUI.2b3 — Comparison and run detail
@@ -200,18 +200,35 @@
 
 ### File scope
 
-- The styles and components under `src/`, and `index.html` if a font or colour-scheme setting needs it.
-- The browser tests' layout checks under `tests/browser/`.
-- This plan's status row and the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md)'s GUI.2 row.
+- The styles, components and `main.ts` under `src/`, including `src/styles/tokens.css` and `src/styles/base.css` (D139).
+- `stylelint.config.js` for the colour-literal rules (D142).
+- Vitest tests under `tests/unit/` for the outcome tones and the token contrast (D146, D152).
+- The browser tests' layout checks under `tests/browser/` (D151).
+- `docs/project/SMOKE_TESTING.md` (D153).
+- This plan's status row and decision rows, and the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md)'s GUI.2 entry if it needs a change (it needed none).
 
 ### Acceptance criteria
 
-To be completed by GUI.2b2's decisions, before it starts. Already decided:
-
-- The screens follow the look of the preview mock-ups.
-- No new dependency is added without approval.
-- Styles use CSS logical properties only; stylelint enforces this.
-- The layout is checked in the `ar-XB` pseudo-locale.
+- The screens follow the look of the preview mock-ups, with the departures D144, D145 and D149 name.
+- `src/styles/tokens.css` holds custom properties only and `src/styles/base.css` holds the element defaults; each is imported once in `src/main.ts`. Component styles hold their own layout only, and every colour, size and radius in them comes from a token (D139).
+- The tokens are the mock-ups' palette under meaning-based names, with rem-based spacing, radius and type steps and a mono font token; muted text and the control border use the corrected values (D140).
+- Dark mode follows the system through `prefers-color-scheme`, with `color-scheme: light dark` on `:root`; there is no in-app toggle and no Tauri configuration change (D141).
+- stylelint rejects a hex colour, a named colour and `rgb`, `rgba`, `hsl` and `hsla` everywhere except `src/styles/tokens.css`, with no new dependency (D142).
+- Text uses the `system-ui` stack at 0.875rem, weights 400 and 500 only, sizes in rem, and tabular figures on number cells (D143).
+- The sidebar, the content area and the breadcrumb follow D144; the current navigation item keeps `aria-current`.
+- Tables follow D145: number cells are aligned to the inline end with tabular figures, every table sits in a container that scrolls on the inline axis, and links use the accent colour; no link is added.
+- Each `RunOutcome` code has an explicit tone, and the Saved runs outcome column shows pills whose text is the engine's term name with its term id and `lang`; a unit test covers every value of the vendored enum (D146).
+- Buttons, inputs and selects follow D147, with the platform's own select arrow and no test that opens a drop-down.
+- Every interactive element shows a 2px accent `:focus-visible` outline with an offset (D148).
+- Connecting, engine-not-ready and failure states and the empty-list messages look as D149 says, with every existing role, `lang` and message key kept.
+- Pills and the current navigation item carry a 1px transparent border for forced-colours mode (D150).
+- Browser tests check the layout geometrically in Chromium and WebKit, with no screenshot comparison: in `ar-XB` the sidebar is on the physical right and its border mirrors, number cells align to the inline end in both directions, a dark colour scheme gives the dark body background, a wide table scrolls inside its container at a narrow viewport with no horizontal overflow of the page, and a focused navigation link shows an outline (D151).
+- A unit test reads the tokens and checks the contrast pairs of D152 in both schemes.
+- `docs/project/SMOKE_TESTING.md` has the checks of D153, and the vendored IAN commit stays `f67c4cb`.
+- None of the items D154 leaves out is built, and `docs/design/preview-mockups.html` is unchanged.
+- No new dependency, and no change to the CSP, `tauri.conf.json` or `index.html`.
+- The pull request records a manual run against a real engine at IAN `f67c4cb`, using the record `pnpm smoke` generates.
+- `pnpm gate` passes on Windows, macOS and Linux.
 
 ## GUI.2b3 detail
 
@@ -356,3 +373,19 @@ Approved by the project owner on 2026-11-13.
 | D136 | No record writes after the handover (amends D117, D127, D129 and D135): this replaces updating the Engine and Step 10 lines in place, because an editor holding the contributor's unsaved changes offers to reload a file that changed on disk, which discards the marks, so any write after the handover conflicts. The handover is the pre-application record write, the one whose path is printed before "Starting the application…". From then on the tool never writes `SMOKE_RECORD.md`, for any reason. Before it, whole-record writes are unchanged, including the "Interrupted" write when a stop signal arrives during setup (D135). The Engine line written at the handover is final: for a switched checkout it says "switched from <branch or commit> to <short vendored commit> for the test", with the version, where `ian` came from and any uncommitted changes, and it no longer says "restored", "not restored" or "to be restored when the test ends"; no record line depends on the restore, and the "Restore command" line stays. When nothing is switched, the line is unchanged. The restore result is shown in the terminal only: a successful restore prints as before, and a failed restore prints its message and the one restore command. When the application exits with a failure status, the terminal gets one message telling the contributor to mark Step 10 `fail` with the exit status. A stop signal (SIGTERM or SIGHUP) while the application runs prints the stop and the restore result only. D135's record-write queue stays, because the "Interrupted" write during setup must not overlap the pre-application write. |
 | D137 | Linux CI package list (IAD pull request 15): the Linux job no longer installs `webkit2gtk-driver`. GitHub is moving `ubuntu-latest` from Ubuntu 24.04 to Ubuntu 26.04, where that package is replaced by `webkitgtk-webdriver` and the install fails with "no installation candidate". The shell smoke test uses the embedded WebDriver provider (T4 in the GUI.1 slice plan), and nothing in the repository starts WebKitWebDriver or `tauri-driver`, so no separate WebKitWebDriver is installed. The rest of the install line is unchanged. |
 | D138 | Runner labels stay `-latest` (IAD pull request 15): `windows-latest`, `macos-latest` and `ubuntu-latest` are not pinned, on purpose. When GitHub moves a label to a new image and CI breaks, it is fixed then, in the pull request it breaks, with a decision row like D137, rather than moving pinned labels later as a separate chore. AGENTS.md says so next to the CI text. |
+| D139 | Style files (GUI.2b2, S1): `src/styles/tokens.css` holds custom properties only and `src/styles/base.css` holds the defaults for body, headings, links, table, button, input, select and focus; each is imported once in `src/main.ts`. Components keep scoped styles for their own layout only, and every colour, size and radius in them comes from a token. Rejected: per-component styling with no shared base. |
+| D140 | Tokens (GUI.2b2, S2): the mock-ups' palette under meaning-based names (surface, raised surface, text, secondary text, muted text, border, control border, accent, and positive, caution and negative tones with their backgrounds), plus rem-based spacing, radius and type steps and a mono font token for GUI.2b3. Two corrections to the mock-ups for WCAG AA: muted text is #6e6d68 in light and #94938c in dark (the mock-ups' #888780 is 3.1 to 3.6:1 in light); a separate control border token, #8b8a83 in light and #757570 in dark (3:1), is used for inputs, selects and buttons, while the mock-ups' border (#d3d1c7 / #444441) stays for table rules and dividers. |
+| D141 | Dark mode (GUI.2b2, S3): it follows the system through `prefers-color-scheme`, with `color-scheme: light dark` on `:root` so native controls and scrollbars follow. There is no in-app toggle (it would need a saved setting, as in D63) and no Tauri configuration change; the smoke run notes any white flash at startup in dark mode. |
+| D142 | Colour literals (GUI.2b2, S4): they are linted with stylelint's built-in rules only (`color-no-hex`, `color-named: "never"`, and `function-disallowed-list` for `rgb`, `rgba`, `hsl` and `hsla`), with an override that allows them only in `src/styles/tokens.css`. No new dependency. |
+| D143 | Type (GUI.2b2, S5): the `system-ui` stack, no web font. Body text 0.875rem, weights 400 and 500 only, all sizes in rem, and `font-variant-numeric: tabular-nums` on number cells. |
+| D144 | Shell (GUI.2b2, S6): the sidebar follows the mock-ups. The current navigation item has the raised-surface background and rounded corners and keeps `aria-current`, and the product name and pre-release notice (secondary text) sit above the navigation. The content area fills the window (no maximum width). The breadcrumb stays in the content area (D98) as a small secondary-text line above the heading; the mock-ups' full-width top bar is not adopted. |
+| D145 | Tables (GUI.2b2, S7): rules, padding and the secondary-text header follow the mock-ups. Row headers are regular weight. Number cells (the counts in the refreshes tables) are aligned to the inline end with tabular figures; this departs from the mock-ups on purpose. Every table sits in a container that scrolls on the inline axis, so the page body never scrolls sideways. Links use the accent colour. No link is added that GUI.2b1 does not have (D104). |
+| D146 | Outcome pills (GUI.2b2, S8): one module maps each `RunOutcome` code to a tone: `completed` positive, `unavailable` caution, `failed` negative, `not_applicable` and any unknown code neutral. The pill's text is always the engine's term name through the existing term name element (D43), with its term id and `lang` kept. A unit test asserts that every value of the vendored `RunOutcome` enum (`src/api/schema.ts`) has an explicit entry. Pills appear in the Saved runs outcome column only; the outcome headings of the refreshes tables stay plain text. |
+| D147 | Controls and filter bar (GUI.2b2, S9): buttons, inputs and selects follow the mock-ups (8px radius, the control border token, raised background). Filter labels sit above their fields in small secondary text. Native selects keep the platform arrow: no `appearance: none` and no background image. D111's exception is unchanged and no test opens a drop-down. |
+| D148 | Focus (GUI.2b2, S10): a 2px accent `:focus-visible` outline with an offset on every interactive element, never removed. |
+| D149 | States (GUI.2b2, S11): connecting is secondary-text status text; engine-not-ready states and request failures show in a neutral panel (raised surface plus border) holding the message and, for `database_busy`, the existing "Try again" button; empty-list messages are secondary text. No red for these states, no spinner and no animation. Every existing role, `lang` and message key is kept. |
+| D150 | Forced colours (GUI.2b2, S12): pills and the current navigation item carry a 1px transparent border so forced-colours mode shows them. No `forced-colors` media queries. |
+| D151 | Layout checks (GUI.2b2, S13): Playwright checks are geometric, never screenshot comparisons: in `ar-XB` the sidebar is physically on the right and its border and current-item marker mirror; number cells align to the inline end in both directions; with the colour scheme emulated as dark the body background is the dark token's value; at a narrow viewport a wide table scrolls inside its container and the body has no horizontal overflow; keyboard focus on a navigation link shows an outline. |
+| D152 | Contrast test (GUI.2b2, S14): a Vitest test reads `src/styles/tokens.css` and checks, in both schemes, that text, secondary text and muted text on each surface, accent on each surface, and each pill tone's text on its background reach 4.5:1, and that the control border and the focus outline reach 3:1 against the surfaces they sit on. It computes WCAG relative luminance itself; no dependency. |
+| D153 | Smoke testing (GUI.2b2, S15): `docs/project/SMOKE_TESTING.md` gains checks, in the existing numbered-check style in the fitting sections: the screens follow the mock-ups' look (sidebar, tables, outcome pills); switching the operating system's light or dark theme while the app runs switches the app, noting any white flash at startup; Tab moves through the navigation and the Saved runs filters with a visible focus outline. No re-vendor: the vendored IAN commit stays `f67c4cb`. |
+| D154 | Scope edges (GUI.2b2, S16): no "Analyze a ticker" or "Setup" navigation items, no ⓘ markers, no "Refresh now", progress view or first-run form; no run detail cards, view tabs or text blocks (GUI.2b3 builds them on these tokens); `docs/design/preview-mockups.html` is not edited; the saved-runs identical-rows open decision stays with GUI.2b3. |
