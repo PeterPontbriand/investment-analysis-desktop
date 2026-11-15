@@ -20,7 +20,7 @@
 
 ## Background
 
-The project starts from the 2026-10-30 decision to provide investors with a desktop route into IAN while keeping the engine's financial analysis, labels, and explanations owned by IAN. The preview is aimed first at Windows users, including people who are new to investing and do not use command-line tools. The technology choices were approved in GUI.1; the installer choices are approved before GUI.5.
+The project starts from the 2026-10-30 decision to provide investors with a desktop route into IAN while keeping the engine's financial analysis, labels, and explanations owned by IAN. The preview is intended for Windows, macOS, and Linux users, including people who are new to investing and do not use command-line tools. The technology choices were approved in GUI.1; the installer choices are approved before GUI.5.
 
 The preview screens are shown in [preview mock-ups](../design/preview-mockups.html).
 
