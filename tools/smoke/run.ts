@@ -67,8 +67,7 @@ export async function runSmoke(
   const { print, printError } = deps;
   const message = checkArguments(args);
   if (message !== null) {
-    printError(`${message}
-`);
+    printError(`${message}\n`);
     return 1;
   }
   const session = newSession();
@@ -78,6 +77,22 @@ export async function runSmoke(
   let interruption: Promise<void> | null = null;
   let setupSettled: Promise<unknown> = Promise.resolve();
   const abort = new AbortController();
+  // Every record write goes through this queue, so writes happen one at a
+  // time in the order they were asked for. A normal write is skipped once a
+  // stop signal has arrived, so the "Interrupted" write is always the last.
+  let writes: Promise<unknown> = Promise.resolve();
+  const writeRecord = (
+    stopped: { step: string; message: string } | null,
+    interruption = false,
+  ): Promise<string | null> => {
+    const next = writes.then(() =>
+      !interruption && interrupted !== null
+        ? null
+        : deps.writeRecord(session, stopped),
+    );
+    writes = next.catch(() => null);
+    return next;
+  };
   const restore = () =>
     restoreEngine(
       deps.setup.run,
@@ -117,21 +132,20 @@ export async function runSmoke(
       if (signal === 'SIGINT' && phase === 'application') return;
       if (interrupted !== null) return;
       interrupted = signal;
-      printError(`
-Stopped by ${signal}.
-`);
+      printError(`\nStopped by ${signal}.\n`);
       // One path: end the running command, let setup finish (it starts no
       // more), then restore, write the record once and exit.
       abort.abort();
       interruption = (async () => {
         await setupSettled;
         await restore();
-        await deps
-          .writeRecord(session, {
+        await writeRecord(
+          {
             step: 'Interrupted',
             message: `The run was stopped by ${signal}.`,
-          })
-          .catch(() => null);
+          },
+          true,
+        ).catch(() => null);
         deps.exit(128 + signalNumbers[signal]);
       })();
     };
@@ -156,23 +170,26 @@ Stopped by ${signal}.
     }
     if (failure !== null) {
       if (!(failure instanceof SmokeStop)) throw failure;
-      printError(`Smoke test stopped at ${failure.step}: ${failure.message}
-`);
+      printError(`Smoke test stopped at ${failure.step}: ${failure.message}\n`);
       await restore();
-      const path = await deps.writeRecord(session, {
+      const path = await writeRecord({
         step: failure.step,
         message: failure.message,
       });
-      if (path)
-        printError(`The record so far is in ${path}
-`);
+      if (path) printError(`The record so far is in ${path}\n`);
       return 1;
     }
     session.scripted.set('Step 10', {
       fact: 'the tool started the application; mark whether its window opened',
       leftToYou: true,
     });
-    const path = await deps.writeRecord(session, null);
+    const path = await writeRecord(null);
+    // A signal before or during that write leaves the application unstarted.
+    const lateSignal = stopped();
+    if (lateSignal !== null) {
+      await interruption;
+      return 128 + signalNumbers[lateSignal];
+    }
     const folder = session.throwawayFolder ?? '';
     const engine = session.engineSwitch;
     print(
@@ -182,12 +199,6 @@ Stopped by ${signal}.
           : `The engine checkout is switched; it is restored when the application exits. If this terminal closes first, restore it with: ${restoreCommand(engine.folder, engine.start)}\n`
       }Starting the application…\n`,
     );
-    // A signal during the lines above leaves the application unstarted.
-    const lateSignal = stopped();
-    if (lateSignal !== null) {
-      await interruption;
-      return 128 + signalNumbers[lateSignal];
-    }
     phase = 'application';
     let code: number;
     try {
@@ -195,7 +206,7 @@ Stopped by ${signal}.
         session,
         start: () =>
           deps.startApplication(applicationEnvironment(setup.env, session)),
-        rewrite: () => deps.writeRecord(session, null),
+        rewrite: () => writeRecord(null),
         print,
       });
     } finally {
@@ -203,7 +214,7 @@ Stopped by ${signal}.
     }
     await restore();
     // The record's engine line now says whether the checkout was restored.
-    if (session.engineSwitch !== null) await deps.writeRecord(session, null);
+    if (session.engineSwitch !== null) await writeRecord(null);
     return code;
   } finally {
     for (const [signal, handler] of handlers) deps.signals.off(signal, handler);

@@ -360,7 +360,14 @@ describe('switching the engine checkout', () => {
 // A fake machine for the whole run: signals the test can send, an application
 // the test controls, and a record that remembers the engine state each time it
 // was written.
-function machine(script: Script, options: { exitCode?: number } = {}) {
+function machine(
+  script: Script,
+  options: {
+    exitCode?: number;
+    // Runs when the nth record write starts; the write ends when it settles.
+    duringWrite?: (index: number) => Promise<void> | void;
+  } = {},
+) {
   const made = dependencies(healthy(script));
   const listeners = new Map<StopSignal, (() => void)[]>();
   const signals = {
@@ -380,6 +387,7 @@ function machine(script: Script, options: { exitCode?: number } = {}) {
   const err: string[] = [];
   const writes: { state: string | null; stopped: string | null }[] = [];
   const exits: number[] = [];
+  const events: string[] = [];
   let application: ((code: number) => void) | null = null;
   let started = false;
   const deps: RunDependencies = {
@@ -394,12 +402,16 @@ function machine(script: Script, options: { exitCode?: number } = {}) {
         application = resolve;
       });
     },
-    writeRecord: (session, stopped) => {
+    writeRecord: async (session, stopped) => {
+      const index = writes.length;
       writes.push({
         state: session.engineSwitch?.state ?? null,
         stopped: stopped?.step ?? null,
       });
-      return Promise.resolve('record.md');
+      events.push(`start ${index}`);
+      await options.duringWrite?.(index);
+      events.push(`end ${index}`);
+      return 'record.md';
     },
     print: (text) => out.push(text),
     printError: (text) => err.push(text),
@@ -412,6 +424,7 @@ function machine(script: Script, options: { exitCode?: number } = {}) {
     out,
     err,
     writes,
+    events,
     exits,
     started: () => started,
     endApplication: (code: number) => application?.(code),
@@ -556,6 +569,47 @@ describe('restoring the engine checkout', () => {
       );
     },
   );
+
+  it.each(signals)(
+    'keeps the Interrupted record last when %s arrives during the normal record write',
+    async (signal, status) => {
+      const fake = engine();
+      const run = machine(fake.script, {
+        // The normal pre-application write is slow, and the signal arrives in it.
+        duringWrite: async (index) => {
+          if (index !== 0) return;
+          run.signals.emit(signal);
+          await flush();
+          await flush();
+        },
+      });
+      const code = await runSmoke(run.deps, []);
+      await flush();
+      expect(code).toBe(status);
+      expect(run.exits).toEqual([status]);
+      expect(run.started()).toBe(false);
+      expect(restoreCalls(run.calls)).toHaveLength(1);
+      // The writes never overlap, and the last one is the Interrupted record.
+      expect(run.events).toEqual(['start 0', 'end 0', 'start 1', 'end 1']);
+      expect(run.writes.at(-1)?.stopped).toBe('Interrupted');
+      expect(run.writes).toHaveLength(2);
+    },
+  );
+
+  it('makes no normal record write once a signal has arrived', async () => {
+    const fake = engine();
+    const run = machine(fake.script);
+    const done = runSmoke(run.deps, []);
+    await flush();
+    expect(run.started()).toBe(true);
+    run.signals.emit('SIGTERM');
+    run.endApplication(1);
+    await done;
+    await flush();
+    // The normal write before the application, then only the Interrupted one:
+    // neither the failure rewrite nor the final write follows the signal.
+    expect(run.writes.map((w) => w.stopped)).toEqual([null, 'Interrupted']);
+  });
 
   it('attempts one unforced restore when the signal arrives during the switch', async () => {
     const { run } = await interruptDuring(

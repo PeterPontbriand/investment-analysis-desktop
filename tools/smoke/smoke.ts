@@ -93,9 +93,7 @@ process.exitCode = await runSmoke(
       platform: process.platform,
       repositoryRoot,
       now,
-      progress: (line) =>
-        process.stdout.write(`${line}
-`),
+      progress: (line) => process.stdout.write(`${line}\n`),
     },
     signals: process,
     startApplication: (env) => startApplication(repositoryRoot, env),
