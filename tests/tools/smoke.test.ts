@@ -17,7 +17,6 @@ import {
   stopMessages,
 } from '../../tools/smoke/setup.ts';
 import {
-  readEngineVersion,
   readVendoredCommit,
   resolveIan,
   resolveIanInUv,
@@ -25,7 +24,6 @@ import {
 import { SmokeStop, type Runner } from '../../tools/smoke/types.ts';
 import {
   dependencies,
-  enginePath,
   healthy,
   ianPath,
   json,
@@ -159,15 +157,6 @@ describe('sources', () => {
     expect(() => readVendoredCommit('no commit here')).toThrow();
   });
 
-  it('reads the engine version from the [project] table only', () => {
-    expect(
-      readEngineVersion(
-        '[tool.x]\nversion = "9"\n\n[project]\nname = "n"\nversion = "1.2.3"\n\n[other]\nversion = "7"\n',
-      ),
-    ).toBe('1.2.3');
-    expect(readEngineVersion('[project]\nname = "n"\n')).toBeNull();
-  });
-
   it('resolves ian from IAD_IAN_PATH, else from PATH, else not at all', () => {
     const exists = (path: string) => path === 'C:\\bin\\ian.exe';
     expect(
@@ -235,9 +224,10 @@ describe('record', () => {
     applicationCommit: 'abc1234',
     dirty: false,
     engineCommit: 'beb58a2',
-    enginePath: 'C:/tools/ian.exe',
     ianSource: 'PATH' as const,
     engineVersion: '0.1.0',
+    engineUncommitted: false,
+    engineSwitch: null,
     data: { watchlists: 2, entries: 4, runs: 5, refreshes: 1 },
     throwawayFolder: '.tmp/smoke/20261113-090507',
     steps,
@@ -245,7 +235,7 @@ describe('record', () => {
       ['Step 1', { fact: 'engine at beb58a2' }],
       ['Step 2', {}],
     ]),
-    log: [{ command: 'ian --help', output: 'Usage\n' }],
+    log: [{ command: 'ian about --json', output: 'engine_version: 0.1.0' }],
     stopped: null,
   };
 
@@ -258,8 +248,7 @@ describe('record', () => {
         '- **Time zone:** America/Toronto',
         '- **Operating system:** Windows_NT 10.0 (win32 x64)',
         '- **Application commit:** abc1234',
-        '- **Engine commit:** beb58a2, matches vendor/ian/SOURCE.md',
-        "- **Engine:** `ian` from `PATH`, C:/tools/ian.exe; version 0.1.0, from the engine checkout's pyproject.toml",
+        '- **Engine:** beb58a2, matches vendor/ian/SOURCE.md; version 0.1.0, from `ian about`; `ian` from `PATH`; not switched',
         '- **Data:** 2 watchlists, 4 entries, 5 runs, 1 refresh',
         '- **Throwaway folder:** .tmp/smoke/20261113-090507',
         '',
@@ -273,8 +262,8 @@ describe('record', () => {
         '<details><summary>Command output</summary>',
         '',
         '````text',
-        '> ian --help',
-        'Usage',
+        '> ian about --json',
+        'engine_version: 0.1.0',
         '````',
         '',
         '</details>',
@@ -296,7 +285,7 @@ describe('record', () => {
     ['uv', "uv's command folder"],
   ] as const)('names %s as where ian came from', (ianSource, name) => {
     expect(renderRecord({ ...base, ianSource })).toContain(
-      `- **Engine:** \`ian\` from ${name}, C:/tools/ian.exe; version 0.1.0`,
+      `; \`ian\` from ${name}; not switched`,
     );
   });
 
@@ -382,7 +371,7 @@ describe('setup', () => {
     await runSetup(deps, newSession());
 
     expect(progress).toEqual([
-      'Step 1: checking the engine checkout and the `ian` command…',
+      'Step 1: finding the engine through `ian` and checking its commit…',
       'Step 2: reading the state of your real database (read only)…',
       'Step 3: creating the throwaway database folder .tmp/smoke/20261113-090507…',
       "Step 4: creating the throwaway database's schema…",
@@ -449,14 +438,13 @@ describe('setup', () => {
     script: Parameters<typeof healthy>[0],
     expectedStep: string,
     message: string | RegExp,
-    options: { pathless?: boolean; noEngine?: boolean } = {},
+    options: { pathless?: boolean } = {},
   ) {
     const { deps } = dependencies(
       healthy(script),
       {},
       {
         ...(options.pathless ? { env: { PATH: '' } } : {}),
-        ...(options.noEngine ? { enginePath: `${enginePath}-missing` } : {}),
       },
     );
     const session = newSession();
@@ -469,102 +457,6 @@ describe('setup', () => {
     expect((error as SmokeStop).message).toMatch(message);
     return session;
   }
-
-  it('stops when the engine folder does not exist', async () => {
-    await stopsAt(() => undefined, 'Step 1', /does not exist/, {
-      noEngine: true,
-    });
-  });
-
-  it('stops when the folder is not a Git checkout', async () => {
-    await stopsAt(
-      (call) =>
-        call.file === 'git'
-          ? { code: 128, stdout: '', stderr: 'no' }
-          : undefined,
-      'Step 1',
-      /not a Git checkout/,
-    );
-  });
-
-  it('stops when the engine is at another commit, naming the command to run', async () => {
-    const other = 'a'.repeat(40);
-    await stopsAt(
-      (call) =>
-        call.file === 'git'
-          ? { code: 0, stdout: `${other}\n`, stderr: '' }
-          : undefined,
-      'Step 1',
-      new RegExp(`${other}.*${vendoredCommit}.*checkout ${vendoredCommit}`),
-    );
-  });
-
-  it('gives the fetch, checkout and switch commands for the wrong commit', () => {
-    const path = '/engine';
-    const message = stopMessages.wrongCommit(path, 'abc', vendoredCommit);
-    expect(message).toBe(
-      `The engine checkout is at abc, but vendor/ian/SOURCE.md names ${vendoredCommit}. In the engine checkout, run \`git -C "/engine" fetch\` and then \`git -C "/engine" checkout ${vendoredCommit}\`, and try again. This leaves the engine checkout on that commit rather than a branch; afterwards, \`git -C "/engine" switch main\` returns it to main.`,
-    );
-  });
-
-  it('stops when --engine points at this repository, before any git command', async () => {
-    for (const [path, platform] of [
-      [repositoryRoot, 'linux'],
-      [repositoryRoot.toUpperCase(), 'win32'],
-    ] as const) {
-      const { deps, calls } = dependencies(
-        healthy(),
-        {},
-        {
-          enginePath: path,
-          platform,
-        },
-      );
-      const error = await runSetup(deps, newSession()).then(
-        () => null,
-        (caught: unknown) => caught,
-      );
-      expect((error as SmokeStop).step).toBe('Step 1');
-      expect((error as SmokeStop).message).toBe(
-        '`--engine` points at this repository. Pass the folder of your engine checkout (the investment-analysis-engine repository), not this one.',
-      );
-      expect(calls.some((call) => call.file === 'git')).toBe(false);
-    }
-  });
-
-  it.each([
-    [
-      'names another project',
-      '[project]\nname = "something-else"\nversion = "1"\n',
-    ],
-    ['has no [project] name', '[build-system]\nrequires = []\n'],
-  ])("stops when the folder's pyproject.toml %s", async (_name, pyproject) => {
-    const { deps, calls } = dependencies(healthy(), {
-      [join(enginePath, 'pyproject.toml')]: pyproject,
-    });
-    const error = await runSetup(deps, newSession()).then(
-      () => null,
-      (caught: unknown) => caught,
-    );
-    expect((error as SmokeStop).message).toBe(
-      `${enginePath} is not an engine checkout: its pyproject.toml does not name the investment-analysis-engine project. Pass the folder of your engine checkout.`,
-    );
-    expect(calls.some((call) => call.file === 'git')).toBe(false);
-  });
-
-  it('stops when the folder has no pyproject.toml', async () => {
-    const { deps } = dependencies(healthy());
-    const original = deps.fs.exists;
-    deps.fs = {
-      ...deps.fs,
-      exists: (path) => !path.endsWith('pyproject.toml') && original(path),
-    };
-    const error = await runSetup(deps, newSession()).then(
-      () => null,
-      (caught: unknown) => caught,
-    );
-    expect((error as SmokeStop).message).toMatch(/is not an engine checkout/);
-  });
 
   it.each(['C:/tools/ian.cmd', 'C:/tools/IAN.BAT'])(
     'stops when IAD_IAN_PATH names a batch file (%s)',
@@ -675,17 +567,6 @@ describe('setup', () => {
       await runSetup(dependencies(healthy()).deps, onPath);
       expect(applicationEnvironment({}, onPath).IAD_IAN_PATH).toBeUndefined();
     });
-  });
-
-  it('stops when ian --help fails', async () => {
-    await stopsAt(
-      (call) =>
-        call.args.join(' ') === '--help'
-          ? { code: 2, stdout: '', stderr: '' }
-          : undefined,
-      'Step 1',
-      /ian --help. did not succeed/,
-    );
   });
 
   it('continues on a missing real database, which exits 1', async () => {

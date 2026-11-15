@@ -23,9 +23,11 @@ function recordOf(made: ReturnType<typeof session>): string {
     applicationCommit: 'c',
     dirty: false,
     engineCommit: 'beb58a2',
-    enginePath: 'C:/ian.exe',
+
     ianSource: 'PATH',
     engineVersion: '0.1.0',
+    engineUncommitted: false,
+    engineSwitch: null,
     data: null,
     throwawayFolder: '.tmp/smoke/x',
     steps,

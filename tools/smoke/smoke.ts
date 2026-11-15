@@ -1,34 +1,19 @@
-// `pnpm smoke --engine <engine checkout>`: does the setup steps of
+// `pnpm smoke`: does the setup steps of
 // docs/project/SMOKE_TESTING.md, writes a pre-filled record, and starts the
 // application against the throwaway database.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { arch, platform, release, type } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { throwawayFile } from './commands.ts';
 import { parseSteps } from './document.ts';
-import { startAndFinish } from './finish.ts';
 import { fileSystem, run, startApplication } from './process.ts';
 import { renderRecord, type RecordInput } from './record.ts';
-import {
-  applicationEnvironment,
-  newSession,
-  runSetup,
-  type Session,
-} from './setup.ts';
-import { SmokeStop } from './types.ts';
+import { runSmoke } from './run.ts';
+import type { Session } from './setup.ts';
 
 const repositoryRoot = resolve(
   fileURLToPath(new URL('../..', import.meta.url)),
 );
-
-function engineArgument(argv: string[]): string | null {
-  for (const [index, argument] of argv.entries()) {
-    if (argument === '--engine') return argv[index + 1] ?? null;
-    if (argument.startsWith('--engine=')) return argument.slice(9) || null;
-  }
-  return null;
-}
 
 function localDate(now: Date): string {
   const pad = (value: number) => String(value).padStart(2, '0');
@@ -69,9 +54,16 @@ async function writeRecord(
     applicationCommit: application.commit,
     dirty: application.dirty,
     engineCommit: session.engineCommit,
-    enginePath: session.ianPath,
     ianSource: session.ianSource,
     engineVersion: session.engineVersion,
+    engineUncommitted: session.engineUncommitted,
+    engineSwitch:
+      session.engineSwitch === null
+        ? null
+        : {
+            start: session.engineSwitch.start,
+            state: session.engineSwitch.state,
+          },
     data: session.data,
     throwawayFolder: session.throwawayFolder,
     steps: parseSteps(
@@ -89,62 +81,27 @@ async function writeRecord(
   return path;
 }
 
-async function main(): Promise<number> {
-  const engine = engineArgument(process.argv.slice(2));
-  if (engine === null) {
-    process.stderr.write(
-      'Usage: pnpm smoke --engine <your engine checkout>\n--engine is required: the folder of the engine checkout at the commit in vendor/ian/SOURCE.md.\n',
-    );
-    return 1;
-  }
-  const enginePath = resolve(engine);
-  const now = new Date();
-  const session = newSession();
-  try {
-    await runSetup(
-      {
-        run,
-        fs: fileSystem,
-        env: process.env,
-        platform: process.platform,
-        repositoryRoot,
-        enginePath,
-        now,
-        progress: (line) => process.stdout.write(`${line}\n`),
-      },
-      session,
-    );
-  } catch (error) {
-    if (!(error instanceof SmokeStop)) throw error;
-    process.stderr.write(
-      `Smoke test stopped at ${error.step}: ${error.message}\n`,
-    );
-    const path = await writeRecord(session, now, {
-      step: error.step,
-      message: error.message,
-    });
-    if (path) process.stderr.write(`The record so far is in ${path}\n`);
-    return 1;
-  }
-  session.scripted.set('Step 10', {
-    fact: 'the tool started the application; mark whether its window opened',
-    leftToYou: true,
-  });
-  const path = await writeRecord(session, now, null);
-  const folder = session.throwawayFolder ?? '';
-  process.stdout.write(
-    `The record is ${path}\nClean-up will delete these files in ${folder}, and leave the folder and the record: ${throwawayFile}, ${throwawayFile}-wal, ${throwawayFile}-shm\nStarting the application…\n`,
-  );
-  return startAndFinish({
-    session,
-    start: () =>
-      startApplication(
-        repositoryRoot,
-        applicationEnvironment(process.env, session),
-      ),
-    rewrite: () => writeRecord(session, now, null),
-    print: (text) => process.stdout.write(text),
-  });
-}
+const now = new Date();
 
-process.exitCode = await main();
+process.exitCode = await runSmoke(
+  {
+    setup: {
+      run,
+      fs: fileSystem,
+      env: process.env,
+      platform: process.platform,
+      repositoryRoot,
+      now,
+      progress: (line) =>
+        process.stdout.write(`${line}
+`),
+    },
+    signals: process,
+    startApplication: (env) => startApplication(repositoryRoot, env),
+    writeRecord: (session, stopped) => writeRecord(session, now, stopped),
+    print: (text) => process.stdout.write(text),
+    printError: (text) => process.stderr.write(text),
+    exit: (code) => process.exit(code),
+  },
+  process.argv.slice(2),
+);
