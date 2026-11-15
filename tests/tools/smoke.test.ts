@@ -355,6 +355,20 @@ describe('record', () => {
     expect(text).not.toContain(repositoryRoot);
     expect(text).toContain('<repository>');
   });
+
+  it('removes a Windows folder in every form `ian` prints it', () => {
+    const root = 'E:\\Source\\repo';
+    const text = scrub(
+      [
+        'Database: "E:\\\\Source\\\\repo\\\\.tmp\\\\x.sqlite3"',
+        'plain E:\\Source\\repo\\.tmp and forward E:/Source/repo/.tmp',
+      ].join('\n'),
+      root,
+      'E:\\Source\\engine',
+    );
+    expect(text).not.toMatch(/Source/);
+    expect(text).toContain('"<repository>\\\\.tmp\\\\x.sqlite3"');
+  });
 });
 
 describe('setup', () => {

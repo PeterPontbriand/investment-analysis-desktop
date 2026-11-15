@@ -61,10 +61,14 @@ export function scrub(
     [repositoryRoot, '<repository>'],
     [engineFolder ?? '', '<engine checkout>'],
   ] as const) {
+    // The JSON-escaped form too: `ian` prints Windows paths with doubled
+    // backslashes.
+    const backslashes = folder.split('/').join('\\');
     const variants = new Set([
       folder,
       folder.split('\\').join('/'),
-      folder.split('/').join('\\'),
+      backslashes,
+      backslashes.split('\\').join('\\\\'),
     ]);
     for (const variant of variants)
       if (variant !== '') result = result.split(variant).join(name);
