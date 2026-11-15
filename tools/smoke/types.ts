@@ -10,6 +10,8 @@ export type RunResult = {
 export type RunOptions = {
   cwd?: string;
   env?: Record<string, string | undefined>;
+  // Ends the command's process when it aborts.
+  signal?: AbortSignal;
 };
 
 export type Runner = (
@@ -22,6 +24,7 @@ export type FileSystem = {
   exists(path: string): boolean;
   readText(path: string): string;
   makeFolder(path: string): void;
+  writeText(path: string, text: string): void;
 };
 
 // The tool stops with a plain message instead of guessing. `step` names the

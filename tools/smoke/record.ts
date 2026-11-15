@@ -1,6 +1,11 @@
 // Renders the smoke-test record: Markdown that can be pasted into a pull
 // request description.
 import type { DocumentStep } from './document.ts';
+import {
+  describeStart,
+  restoreCommandForRecord,
+  type StartPoint,
+} from './checkout.ts';
 import { ianSourceNames, type IanSource } from './source.ts';
 
 // A step the tool did. `leftToYou` is a step the tool only started: the
@@ -17,11 +22,18 @@ export type RecordInput = {
   operatingSystem: string;
   applicationCommit: string;
   dirty: boolean;
+  // The short commit the engine checkout was at when the application ran.
   engineCommit: string | null;
-  enginePath: string | null;
   // Where `ian` was found: IAD_IAN_PATH, PATH or uv's command folder.
   ianSource: IanSource | null;
   engineVersion: string | null;
+  // Changes `ian about` reported in the engine checkout before any switch.
+  engineUncommitted: boolean | null;
+  // Set when the tool switched the engine checkout. The record never says
+  // whether the checkout was restored: the restore's result is shown in the
+  // terminal, because the tool does not write the record once the application
+  // has started.
+  engineSwitch: { start: StartPoint } | null;
   data: {
     watchlists: number;
     entries: number;
@@ -39,15 +51,28 @@ export type RecordInput = {
 };
 
 // A secret never reaches the record, whatever the output held.
-export function scrub(text: string, repositoryRoot: string): string {
-  const variants = new Set([
-    repositoryRoot,
-    repositoryRoot.split('\\').join('/'),
-    repositoryRoot.split('/').join('\\'),
-  ]);
+export function scrub(
+  text: string,
+  repositoryRoot: string,
+  engineFolder: string | null = null,
+): string {
   let result = text;
-  for (const variant of variants)
-    if (variant !== '') result = result.split(variant).join('<repository>');
+  for (const [folder, name] of [
+    [repositoryRoot, '<repository>'],
+    [engineFolder ?? '', '<engine checkout>'],
+  ] as const) {
+    // The JSON-escaped form too: `ian` prints Windows paths with doubled
+    // backslashes.
+    const backslashes = folder.split('/').join('\\');
+    const variants = new Set([
+      folder,
+      folder.split('\\').join('/'),
+      backslashes,
+      backslashes.split('\\').join('\\\\'),
+    ]);
+    for (const variant of variants)
+      if (variant !== '') result = result.split(variant).join(name);
+  }
   return result.replace(
     /("?token"?\s*[:=]\s*"?)[A-Za-z0-9_-]{16,}/gi,
     '$1<removed>',
@@ -58,6 +83,28 @@ function plural(count: number, one: string, many: string): string {
   return `${count} ${count === 1 ? one : many}`;
 }
 
+// The engine line: the commit, the version `ian about` reports, where `ian`
+// came from, and whether the tool switched the checkout for the test. It
+// never names the installation folder, because the record is pasted into
+// public pull requests.
+function engineLine(input: RecordInput): string {
+  if (input.engineCommit === null) return 'not checked';
+  const parts = [
+    `${input.engineCommit}, matches vendor/ian/SOURCE.md`,
+    `version ${input.engineVersion ?? 'unknown'}, from \`ian about\``,
+    `\`ian\` from ${input.ianSource === null ? 'an unknown place' : ianSourceNames[input.ianSource]}`,
+  ];
+  const engine = input.engineSwitch;
+  parts.push(
+    engine === null
+      ? 'not switched'
+      : `switched from ${describeStart(engine.start)} to ${input.engineCommit} for the test`,
+  );
+  if (input.engineUncommitted === true)
+    parts.push('the engine checkout has uncommitted changes');
+  return parts.join('; ');
+}
+
 export function renderRecord(input: RecordInput): string {
   const lines: string[] = ['# Smoke test record', ''];
   lines.push(`- **Date:** ${input.date}`);
@@ -66,16 +113,11 @@ export function renderRecord(input: RecordInput): string {
   lines.push(
     `- **Application commit:** ${input.applicationCommit}${input.dirty ? ' (with uncommitted changes)' : ''}`,
   );
-  lines.push(
-    `- **Engine commit:** ${input.engineCommit === null ? 'not checked' : `${input.engineCommit}, matches vendor/ian/SOURCE.md`}`,
-  );
-  lines.push(
-    `- **Engine:** ${
-      input.enginePath === null
-        ? 'not found'
-        : `\`ian\` from ${input.ianSource === null ? 'an unknown place' : ianSourceNames[input.ianSource]}, ${input.enginePath}; version ${input.engineVersion ?? 'unknown'}, from the engine checkout's pyproject.toml`
-    }`,
-  );
+  lines.push(`- **Engine:** ${engineLine(input)}`);
+  if (input.engineSwitch !== null)
+    lines.push(
+      `- **Restore command:** \`${restoreCommandForRecord(input.engineSwitch.start)}\``,
+    );
   lines.push(
     `- **Data:** ${
       input.data === null

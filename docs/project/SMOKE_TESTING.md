@@ -16,7 +16,7 @@ The test has two parts. The setup steps (Steps 1 to 10) install and prepare the 
 
 The setup creates data: watchlists, with the [tickers](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#ticker) and the [analysis strategy](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#analysis-strategy) to run on each, and [analysis runs](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#analysis-run). A saved run cannot be deleted, so the setup never writes to your real database. It uses a throwaway database instead: a new [SQLite](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#sqlite) file in a new timestamped folder under this repository's ignored `.tmp/smoke/` folder. Normally, the engine's `IAN_DATABASE_URL` environment variable determines which database file it uses. This test sets it to the throwaway file instead.
 
-The setup steps can be done for you by this repository's tool, `pnpm smoke --engine <your engine checkout>`. It checks the engine, creates the throwaway database and its data, writes a record of the run with the setup steps filled in, and then starts the application against the throwaway database. It sets `IAN_DATABASE_URL` only for the commands and the application it starts, never in your terminal.
+The setup steps can be done for you by this repository's tool, `pnpm smoke`. It finds your engine checkout by asking the `ian` command where it is installed, switches that checkout to the vendored commit when it is at another one and puts it back when the test ends, creates the throwaway database and its data, writes a record of the run with the setup steps filled in, and then starts the application against the throwaway database. It sets `IAN_DATABASE_URL` only for the commands and the application it starts, never in your terminal.
 
 You can follow the setup steps by hand instead. Run every command in one terminal: the variable lasts only in the terminal where you set it, until that terminal closes, and the application passes its environment through to the engine it starts.
 
@@ -24,7 +24,7 @@ The record is `SMOKE_RECORD.md` in the throwaway folder. You mark the checks in 
 
 ## Before you start
 
-**Install the engine at the vendored commit.** The vendored commit is the engine-repository commit from which this repository's copy of the engine's API description was taken; it is named in [the vendored API description's source record](../../vendor/ian/SOURCE.md). The test must run against that commit, so the application is checked against the engine it was built for.
+**Install the engine from a source checkout.** The vendored commit is the engine-repository commit from which this repository's copy of the engine's API description was taken; it is named in [the vendored API description's source record](../../vendor/ian/SOURCE.md). The test must run against that commit, so the application is checked against the engine it was built for. `pnpm smoke` needs the engine installed from a checkout of the engine repository (an engine installed as a package has no checkout to use), and if that checkout is at another commit it switches it for you, as [the engine checkout and `pnpm smoke`](#the-engine-checkout-and-pnpm-smoke) explains.
 
 Step 1. Get the engine at the commit this repository vendors, and make its command available.
 
@@ -33,11 +33,24 @@ Step 1. Get the engine at the commit this repository vendors, and make its comma
 - Confirm that `ian --help` shows the engine's help text.
 - Outbound access to Yahoo Finance and SEC EDGAR must be allowed, because the steps below run live analyses. If you have not run the engine's own [smoke test](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/SMOKE_TESTING.md) on this installation, run its provider check first (`ian health`), so a provider failure is not mistaken for an application failure.
 
-`pnpm smoke` finds `ian` itself: from `IAD_IAN_PATH` if you set it, otherwise on `PATH`, otherwise in uv's command folder. When you follow the steps by hand, the application finds `ian` on `PATH`. The engine's installer puts the `ian` command in uv's command folder and adds that folder to `PATH` for terminals opened afterwards, so open a new terminal after installing. If `ian` is still not found, follow the engine's troubleshooting entry, [`ian` is "not recognized" / "command not found"](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#ian-is-not-recognized--command-not-found). To use a specific `ian` instead, set the environment variable `IAD_IAN_PATH` (IAD is this application) to the file in the folder that `uv tool dir --bin` prints: `ian.exe` on Windows, `ian` elsewhere.
+`pnpm smoke` finds `ian` itself: from `IAD_IAN_PATH` if you set it, otherwise on `PATH`, otherwise in uv's command folder. It then runs `ian about --json`, which reports the engine's version, the folder of the checkout the command runs and that checkout's Git commit, and uses that checkout. It cannot check one engine while running another, and it takes no argument naming the engine. When you follow the steps by hand, the application finds `ian` on `PATH`. The engine's installer puts the `ian` command in uv's command folder and adds that folder to `PATH` for terminals opened afterwards, so open a new terminal after installing. If `ian` is still not found, follow the engine's troubleshooting entry, [`ian` is "not recognized" / "command not found"](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#ian-is-not-recognized--command-not-found). To use a specific `ian` instead, set the environment variable `IAD_IAN_PATH` (IAD is this application) to the file in the folder that `uv tool dir --bin` prints: `ian.exe` on Windows, `ian` elsewhere.
 
 **Install this repository's development tools** as the [README](../../README.md) describes. On Windows that includes the C++ build tools, because `pnpm tauri dev`, the command that builds and opens the desktop application in development mode, compiles the application.
 
-**Then start the test.** Run `pnpm smoke --engine <your engine checkout>` from this repository's root. It does Steps 2 to 10 as described below, writes the record to the throwaway folder and starts the application. The steps below stay the reference for what it runs, and you can follow them by hand instead. [If `pnpm smoke` stops](#if-pnpm-smoke-stops) lists its stop messages.
+**Then start the test.** Run `pnpm smoke` from this repository's root. It does Steps 2 to 10 as described below (switching the engine checkout between Step 3 and Step 4 when it must), writes the record to the throwaway folder and starts the application. The steps below stay the reference for what it runs, and you can follow them by hand instead. [If `pnpm smoke` stops](#if-pnpm-smoke-stops) lists its stop messages.
+
+### The engine checkout and `pnpm smoke`
+
+`pnpm smoke` leaves your engine checkout as it found it. It reads the checkout's commit from `ian about` and, when it must switch, its branch from `git symbolic-ref` (`ian about` reports no branch), and does one of two things:
+
+- **The checkout is at the vendored commit:** nothing is switched. If the checkout has uncommitted changes, the run continues and the record notes them.
+- **The checkout is at another commit:** the tool refuses a checkout with uncommitted changes (commit, stash or discard them first). Otherwise it makes sure the checkout has the vendored commit, running `git fetch origin` only when it does not, and after Step 3 switches the checkout to that commit with `git switch --detach`. A detached checkout is at a commit rather than on a branch, which is how the test pins the engine. Before it switches, the tool notes whether the checkout was on a branch or detached.
+
+The tool never uses `--force` and never uses `reset`. Step 2 reads your real database with your own engine before the switch, and after the switch nothing touches the real database: every later step uses the throwaway database.
+
+The tool puts the checkout back, with `git switch <branch>` or `git switch --detach <commit>`, when setup stops, when it hits an error, when the application exits (with any status) and when you press Ctrl+C or the terminal sends it a stop signal. A stop signal during setup ends the command that is running (on Windows with its whole process tree), starts no further command, does not start the application, and then restores the checkout, writes the record once with the stop recorded as "Interrupted", and exits. A switch already under way is left to finish before the restore, so Git is never killed half-way. While the application runs, Ctrl+C is left to the application, which exits, and the tool then restores. Any other stop signal while the application runs restores the checkout too, and the terminal shows the stop and the restore's result. If you close the terminal window, Windows allows the tool about 10 seconds to do it. When it switches the checkout, it prints the one command that restores it at the start, and the record carries the same command, so you can restore the checkout yourself if the terminal itself is closed. The restore's result is shown in the terminal, not in the record: the record's Engine line says the checkout was switched for the test, and the tool does not write the record once the application has started (see [Recording the result](#recording-the-result)). If the restore fails, the tool does not force it: it prints the message and that command.
+
+The first engine command after a switch, and the first one after a restore, can take about a minute while the engine's environment syncs.
 
 ### Use a throwaway database
 
@@ -49,7 +62,7 @@ Step 2. Check your real database once, before you set `IAN_DATABASE_URL` for the
 ian db status
 ```
 
-`pnpm smoke` runs this step, reading the state with `ian db status --json`; it continues on `ready` or `missing`.
+`pnpm smoke` runs this step, reading the state with `ian db status --json`; it continues on `ready` or `missing`. It runs before the tool switches the engine checkout, so it reads your database with your own engine.
 
 Expect `State: ready`, or `State: missing` with `Database is not initialized yet.` if you have never run an analysis (the command then exits with status 1, which is expected). If it reports `upgrade_required`, follow [First use and explicit upgrades](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md#first-use-and-explicit-upgrades) before going on. For any other state, stop and use [Local Database Operations](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md).
 
@@ -69,7 +82,7 @@ mkdir -p "$smoke"
 export IAN_DATABASE_URL="sqlite:///$smoke/smoke-test.sqlite3"
 ```
 
-`pnpm smoke` creates the folder and sets the variable for the commands it runs and for the application, and for nothing else.
+`pnpm smoke` creates the folder and sets the variable for the commands it runs and for the application, and for nothing else. When the engine checkout must be switched, the tool does it after this step, so every engine command from then on already uses the throwaway database.
 
 Step 4. Create the file's schema and confirm it is ready:
 
@@ -149,7 +162,7 @@ pnpm tauri dev
 
 The first start compiles the application and takes a while. When you follow the steps by hand and `ian` is not on `PATH`, set `IAD_IAN_PATH` first, as [Before you start](#before-you-start) says; `pnpm smoke` does not need this. Expect a window to open. Leave the terminal open: it shows the application's launch line for the engine.
 
-If the start fails with "Access is denied" when removing the application's executable, an earlier copy of the application is still running. Close it, or end it with `Get-Process investment-analysis-desktop -ErrorAction SilentlyContinue | Stop-Process`, and run `pnpm smoke` again. When `pnpm smoke` starts the application and it exits with a failure status, the tool marks Step 10 `fail` in the record.
+If the start fails with "Access is denied" when removing the application's executable, an earlier copy of the application is still running. Close it, or end it with `Get-Process investment-analysis-desktop -ErrorAction SilentlyContinue | Stop-Process`, and run `pnpm smoke` again. When `pnpm smoke` starts the application and it exits with a failure status, the terminal tells you to mark Step 10 `fail` in the record, with the exit status. When you close the window normally, the terminal may print `[ELIFECYCLE] Command failed with exit code -1.` This is pnpm reporting that the development server was stopped along with the application, not a failure of the application, and the exit status stays 0, so you can ignore it.
 
 ## N. Navigation and About
 
@@ -159,7 +172,7 @@ Check N2. Each navigation link opens its screen. The breadcrumb above each scree
 
 Check N3. About shows the engine's details. They are its version, API versions, schema version, SEC identity and languages; compare them with the engine:
 
-- The engine's commands offer no way to print its version, and its documents name no place to check it. Compare the engine version with the `version` in `pyproject.toml` in the engine checkout, and say in the record that this is what you compared with.
+- Compare the engine version with the version `ian about` prints on its first line, and say in the record that this is what you compared with. `pnpm smoke` records the version `ian about` reported.
 - SEC identity shows configured when the engine's configuration holds an SEC EDGAR identification, and not configured otherwise.
 
 ## W. Watchlists
@@ -214,13 +227,16 @@ Check L3. A narrow window stays usable. Narrow the window to about half the scre
 
 Do these last. After Check E1, close the application. Check E2 starts it from a new terminal where the engine cannot be found, so it needs no data. To see the data again afterwards, run `pnpm smoke` again, which makes a fresh throwaway database.
 
-Check E1. The engine stops while the application is open. The [`ian` command](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#make-the-ian-command-available) is a launcher that starts the engine, and the application starts the engine through it. Two `ian.exe` processes therefore run, both with `serve` and `--allow-origin` in their command lines: the launcher, which is the `ian` command in uv's command folder, and the engine itself, which is `ian.exe` inside the engine checkout's `.venv\Scripts` folder and which the launcher runs through `uv run`. End the engine, the one inside the engine checkout's `.venv`, in one of two ways. Within a few seconds the launcher exits too; if it stays, note that in the record.
+Check E1. The engine stops while the application is open. The [`ian` command](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/INSTALLATION.md#make-the-ian-command-available) is a launcher that starts the engine, and the application starts the engine through it. Two `ian.exe` processes therefore run, both with `serve` and `--allow-origin` in their command lines: the launcher, which is the `ian` command in uv's command folder, and the engine itself, which is `ian.exe` inside the engine checkout's `.venv\Scripts` folder and which the launcher runs through `uv run`. End the engine, the one inside the engine checkout's `.venv`, in one of two ways. The launcher exits too, usually at once; if it is still running a few seconds later, note that in the record.
 
 - In Task Manager, open the Details tab, right-click a column heading, choose "Select columns" and add "Command line". End the `ian.exe` whose command line starts with the engine checkout's `.venv\Scripts\ian.exe` path.
-- Or, in a second PowerShell terminal, find it by its command line and end it. This ends only the process whose command line contains `\.venv\Scripts\ian.exe`, `serve` and `--allow-origin`. The syntax was checked, but it cannot be tested without a running application, so this command has not been run:
+- Or, in a second PowerShell terminal, run this. It lists every `ian.exe` it finds with its command line, and stops a process only when exactly one looks like the engine (inside the engine checkout's `.venv`, with `serve` and `--allow-origin`), saying which one it stopped; otherwise it stops nothing and says how many it found. The listed command lines contain your folder paths, so do not paste them into the record:
 
 ```powershell
-Get-CimInstance Win32_Process -Filter "Name='ian.exe'" | Where-Object { $_.CommandLine.Contains('\.venv\Scripts\ian.exe') -and $_.CommandLine -match '\sserve\s' -and $_.CommandLine -match '--allow-origin' } | ForEach-Object { Stop-Process -Id $_.ProcessId }
+$all = @(Get-CimInstance Win32_Process -Filter "Name='ian.exe'")
+$all | ForEach-Object { "Found ian.exe, process $($_.ProcessId): $($_.CommandLine)" }
+$engine = @($all | Where-Object { $_.CommandLine -and $_.CommandLine.Contains('\.venv\Scripts\ian.exe') -and $_.CommandLine -match '\sserve(\s|$)' -and $_.CommandLine -match '--allow-origin' })
+if ($engine.Count -eq 1) { Stop-Process -Id $engine[0].ProcessId; "Stopped the engine, process $($engine[0].ProcessId)." } else { "Stopped nothing: $($engine.Count) processes look like the engine, and exactly one was expected." }
 ```
 
 Then open another screen, such as Refreshes. Expect a message that the analysis engine stopped unexpectedly and that the application must be restarted, with no traceback and no process name. The navigation still works.
@@ -246,9 +262,9 @@ With `pnpm smoke`, the throwaway `IAN_DATABASE_URL` setting never reaches your t
 
 `pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. Steps 1 to 9 of the setup are filled in as `pass (scripted)`, each with its command output under "Command output". Step 10 and every check are yours: the tool only started the application, so mark whether its window opened, and mark each check `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. Use `note` for something worth reporting that is neither a pass nor a fail, such as a difference you cannot judge or an oddity outside the check. A check that this document says cannot be made here no longer exists, so it has no line in the record and is not marked `n/a`; [What smoke testing does not cover](#what-smoke-testing-does-not-cover) lists what browser tests cover instead. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
 
-The "Command output" section is the tool's, and is kept as written. A run whose application failed to start is not a record for a pull request: fix the cause and run `pnpm smoke` again.
+Once the application starts, the tool never changes the record, for any reason, because your editor may hold unsaved marks and a change on disk would conflict with them. If the application exits with a failure status, the terminal tells you to mark Step 10 `fail`, with the exit status. The Engine line was written before the application started, so it says whether the checkout was switched for the test and never whether it was restored: the restore's result is in the terminal. The "Command output" section is the tool's, and is kept as written. A run whose application failed to start is not a record for a pull request: fix the cause and run `pnpm smoke` again.
 
-If you followed the steps by hand, write the same record yourself: the date, time zone, operating system, application commit, engine commit, the engine version and what you compared it with, the data you created, and each step with its mark.
+If you followed the steps by hand, write the same record yourself: the date, time zone, operating system, application commit, engine commit, the engine version from `ian about`, whether you switched your engine checkout and restored it, the data you created, and each step with its mark.
 
 Record a run in the description of the pull request that adds or changes a screen, naming the engine commit from [the source record](../../vendor/ian/SOURCE.md). Keep the record as the run's record; do not summarise it as "passed".
 
@@ -256,12 +272,16 @@ Record a run in the description of the pull request that adds or changes a scree
 
 It stops with a plain message instead of guessing, and writes the record so far beside the throwaway folder when it got that far.
 
-- **`--engine` is required, or the folder does not exist:** pass the folder of your engine checkout.
-- **`--engine` points at this repository, or the folder is not an engine checkout:** pass the folder of your engine checkout, the investment-analysis-engine repository, not this one. The tool recognises it by its `pyproject.toml`, whose `[project]` table must name `investment-analysis-engine`.
-- **The folder is not a Git checkout:** pass the folder that holds the engine's `.git` folder.
-- **The engine checkout is at another commit:** the message prints both commits and the commands to run in the engine checkout: `git -C "<path>" fetch`, then `git -C "<path>" checkout <commit>`. Run them, then try again. This leaves the engine checkout on that commit rather than a branch; afterwards, `git -C "<path>" switch main` returns it to main.
+- **`--engine` was passed:** the option no longer exists, because the tool finds the engine through `ian about`. Run `pnpm smoke` without it.
+- **`ian about` is unknown:** the engine is older than the vendored commit. Update it by pulling main in your engine checkout, then run `pnpm smoke` again.
+- **The engine is installed as a package:** `ian about` reports no installation folder. The smoke test needs the engine installed from a source checkout of the engine repository; follow the engine's installation guide from a checkout.
+- **The engine's folder is not a Git checkout:** `ian about` reports no commit. Install the engine from a Git checkout of the engine repository.
+- **`ian about` failed:** the file the tool found does not run as the engine's `ian`. The record's Engine line, or the message, names where it came from; fix that installation, or set `IAD_IAN_PATH` to the right file.
+- **The engine checkout is at another commit and has uncommitted changes:** the tool will not switch it. Commit, stash or discard the changes in the engine checkout, then run `pnpm smoke` again.
+- **The engine checkout does not have the vendored commit, even after a fetch:** nothing was switched. Check that the commit is on the engine's origin, then run `pnpm smoke` again.
+- **The run stopped at "Engine switch":** the switch itself failed, or `ian` does not run the switched checkout. The stop is labelled "Engine switch" rather than a step number because it happens between Step 3 and Step 4. In the first case the checkout was not changed; in the second the tool restored it. The message says what Git reported.
+- **The engine checkout was not restored:** the tool printed the one command that restores it, and the record carries it too. Run it in the engine checkout. A failed restore is usually a file that changed while the checkout was switched; the tool never forces it.
 - **The `ian` command was not found on `PATH` or in uv's command folder:** do the engine's "Make the `ian` command available" step (Step 1), then open a new terminal and try again. If that does not help, follow the troubleshooting entry linked in [Before you start](#before-you-start). To use a specific `ian`, set `IAD_IAN_PATH`.
-- **`ian --help` failed:** the file the tool found does not run as the engine's `ian`. The record's Engine line, or the message, names where it came from; fix that installation, or set `IAD_IAN_PATH` to the right file.
 - **`IAD_IAN_PATH` names a `.cmd` or `.bat` file:** the application and the tool start the engine without a shell, so `IAD_IAN_PATH` must name an executable (`.exe`). Point it at the `.exe`, or unset it so `ian` is found on `PATH`.
 - **Your real database is not `ready` or `missing`:** an `upgrade_required` database needs the engine's [explicit upgrade](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md#first-use-and-explicit-upgrades) first. For any other state, use the engine's [Local Database Operations](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/DATABASE.md).
 - **A setup command failed:** the message names the step and the command, and its output is in the record. For a provider failure, see the engine's troubleshooting guide.

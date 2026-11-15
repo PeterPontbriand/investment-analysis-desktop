@@ -21,6 +21,18 @@ export const ianPath = resolve('fake-bin', ianFileName(platform));
 export const uvBinFolder = resolve('fake-uv-bin');
 export const uvIanPath = join(uvBinFolder, ianFileName(platform));
 
+// What `ian about --json` answers for a source checkout.
+export function aboutJson(overrides: Record<string, unknown> = {}) {
+  return json({
+    schema_version: 1,
+    engine_version: '0.1.0',
+    installation_folder: enginePath,
+    commit: vendoredCommit,
+    uncommitted_changes: false,
+    ...overrides,
+  });
+}
+
 export const sourceRecord = `# Vendored IAN API description\n\n- **Commit:** \`${vendoredCommit}\`\n- **Commit date:** 2026-11-13\n`;
 
 export type Call = {
@@ -47,10 +59,10 @@ export function healthy(overrides: Script = () => undefined): Script {
     const override = overrides(call);
     if (override) return override;
     const line = call.args.join(' ');
-    if (call.file === 'git') return ok(`${vendoredCommit}\n`);
+    if (call.file === 'git') return ok();
     // uv's command folder holds no ian unless a test says so.
     if (call.file === 'uv') return ok('', 1);
-    if (line === '--help') return ok('Usage: root [OPTIONS] COMMAND\n');
+    if (line === 'about --json') return aboutJson();
     if (line === readCommands.databaseStatus.join(' '))
       return json({ state: 'ready', database_path: 'C:/private/real.sqlite3' });
     if (line === 'db status')
@@ -93,12 +105,12 @@ export function fakeRunner(script: Script): { run: Runner; calls: Call[] } {
 export function fakeFileSystem(extra: Record<string, string> = {}): {
   fs: FileSystem;
   folders: string[];
+  written: Record<string, string>;
 } {
+  const written: Record<string, string> = {};
   const folders: string[] = [];
   const files: Record<string, string> = {
     [join(repositoryRoot, 'vendor', 'ian', 'SOURCE.md')]: sourceRecord,
-    [join(enginePath, 'pyproject.toml')]:
-      '[build-system]\nrequires = []\n\n[project]\nname = "investment-analysis-engine"\nversion = "0.1.0"\n',
     ...extra,
   };
   const normal = (path: string) =>
@@ -108,15 +120,20 @@ export function fakeFileSystem(extra: Record<string, string> = {}): {
   );
   return {
     folders,
+    written,
     fs: {
       exists: (path) => present.has(normal(path)),
       readText: (path) => {
-        const text = files[path];
+        const text = written[path] ?? files[path];
         if (text === undefined) throw new Error(`No fake file ${path}`);
         return text;
       },
       makeFolder: (path) => {
         folders.push(path);
+        present.add(normal(path));
+      },
+      writeText: (path, text) => {
+        written[path] = text;
         present.add(normal(path));
       },
     },
@@ -133,16 +150,22 @@ export function dependencies(
   const files = fakeFileSystem(fsExtra);
   const deps: Dependencies = {
     run: runner.run,
+    runToCompletion: runner.run,
     fs: files.fs,
     env: { PATH: resolve('fake-bin'), SECRET_FOR_TEST: 'kept' },
     platform,
     repositoryRoot,
-    enginePath,
     now: new Date(2026, 10, 13, 9, 5, 7),
     progress: (line) => progress.push(line),
     ...overrides,
   };
-  return { deps, ...runner, folders: files.folders, progress };
+  return {
+    deps,
+    ...runner,
+    folders: files.folders,
+    written: files.written,
+    progress,
+  };
 }
 
 export const commandCount = setupCommands.length;

@@ -22,9 +22,11 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - Tests read expected user-facing text from the catalog with the locale pinned; they never assert literal user-facing English.
 - Project type declarations, generated or hand-written, go in `.ts` files, not `.d.ts`, because `skipLibCheck` skips `.d.ts` files.
 - User-facing messages never name internal shorthand (such as `ian` or `iad`), an environment variable, a command-line option or a command. Such detail belongs in developer output such as standard error or logs.
+- Re-vendor IAN's API description (`vendor/ian/`) only in a slice that needs a newer engine (an API change, or a command the tools use), or before a release. Do it as that slice's first commit with `pnpm vendor-ian <commit>`, record a decision row naming the commit in the slice plan, and never re-vendor as a drive-by.
 - Dependabot pull requests are never merged; reapply dependency bumps on a project branch.
 - `pnpm gate` must pass before pushing.
 - The required CI check is `quality`, fed by Windows, macOS, and Linux jobs.
+- CI runner labels stay `-latest` (`windows-latest`, `macos-latest`, `ubuntu-latest`); do not pin them. When GitHub moves a label to a new image and CI breaks, fix it in the pull request it breaks, with a decision row in the slice plan.
 - This repository contains no Python. Its tooling, including documentation checks, is written in the repository's own language.
 
 ## Approval gates
