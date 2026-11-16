@@ -83,7 +83,7 @@ function view(key: string) {
       </td>
     </template>
     <td v-if="group.outcomeColumn">
-      <RouterLink :to="runLocation(run.analysis_run_id)">
+      <RouterLink :to="runLocation(run.analysis_run_id)" class="pill-link">
         <OutcomePill :code="run.outcome" />
       </RouterLink>
     </td>
@@ -98,6 +98,10 @@ function view(key: string) {
 .value {
   color: var(--color-text);
   font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+
+.pill-link {
   text-decoration: none;
 }
 
