@@ -12,6 +12,7 @@
   --color-border: #d3d1c7;
   --color-control-border: #8b8a83;
   --color-accent: #185fa5;
+  --color-accent-underline: #185fa58c;
   --color-positive: #3b6d11;
   --color-positive-bg: #eaf3de;
   --color-caution: #854f0b;
@@ -53,6 +54,7 @@
     --color-border: #444441;
     --color-control-border: #757570;
     --color-accent: #85b7eb;
+    --color-accent-underline: #85b7eb8c;
     --color-positive: #c0dd97;
     --color-positive-bg: #27500a;
     --color-caution: #fac775;

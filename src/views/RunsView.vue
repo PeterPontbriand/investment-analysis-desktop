@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router';
 import { useEngine } from '../api/engine.ts';
 import type { ResolvedName } from '../api/terms.ts';
 import { pageSize, usePagedList } from '../api/useScreenData.ts';
-import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import EmptyMessage from '../components/EmptyMessage.vue';
 import OutcomePill from '../components/OutcomePill.vue';
 import ScreenState from '../components/ScreenState.vue';
@@ -111,7 +110,6 @@ const list = usePagedList(
 </script>
 
 <template>
-  <AppBreadcrumb :crumbs="[{ label: t('nav.runs') }]" />
   <h1>{{ t('nav.runs') }}</h1>
   <form class="filters" @submit.prevent="applyTicker">
     <label>

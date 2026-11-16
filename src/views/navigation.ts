@@ -54,16 +54,12 @@ export type RunCrumbLabels = {
   refreshComparison: string;
 };
 
-// Run detail's breadcrumb by where the reader came from (D157).
+// Run detail's trail by where the reader came from (D157, D173): the screens
+// above it, not the run itself.
 export function runCrumbs(
   labels: RunCrumbLabels,
-  title: string,
   origin: { fromRuns: boolean; refreshId: string | null; query: LocationQuery },
 ): Crumb[] {
-  const runsCrumb: Crumb = {
-    label: labels.runs,
-    to: { name: 'runs', query: filtersToQuery(filtersFromQuery(origin.query)) },
-  };
   if (!origin.fromRuns && origin.refreshId !== null)
     return [
       { label: labels.refreshes, to: { name: 'refreshes' } },
@@ -71,20 +67,24 @@ export function runCrumbs(
         label: labels.refreshComparison,
         to: compareLocation(origin.refreshId),
       },
-      { label: title },
     ];
-  return [runsCrumb, { label: title }];
+  return [
+    {
+      label: labels.runs,
+      to: {
+        name: 'runs',
+        query: filtersToQuery(filtersFromQuery(origin.query)),
+      },
+    },
+  ];
 }
 
-// The comparison's breadcrumb: always Refreshes, then its heading.
-export function compareCrumbs(
-  refreshesLabel: string,
-  heading: string | null,
-): Crumb[] {
-  return heading === null
-    ? [{ label: refreshesLabel }]
-    : [
-        { label: refreshesLabel, to: { name: 'refreshes' } },
-        { label: heading },
-      ];
+// The comparison's trail: Refreshes (D173).
+export function compareCrumbs(refreshesLabel: string): Crumb[] {
+  return [{ label: refreshesLabel, to: { name: 'refreshes' } }];
+}
+
+// The watchlist screen's trail: Watchlists (D173).
+export function watchlistCrumbs(watchlistsLabel: string): Crumb[] {
+  return [{ label: watchlistsLabel, to: { name: 'watchlists' } }];
 }

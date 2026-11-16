@@ -59,7 +59,6 @@ const loaded = computed(() =>
   state.value.kind === 'ready' ? state.value.data : null,
 );
 
-const strategy = computed(() => loaded.value?.overview.data.strategy ?? null);
 const fullDocument = computed(() => {
   const document = loaded.value?.document;
   return document?.ok ? document.result : null;
@@ -69,27 +68,20 @@ const companyName = computed(
   () => fullDocument.value?.data.security_identity.instrument_name ?? null,
 );
 
-const crumbs = computed(() => {
-  const overview = loaded.value?.overview.data;
-  const labels = {
-    runs: t('nav.runs'),
-    refreshes: t('nav.refreshes'),
-    refreshComparison: t('compare.refreshComparison'),
-  };
-  if (!overview || !strategy.value) return [{ label: t('nav.runs') }];
-  return runCrumbs(
-    labels,
-    t('runDetail.titleNoName', {
-      ticker: overview.ticker,
-      strategy: strategy.value.label,
-    }),
+const crumbs = computed(() =>
+  runCrumbs(
+    {
+      runs: t('nav.runs'),
+      refreshes: t('nav.refreshes'),
+      refreshComparison: t('compare.refreshComparison'),
+    },
     {
       fromRuns: query.from === 'runs',
-      refreshId: overview.refresh_id,
+      refreshId: loaded.value?.overview.data.refresh_id ?? null,
       query,
     },
-  );
-});
+  ),
+);
 
 const asOf = computed(() =>
   fullDocument.value === null
@@ -149,6 +141,7 @@ const asOf = computed(() =>
       </li>
       <li v-if="state.data.overview.data.refresh_id !== null">
         <RouterLink
+          class="text-link"
           :to="compareLocation(state.data.overview.data.refresh_id)"
           >{{ t('runDetail.savedByRefresh') }}</RouterLink
         >

@@ -29,7 +29,7 @@ const refusal = (list: string) => {
 describe('--checks', () => {
   it('reads the checks of the document', () => {
     expect(valid).toContain('C1');
-    expect(valid).toContain('D6');
+    expect(valid).toContain('D7');
   });
 
   it('accepts singles, ranges and a mix, and words them as given', () => {
@@ -80,7 +80,7 @@ describe('--checks', () => {
       'C1 to C3, D1, H1, H3',
     );
     expect(refusal('Z1')).toContain('C1 to C6');
-    expect(refusal('Z1')).toContain('D1 to D6');
+    expect(refusal('Z1')).toContain('D1 to D7');
   });
 
   it('prints the refusal for an unknown id', () => {});

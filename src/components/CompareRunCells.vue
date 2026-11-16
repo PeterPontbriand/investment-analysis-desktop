@@ -98,15 +98,10 @@ function view(key: string) {
 .value {
   color: var(--color-text);
   font-weight: var(--font-weight-medium);
-  text-decoration: none;
 }
 
 .pill-link {
   text-decoration: none;
-}
-
-.value:hover {
-  text-decoration: underline;
 }
 
 small {

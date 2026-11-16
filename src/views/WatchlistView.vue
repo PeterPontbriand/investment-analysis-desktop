@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useScreenData } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
+import { watchlistCrumbs } from './navigation.ts';
 import RefreshesTable from '../components/RefreshesTable.vue';
 import EmptyMessage from '../components/EmptyMessage.vue';
 import ScreenState from '../components/ScreenState.vue';
@@ -25,19 +26,12 @@ const { state, reload } = useScreenData(
   ['strategies'],
   [watchlistId],
 );
+
+const crumbs = watchlistCrumbs(t('nav.watchlists'));
 </script>
 
 <template>
-  <AppBreadcrumb
-    :crumbs="
-      state.kind === 'ready'
-        ? [
-            { label: t('nav.watchlists'), to: { name: 'watchlists' } },
-            { label: state.data.display_name },
-          ]
-        : [{ label: t('nav.watchlists') }]
-    "
-  />
+  <AppBreadcrumb :crumbs="crumbs" />
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <template v-else>
     <h1>{{ state.data.display_name }}</h1>

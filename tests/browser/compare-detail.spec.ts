@@ -184,19 +184,22 @@ test.describe('comparison', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       await coreHeading(page),
     );
-    // The watchlist's name links to it.
+    // The heading is plain text; the watchlist is reached through Watchlists
+    // (D177).
     await expect(
       page.getByRole('heading', { level: 1 }).getByRole('link'),
-    ).toHaveText('Core (as it was)');
+    ).toHaveCount(0);
     const runs = en.compare.runCount
       .split(' | ')[1]!
       .replace('{runs}', String(coreComparison.run_count));
+    // One pill per outcome, with its count inside (D176).
     await expect(page.locator('.counts li')).toHaveText([
       runs,
-      `${en.common.separator}Completed 3`,
-      `${en.common.separator}Unavailable 1`,
-      `${en.common.separator}Not Applicable 1`,
+      'Completed 3',
+      'Unavailable 1',
+      'Not Applicable 1',
     ]);
+    await expect(page.locator('.counts li .pill')).toHaveCount(3);
     const headers = page.locator('thead tr');
     await expect
       .poll(async () => cells(headers.nth(0)))
@@ -465,6 +468,17 @@ test.describe('run detail', () => {
     const cards = page.locator('.cards li');
     await expect(cards.nth(1)).toContainText('RSI');
     await expect(cards.nth(1)).toContainText('—');
+    // The dash is body size in secondary colour, as a table cell shows it
+    // (D178).
+    const sizes = await cards.nth(1).evaluate((card) => {
+      const empty = card.querySelector('.empty');
+      const body = getComputedStyle(document.body).fontSize;
+      return {
+        body,
+        empty: empty ? getComputedStyle(empty).fontSize : null,
+      };
+    });
+    expect(sizes.empty).toBe(sizes.body);
     await expect(
       cards.nth(1).locator('[data-term-id="status-input-unavailable"]'),
     ).toHaveText('Input not available');
@@ -687,14 +701,16 @@ test.describe('run detail views', () => {
 });
 
 test.describe('breadcrumbs', () => {
-  test('shows Refreshes and the heading on the comparison', async ({
+  test('lists only Refreshes above the comparison, as a link', async ({
     page,
   }) => {
     await openComparison(page);
-    expect(await crumbs(page)).toEqual([
-      en.nav.refreshes,
-      await coreHeading(page),
-    ]);
+    expect(await crumbs(page)).toEqual([en.nav.refreshes]);
+    await expect(
+      page
+        .getByRole('navigation', { name: en.breadcrumb.label })
+        .locator('[aria-current]'),
+    ).toHaveCount(0);
     await page
       .getByRole('navigation', { name: en.breadcrumb.label })
       .getByRole('link', { name: en.nav.refreshes })
@@ -713,7 +729,6 @@ test.describe('breadcrumbs', () => {
     expect(await crumbs(page)).toEqual([
       en.nav.refreshes,
       en.compare.refreshComparison,
-      'ACME — Momentum',
     ]);
     await page
       .getByRole('navigation', { name: en.breadcrumb.label })
@@ -728,7 +743,7 @@ test.describe('breadcrumbs', () => {
     page,
   }) => {
     await openRun(page, 2);
-    expect(await crumbs(page)).toEqual([en.nav.runs, 'ZED — Quality Screen']);
+    expect(await crumbs(page)).toEqual([en.nav.runs]);
   });
 
   test('restores the Saved runs filters from the crumb and starts at the first page', async ({
@@ -896,5 +911,68 @@ test.describe('render errors', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       en.nav.refreshes,
     );
+  });
+});
+
+test.describe('links', () => {
+  // Focuses a link after a key press, so that :focus-visible applies (a
+  // browser may not tab to links by default).
+  async function focusByKeyboard(page: Page, link: Locator) {
+    await page.keyboard.press('Shift');
+    await link.focus();
+    await expect(link).toBeFocused();
+  }
+
+  const underline = (link: Locator) =>
+    link.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        line: style.textDecorationLine,
+        skipInk: style.textDecorationSkipInk,
+        thickness: style.textDecorationThickness,
+      };
+    });
+
+  test('a table link and a breadcrumb link are underlined only on focus', async ({
+    page,
+  }) => {
+    await openComparison(page);
+    const tableLink = rows(page).nth(0).locator('td a').first();
+    const crumb = page
+      .getByRole('navigation', { name: en.breadcrumb.label })
+      .getByRole('link');
+    expect((await underline(tableLink)).line).toBe('none');
+    expect((await underline(crumb)).line).toBe('none');
+    for (const link of [crumb, tableLink]) {
+      await focusByKeyboard(page, link);
+      const focused = await underline(link);
+      expect(focused.line).toBe('underline');
+      expect(focused.skipInk).toBe('none');
+    }
+  });
+
+  test('a link inside a line of text is underlined at rest, unbroken', async ({
+    page,
+  }) => {
+    await openRun(page, 2);
+    const link = page.getByRole('link', { name: en.runDetail.savedByRefresh });
+    const style = await underline(link);
+    expect(style.line).toBe('underline');
+    expect(style.skipInk).toBe('none');
+    expect(style.thickness).toBe('1px');
+  });
+
+  test('a time cell stays on one line at a narrow width', async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await openRuns(page);
+    const cell = rows(page).nth(0).locator('th');
+    const lines = await cell.evaluate((element) => {
+      const range = element.ownerDocument.createRange();
+      range.selectNodeContents(element);
+      return new Set(
+        Array.from(range.getClientRects()).map((rect) => Math.round(rect.top)),
+      ).size;
+    });
+    expect(lines).toBe(1);
   });
 });

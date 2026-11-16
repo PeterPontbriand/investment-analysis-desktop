@@ -7,7 +7,7 @@ import CompareRunCells from '../components/CompareRunCells.vue';
 import ScreenState from '../components/ScreenState.vue';
 import StrategyName from '../components/StrategyName.vue';
 import TableScroll from '../components/TableScroll.vue';
-import TermName from '../components/TermName.vue';
+import OutcomePill from '../components/OutcomePill.vue';
 import { useRouteParam } from '../composables/useRouteParam.ts';
 import { formatCompletion, formatCount } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
@@ -52,18 +52,10 @@ const time = computed(() =>
       ),
 );
 
-// The heading as text, for the breadcrumb.
-const headingText = computed(() =>
-  loaded.value === null
-    ? null
-    : t('compare.heading', {
-        watchlist: watchlistName.value,
-        time: time.value,
-      }),
+const heading = computed(() =>
+  t('compare.heading', { watchlist: watchlistName.value, time: time.value }),
 );
-const crumbs = computed(() =>
-  compareCrumbs(t('nav.refreshes'), headingText.value),
-);
+const crumbs = compareCrumbs(t('nav.refreshes'));
 
 const groups = computed(() =>
   loaded.value === null ? [] : groupsOf(loaded.value.document),
@@ -80,22 +72,7 @@ const counts = computed(() =>
   <AppBreadcrumb :crumbs="crumbs" />
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <template v-else>
-    <h1>
-      <i18n-t keypath="compare.heading" scope="global" tag="span">
-        <template #watchlist>
-          <RouterLink
-            v-if="state.data.document.watchlist_id !== null"
-            :to="{
-              name: 'watchlist',
-              params: { watchlistId: state.data.document.watchlist_id },
-            }"
-            >{{ watchlistName }}</RouterLink
-          >
-          <template v-else>{{ watchlistName }}</template>
-        </template>
-        <template #time>{{ time }}</template>
-      </i18n-t>
-    </h1>
+    <h1>{{ heading }}</h1>
     <ul class="counts">
       <li>
         {{
@@ -105,11 +82,7 @@ const counts = computed(() =>
         }}
       </li>
       <li v-for="item in counts" :key="item.code">
-        <span class="separator" aria-hidden="true">{{
-          t('common.separator')
-        }}</span>
-        <TermName code-set="RunOutcome" :code="item.code" />
-        {{ formatCount(locale, item.count) }}
+        <OutcomePill :code="item.code" :count="item.count" />
       </li>
     </ul>
     <TableScroll>
@@ -176,10 +149,6 @@ const counts = computed(() =>
   list-style: none;
   margin: 0 0 var(--space-3);
   padding: 0;
-}
-
-.separator {
-  margin-inline-end: var(--space-2);
 }
 
 .compare .ticker {

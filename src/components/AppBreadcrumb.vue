@@ -2,23 +2,23 @@
 import { useMessages } from '../i18n/index.ts';
 import type { Crumb } from './crumbs.ts';
 
-// The path to the current screen; the last crumb is the current screen.
+// The way back: the screens above the current one, each a link. The heading
+// says where the reader is, so the trail never lists the current screen; with
+// no crumbs there is no trail.
 defineProps<{ crumbs: Crumb[] }>();
 
 const { t } = useMessages();
 </script>
 
 <template>
-  <nav :aria-label="t('breadcrumb.label')" class="breadcrumb">
+  <nav
+    v-if="crumbs.length > 0"
+    :aria-label="t('breadcrumb.label')"
+    class="breadcrumb"
+  >
     <ol>
       <li v-for="(crumb, index) in crumbs" :key="index">
-        <span v-if="index === crumbs.length - 1" aria-current="page">{{
-          crumb.label
-        }}</span>
-        <RouterLink v-else-if="crumb.to" :to="crumb.to">{{
-          crumb.label
-        }}</RouterLink>
-        <span v-else>{{ crumb.label }}</span>
+        <RouterLink :to="crumb.to">{{ crumb.label }}</RouterLink>
       </li>
     </ol>
   </nav>

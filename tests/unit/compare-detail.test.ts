@@ -11,6 +11,7 @@ import {
   filtersFromQuery,
   filtersToQuery,
   runCrumbs,
+  watchlistCrumbs,
 } from '../../src/views/navigation.ts';
 import { outcomeCountsOf } from '../../src/views/compareModel.ts';
 import { coreComparison, coreRefreshId } from '../fixtures/api/compare.ts';
@@ -64,22 +65,23 @@ const labels = {
   refreshes: en.nav.refreshes,
   refreshComparison: en.compare.refreshComparison,
 };
-const title = 'KO — Graham Number';
 const squash = (text: string) => text.replace(/\s+/g, ' ').trim();
 
 describe('breadcrumbs', () => {
-  it('shows Refreshes and the heading on the comparison', () => {
-    expect(compareCrumbs(en.nav.refreshes, 'Core · Oct 30')).toEqual([
+  it('lists only Refreshes above the comparison, as a link', () => {
+    expect(compareCrumbs(en.nav.refreshes)).toEqual([
       { label: en.nav.refreshes, to: { name: 'refreshes' } },
-      { label: 'Core · Oct 30' },
     ]);
-    expect(compareCrumbs(en.nav.refreshes, null)).toEqual([
-      { label: en.nav.refreshes },
+  });
+
+  it('lists only Watchlists above a watchlist, as a link', () => {
+    expect(watchlistCrumbs(en.nav.watchlists)).toEqual([
+      { label: en.nav.watchlists, to: { name: 'watchlists' } },
     ]);
   });
 
   it('starts at Saved runs, with its filters, for a run opened from the list', () => {
-    const crumbs = runCrumbs(labels, title, {
+    const crumbs = runCrumbs(labels, {
       fromRuns: true,
       // Even a run saved by a refresh keeps the route it was opened from.
       refreshId: coreRefreshId,
@@ -90,13 +92,12 @@ describe('breadcrumbs', () => {
         label: en.nav.runs,
         to: { name: 'runs', query: { ticker: 'KO', method: 'graham_number' } },
       },
-      { label: title },
     ]);
   });
 
   it('goes through the refresh comparison for a run opened from a comparison', () => {
     expect(
-      runCrumbs(labels, title, {
+      runCrumbs(labels, {
         fromRuns: false,
         refreshId: coreRefreshId,
         query: {},
@@ -107,17 +108,13 @@ describe('breadcrumbs', () => {
         label: en.compare.refreshComparison,
         to: { name: 'refresh', params: { refreshId: coreRefreshId } },
       },
-      { label: title },
     ]);
   });
 
   it('starts at Saved runs for a run saved by a direct analysis', () => {
     expect(
-      runCrumbs(labels, title, { fromRuns: false, refreshId: null, query: {} }),
-    ).toEqual([
-      { label: en.nav.runs, to: { name: 'runs', query: {} } },
-      { label: title },
-    ]);
+      runCrumbs(labels, { fromRuns: false, refreshId: null, query: {} }),
+    ).toEqual([{ label: en.nav.runs, to: { name: 'runs', query: {} } }]);
   });
 
   it('carries only the filters that are set in the query', () => {
@@ -149,7 +146,7 @@ describe('comparison counts line', () => {
     ]);
   });
 
-  it('shows the run count and each outcome with its term name', async () => {
+  it('shows the run count and each outcome as a pill with its count', async () => {
     const wrapper = await mountAt(`/refreshes/${coreRefreshId}`);
     const runs = en.compare.runCount
       .split(' | ')[1]!
@@ -157,13 +154,14 @@ describe('comparison counts line', () => {
     const items = wrapper
       .findAll('.counts li')
       .map((item) => squash(item.text()));
-    const separated = (text: string) => `${en.common.separator}${text}`;
     expect(items).toEqual([
       runs,
-      separated('Completed 3'),
-      separated('Unavailable 1'),
-      separated('Not Applicable 1'),
+      'Completed 3',
+      'Unavailable 1',
+      'Not Applicable 1',
     ]);
+    // Each outcome is a pill with its count inside (D176).
+    expect(wrapper.findAll('.counts li .pill')).toHaveLength(3);
   });
 });
 

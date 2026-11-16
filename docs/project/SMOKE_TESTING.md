@@ -169,14 +169,14 @@ If the start fails with "Access is denied" when removing the application's execu
 
 Check N1. The window opens on the Watchlists screen. The product name and the pre-release notice show beside a navigation with Watchlists, Refreshes, Saved runs and About; the navigation sits at the start side of the window, and the current item is marked.
 
-Check N2. Each navigation link opens its screen. The breadcrumb above each screen, the trail of names that shows where you are (such as Watchlists / Smoke Test), names it, and the current navigation item follows.
+Check N2. Each navigation link opens its screen, with its name as the heading, and the current navigation item follows. None of these four screens shows a breadcrumb trail above its heading, because no screen sits above any of them.
 
 Check N3. About shows the engine's details. They are its version, API versions, schema version, SEC identity and languages; compare them with the engine:
 
 - Compare the engine version with the version `ian about` prints on its first line, and say in the record that this is what you compared with. `pnpm smoke` records the version `ian about` reported.
 - SEC identity shows configured when the engine's configuration holds an SEC EDGAR identification, and not configured otherwise.
 
-Check N4. The shell follows the look of the preview mock-ups. The navigation at the start side has a thin rule on its inner edge; the current item has a raised background with rounded corners; the product name and the pre-release notice sit above the navigation; the content area fills the rest of the window with the breadcrumb as a small line above the heading.
+Check N4. The shell follows the look of the preview mock-ups. The navigation at the start side has a thin rule on its inner edge; the current item has a raised background with rounded corners; the product name and the pre-release notice sit above the navigation; the content area fills the rest of the window with the breadcrumb trail, on a screen that has one, as a small line above the heading.
 
 ## W. Watchlists
 
@@ -184,7 +184,7 @@ Check W1. The Watchlists screen lists both watchlists. `Smoke Test` has 5 entrie
 
 Check W2. Times are in your time zone. They agree with the clock of the moment you ran the setup commands.
 
-Check W3. Open `Smoke Test` to see its entries. It shows the breadcrumb Watchlists / Smoke Test, a line with the entry count and created time, and the entries numbered 1 to 5 with ticker, strategy name and as-of. The tickers and numbering agree with `ian watchlist show "Smoke Test"`.
+Check W3. Open `Smoke Test` to see its entries. The trail above the heading `Smoke Test` is the single link `Watchlists`, with nothing after it. Below the heading is a line with the entry count and created time, and the entries numbered 1 to 5 with ticker, strategy name and as-of. The tickers and numbering agree with `ian watchlist show "Smoke Test"`.
 
 Check W4. Strategy names are the engine's names for the strategies. No raw method code such as `sma_crossover` shows.
 
@@ -196,9 +196,9 @@ Check W5. The five entries show their three as-of forms correctly. Three entries
 
 Check W6. The watchlist's refreshes are listed under its entries. They show the refresh from Step 7 with its time, its five runs and its outcome counts. The completion time is a link to the refresh's comparison.
 
-Check W7. Open `Smoke Test Empty` to see that it has no entries. It shows that it has no entries and that it has not been refreshed yet. The breadcrumb leads back to Watchlists.
+Check W7. Open `Smoke Test Empty` to see that it has no entries. It shows that it has no entries and that it has not been refreshed yet. The trail above the heading is the single link `Watchlists`, and it leads back.
 
-Check W8. Tables follow the mock-ups: a thin rule under every row, secondary-coloured column headings, and the watchlist names as links in the accent colour. The entry counts are aligned to the end of their column.
+Check W8. Tables follow the mock-ups: a thin rule under every row, secondary-coloured column headings, and the watchlist names as links in the accent colour, with no underline until the pointer is over one or it has keyboard focus. The entry counts are aligned to the end of their column.
 
 ## R. Refreshes
 
@@ -212,7 +212,7 @@ Check R4. The count columns line up at the end of the column, and their digits a
 
 ## C. Refresh comparison
 
-Check C1. Open the comparison from Refreshes. The completion time of the refresh is a link; it opens the comparison. The breadcrumb reads Refreshes and then the heading, which is `Smoke Test` (a link to the watchlist), a dot and the refresh's completion time or time range, formatted as on Refreshes. Under the heading a line gives the run count (5 runs) and then each outcome that has runs, as its name and count, in the engine's order. The counts agree with Refreshes and with `ian runs refreshes`.
+Check C1. Open the comparison from Refreshes. The completion time of the refresh is a link; it opens the comparison. The trail above the heading is the single link `Refreshes`. The heading is plain text, not a link: `Smoke Test`, a dot and the refresh's completion time or time range, formatted as on Refreshes. Under the heading a line gives the run count (5 runs) and then one pill for each outcome that has runs, with its count inside the pill, in the engine's order, such as `Completed 4` and `Not Applicable 1`. The counts agree with Refreshes and with `ian runs refreshes`.
 
 Check C2. The table groups the runs by ticker and strategy. The ticker column is at the start; the three strategy groups (Momentum, Graham Number and Piotroski F-Score) sit beside it, each with its strategy name over its own column labels, and the values are in a slightly heavier weight than the labels. Numbers are formatted by their unit (a percentage, a price with its currency code, a score) and no raw code or `NaN` shows. When the table has a number with no value, it shows a dash with the engine's name for its status beside it in small grey text; a text with no value shows a dash alone.
 
@@ -240,21 +240,23 @@ Check H6. The outcome column shows each outcome as a pill: green for completed, 
 
 Check H7. Keyboard focus is visible. Press Tab to move through the navigation links and then through the Saved runs filters and buttons: each control shows a clear outline when it has focus, and the order follows the screen from the start side to the end side and top to bottom. On macOS, if Tab skips links, turn on "Press Tab to highlight each item on a webpage" in Safari's settings, or use Option+Tab.
 
-Check H8. The links in the list. "Refresh" in the "Saved by" column opens the comparison of the refresh that saved the run, with the breadcrumb Refreshes and then the comparison's heading. The completion time of each row is a link that opens the run's detail.
+Check H8. The links in the list. "Refresh" in the "Saved by" column opens the comparison of the refresh that saved the run, with the trail `Refreshes` above the comparison's heading. The completion time of each row is a link that opens the run's detail.
 
 ## D. Run detail
 
-Check D1. Open a run from the comparison by one of its values. The title is the company's name, the ticker in brackets, a dash and the strategy name, such as "Coca-Cola Co (KO) — Graham Number". Under it a line shows the outcome as a pill, when the run was saved, "As of" with its date, the fiscal period end in the strategy's own words, and "Saved by refresh" as a link to the comparison. The breadcrumb reads Refreshes, Refresh comparison, and the ticker with the strategy; "Refresh comparison" returns to the comparison.
+Check D1. Open a run from the comparison by one of its values. The title is the company's name, the ticker in brackets, a dash and the strategy name, such as "Coca-Cola Co (KO) — Graham Number". Under it a line shows the outcome as a pill, when the run was saved, "As of" with its date, the fiscal period end in the strategy's own words, and "Saved by refresh" as a link to the comparison, with a thin underline at rest. The trail above the title is `Refreshes` and `Refresh comparison`, both links, and does not repeat the title; "Refresh comparison" returns to the comparison.
 
 Check D2. The headline cards. There is one card for each headline cell, in the comparison's order: the cell's label in small grey text and its value in a large type step, formatted as in the comparison. The values agree with the comparison's row.
 
 Check D3. Warnings and limitations. When the run has any, a "Warnings" list and a "Limitations" list sit under the cards, each under its own heading and written by the engine; a list the run does not have is left out.
 
-Check D4. A cell with no value. Open SPY's Piotroski run. Its Score and Completeness cards each show a dash alone, because a text with no value has no status, and its line under the title has no period end. If any run's card has a number with no value, it shows a dash with the engine's name for its status and, when there is one, for its reason, in small grey text; this is the only place a reason shows. Mark that part `n/a` when no run has such a card. A run with no headline shows the engine's name for why, in a neutral panel, in place of the cards.
+Check D4. A cell with no value. Open SPY's Piotroski run. Its Score and Completeness cards each show a dash alone, at the size of body text and in grey, because a text with no value has no status, and its line under the title has no period end. If any run's card has a number with no value, it shows a dash, then the engine's name for its status and, when there is one, for its reason (such as `— Input Unavailable · EPS Not Positive`), all at the size of body text in grey, as a table cell shows them; this is the only place a reason shows. Mark that part `n/a` when no run has such a card. A run with no headline shows the engine's name for why, in a neutral panel, in place of the cards.
 
 Check D5. The tabs. Summary, Details, Diagnostics and JSON are tabs, with Summary open first. The left and right arrow keys move to the next and previous tab and open it (in the other direction in a right-to-left layout), and Home and End go to the first and last. Each tab shows the engine's own text, or the document as indented JSON, in a block that does not wrap; the block scrolls sideways when a line is wide, and you can focus it with Tab and scroll it with the arrow keys. The text can be selected, and there is no copy button. Each text is fetched when its tab first opens: a failure on one tab leaves the others usable.
 
-Check D6. Opened from Saved runs, a run's breadcrumb starts with Saved runs, and a run saved by a direct analysis (Step 8) says "Saved by direct analysis" as plain text. Filter Saved runs by ticker `ko`, open a run by its completion time, then choose "Saved runs" in the breadcrumb: the filter is still applied and the list starts at its first page.
+Check D6. Opened from Saved runs, the trail above the title is `Saved runs`. Filter Saved runs by ticker `ko`, open a run by its completion time, then choose "Saved runs" in the trail: the filter is still applied and the list starts at its first page.
+
+Check D7. For the direct analysis from Step 8, the line under the title ends with "Saved by direct analysis" as plain text.
 
 ## L. Language and layout
 
@@ -320,10 +322,10 @@ A pull request records a manual run only when automated tests cannot cover somet
 `pnpm smoke` still does every setup step and writes every step into the record. Name the checks with `--checks`, a comma-separated list of check ids and of ranges within one letter group; each slice's decisions and its pull request description give the exact command:
 
 ```powershell
-pnpm smoke --checks C1-C6,D1-D6,H1,H8,L1,L3
+pnpm smoke --checks C1-C6,D1-D7,H1,H8,L1,L3
 ```
 
-A targeted run names whole checks only. The record then has a "Targeted run" line naming them, leaves each named check for you to mark, and writes `not run` after every other check; its result line names the checks that were run, for example "Result: Checks C1 to C6, D1 to D6, H1, H8, L1 and L3: all passed". `not run` is separate from `n/a`, which means the check does not apply. The list may be separated by commas or spaces, so the command works the same in PowerShell, cmd and bash. Without `--checks` the run is a full run. `pnpm smoke` stops before any setup, with the valid check ids, when the list is empty, names an id that is not a check in this document, has a range across two letter groups or a reversed range, or names a check twice. Whether a release needs a complete run is GUI.6's decision.
+A targeted run names whole checks only. The record then has a "Targeted run" line naming them, leaves each named check for you to mark, and writes `not run` after every other check; its result line names the checks that were run, for example "Result: Checks C1 to C6, D1 to D7, H1, H8, L1 and L3: all passed". `not run` is separate from `n/a`, which means the check does not apply. The list may be separated by commas or spaces, so the command works the same in PowerShell, cmd and bash. Without `--checks` the run is a full run. `pnpm smoke` stops before any setup, with the valid check ids, when the list is empty, names an id that is not a check in this document, has a range across two letter groups or a reversed range, or names a check twice. Whether a release needs a complete run is GUI.6's decision.
 
 ## If `pnpm smoke` stops
 

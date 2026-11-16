@@ -8,7 +8,7 @@ type Cell = components['schemas']['CompareCellDocument'];
 
 // One card per headline cell, in the order the engine gives them (D162): the
 // label, then the value in a large step. A cell with no value shows a dash,
-// its status and, when it has one, its reason code.
+// its status and, when it has one, its reason code, all in body size (D178); a text cell with no value shows the dash alone.
 defineProps<{ cells: Cell[]; lang: string | null }>();
 
 const { t, locale } = useMessages();
@@ -32,15 +32,16 @@ function text(cell: Cell): string | null {
         :lang="cell.kind === 'text' ? (lang ?? undefined) : undefined"
         >{{ text(cell) }}</span
       >
-      <template v-else>
-        <span class="value">{{ t('common.noValue') }}</span>
-        <span v-if="cell.status !== null" class="reason">
-          <TermName code-set="CellStatusValue" :code="cell.status" />
-        </span>
-        <span v-if="cell.reason_code !== null" class="reason">
+      <span v-else class="empty">
+        {{ t('common.noValue') }}
+        <template v-if="cell.kind === 'number' && cell.status !== null">
+          <TermName code-set="CellStatusValue" :code="cell.status"
+        /></template>
+        <template v-if="cell.kind === 'number' && cell.reason_code !== null">
+          <span aria-hidden="true">{{ t('common.separator') }}</span>
           <TermName code-set="ReasonCode" :code="cell.reason_code" />
-        </span>
-      </template>
+        </template>
+      </span>
     </li>
   </ul>
 </template>
@@ -65,10 +66,14 @@ function text(cell: Cell): string | null {
   padding: var(--space-3) var(--space-4);
 }
 
-.label,
-.reason {
+.label {
   color: var(--color-text-secondary);
   font-size: var(--font-size-small);
+}
+
+/* No value: the dash and its status and reason, as a table cell shows them. */
+.empty {
+  color: var(--color-text-secondary);
 }
 
 .value {
