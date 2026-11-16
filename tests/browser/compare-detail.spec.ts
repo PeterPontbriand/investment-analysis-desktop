@@ -1,6 +1,7 @@
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures.ts';
 import { engineUrl, mockEngine, type Handler } from './engine-mock.ts';
+import { focusByKeyboard } from './keyboard.ts';
 import { instantText, plain, rangeText } from './expected-text.ts';
 import {
   adHocRefreshId,
@@ -915,14 +916,6 @@ test.describe('render errors', () => {
 });
 
 test.describe('links', () => {
-  // Focuses a link after a key press, so that :focus-visible applies (a
-  // browser may not tab to links by default).
-  async function focusByKeyboard(page: Page, link: Locator) {
-    await page.keyboard.press('Shift');
-    await link.focus();
-    await expect(link).toBeFocused();
-  }
-
   const underline = (link: Locator) =>
     link.evaluate((element) => {
       const style = getComputedStyle(element);
@@ -945,9 +938,8 @@ test.describe('links', () => {
     expect((await underline(crumb)).line).toBe('none');
     for (const link of [crumb, tableLink]) {
       await focusByKeyboard(page, link);
-      const focused = await underline(link);
-      expect(focused.line).toBe('underline');
-      expect(focused.skipInk).toBe('none');
+      await expect(link).toHaveCSS('text-decoration-line', 'underline');
+      await expect(link).toHaveCSS('text-decoration-skip-ink', 'none');
     }
   });
 

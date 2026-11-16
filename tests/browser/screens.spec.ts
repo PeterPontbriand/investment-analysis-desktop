@@ -6,6 +6,7 @@ import { coreId } from '../fixtures/api/data.ts';
 import { failure, ok } from '../fixtures/api/server.ts';
 import en from '../../src/locales/en.json' with { type: 'json' };
 import { dateText, instantText, plain, rangeText } from './expected-text.ts';
+import { focusByKeyboard } from './keyboard.ts';
 
 async function cells(row: Locator): Promise<string[]> {
   return (await row.locator('th, td').allInnerTexts()).map((text) =>
@@ -736,14 +737,10 @@ test.describe('styling layout', () => {
     page,
   }) => {
     await open(page);
-    // WebKit does not Tab to links by default, so a key press marks keyboard
-    // use and the link is then focused by script, as Tab does in Chromium.
-    await page.keyboard.press('Tab');
     const link = page
       .getByRole('navigation', { name: en.nav.label })
       .getByRole('link', { name: en.nav.watchlists });
-    await link.focus();
-    await expect(link).toBeFocused();
+    await focusByKeyboard(page, link);
     await expect(link).toHaveCSS('outline-style', 'solid');
     await expect(link).toHaveCSS('outline-width', '2px');
   });
