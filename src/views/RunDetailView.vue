@@ -141,7 +141,6 @@ const asOf = computed(() =>
       </li>
       <li v-if="state.data.overview.data.refresh_id !== null">
         <RouterLink
-          class="text-link"
           :to="compareLocation(state.data.overview.data.refresh_id)"
           >{{ t('runDetail.savedByRefresh') }}</RouterLink
         >

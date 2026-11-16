@@ -100,7 +100,12 @@ watch(
   color: var(--color-text-secondary);
   display: block;
   padding: var(--space-1) var(--space-2);
-  text-decoration: none;
+  text-decoration-line: none;
+}
+
+.sidebar a:hover,
+.sidebar a:focus-visible {
+  text-decoration-line: none;
 }
 
 .sidebar a[aria-current='page'] {

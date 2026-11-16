@@ -32,32 +32,38 @@ p {
   margin-block: 0 var(--space-3);
 }
 
-/* A link standing alone (a table cell, a breadcrumb, a value) has no underline
-   at rest and gains one on hover and keyboard focus. Every underline is
-   continuous, so a descender such as a comma never breaks it (D174). */
+/* Every link is underlined at rest, quietly: the accent alone is too close to
+   the body text to mark a link inside a line of text (WCAG 1.4.1). A link
+   added later inside text is therefore underlined with nothing to remember.
+   Every underline is continuous, so a descender such as a comma never breaks
+   it (D174). */
 a {
   color: var(--color-accent);
-  text-decoration: none;
+  text-decoration-color: var(--color-accent-underline);
+  text-decoration-line: underline;
   text-decoration-skip-ink: none;
+  text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
 }
 
 a:hover,
 a:focus-visible {
-  text-decoration: underline;
-}
-
-/* A link inside a line of text keeps a quiet underline at rest: the accent
-   alone is too close to the body text to mark it (WCAG 1.4.1). */
-.text-link {
-  text-decoration: underline;
-  text-decoration-color: var(--color-accent-underline);
-  text-decoration-thickness: 1px;
-}
-
-.text-link:hover,
-.text-link:focus-visible {
   text-decoration-color: currentcolor;
+}
+
+/* A link standing alone in a table cell has no underline at rest and gains one
+   on hover and keyboard focus. Other standing-alone links (the breadcrumb
+   trail, the outcome pill links, the navigation) say so in their own styles. */
+td a,
+th a {
+  text-decoration-line: none;
+}
+
+td a:hover,
+td a:focus-visible,
+th a:hover,
+th a:focus-visible {
+  text-decoration-line: underline;
 }
 
 table {

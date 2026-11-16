@@ -30,6 +30,16 @@ const { t } = useMessages();
   font-size: var(--font-size-small);
 }
 
+/* The trail stands alone: no underline at rest, one on hover and focus. */
+.breadcrumb a {
+  text-decoration-line: none;
+}
+
+.breadcrumb a:hover,
+.breadcrumb a:focus-visible {
+  text-decoration-line: underline;
+}
+
 .breadcrumb ol {
   display: flex;
   flex-wrap: wrap;

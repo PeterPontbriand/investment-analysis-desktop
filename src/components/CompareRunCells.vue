@@ -100,8 +100,10 @@ function view(key: string) {
   font-weight: var(--font-weight-medium);
 }
 
-.pill-link {
-  text-decoration: none;
+.pill-link,
+.pill-link:hover,
+.pill-link:focus-visible {
+  text-decoration-line: none;
 }
 
 small {

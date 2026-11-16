@@ -962,6 +962,28 @@ test.describe('links', () => {
     expect(style.thickness).toBe('1px');
   });
 
+  test('a link inside a plain paragraph is underlined at rest, with no class', async ({
+    page,
+  }) => {
+    await openRuns(page);
+    const link = await page.evaluate(() => {
+      const paragraph = document.createElement('p');
+      paragraph.innerHTML = 'See <a id="plain" href="#x">this</a> text.';
+      document.body.append(paragraph);
+      const style = getComputedStyle(paragraph.querySelector('a')!);
+      return {
+        line: style.textDecorationLine,
+        skipInk: style.textDecorationSkipInk,
+        thickness: style.textDecorationThickness,
+      };
+    });
+    expect(link).toEqual({
+      line: 'underline',
+      skipInk: 'none',
+      thickness: '1px',
+    });
+  });
+
   test('a time cell stays on one line at a narrow width', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     await openRuns(page);
