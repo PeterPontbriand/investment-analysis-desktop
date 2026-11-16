@@ -130,7 +130,7 @@ export function renderRecord(input: RecordInput): string {
   );
   lines.push(
     '',
-    'Mark each step `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass. A failure note never includes private data.',
+    'Mark each step `pass`, `fail`, `n/a`, `not run` or `note`, with a few words for anything that is not a plain pass. Use `n/a` when a check does not apply and `not run` for a check outside a targeted run. A failure note never includes private data.',
     '',
     '## Setup (scripted)',
     '',
@@ -168,7 +168,7 @@ export function renderRecord(input: RecordInput): string {
     '',
     input.stopped
       ? `**Result:** stopped at ${input.stopped.step}: ${input.stopped.message}`
-      : '**Result:** all steps passed | failing step numbers, with notes',
+      : '**Result:** all steps passed | failing step numbers, with notes | for a targeted run, the checks that were run (the others `not run`)',
     '',
   );
   return lines.join('\n');

@@ -119,14 +119,14 @@ export const stopMessages = {
   noCompletedRun: () =>
     "The refresh completed no run, so the screens would have nothing to show. Check the providers with `ian health` and the engine's troubleshooting guide, then try again.",
   wrongCounts: (found: string) =>
-    `The setup should leave 5 runs, 1 refresh of 4 runs and 2 watchlists with 4 entries in all, but found ${found}. Use a new throwaway database: run pnpm smoke again.`,
+    `The setup should leave 6 runs, 1 refresh of 5 runs and 2 watchlists with 5 entries in all, but found ${found}. Use a new throwaway database: run pnpm smoke again.`,
 } as const;
 
 // One line when each of Steps 4 to 9 starts. Steps that call the data providers say so.
 const progressLines: Record<string, string> = {
   'Step 4': "Step 4: creating the throwaway database's schema…",
   'Step 5': 'Step 5: creating the Smoke Test and Smoke Test Empty watchlists…',
-  'Step 6': 'Step 6: adding four entries to the Smoke Test watchlist…',
+  'Step 6': 'Step 6: adding five entries to the Smoke Test watchlist…',
   'Step 7':
     'Step 7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
   'Step 8':
@@ -397,12 +397,12 @@ export async function runSetup(
   );
   const summary = `${runCount} runs, ${refreshCount} refresh(es) of ${refreshRuns} runs, ${watchlistCount} watchlists with ${entryCount} entries`;
   if (
-    runCount !== 5 ||
+    runCount !== 6 ||
     runs?.has_more === true ||
     refreshCount !== 1 ||
-    refreshRuns !== 4 ||
+    refreshRuns !== 5 ||
     watchlistCount !== 2 ||
-    entryCount !== 4
+    entryCount !== 5
   )
     throw new SmokeStop('Step 9', stopMessages.wrongCounts(summary));
   session.data = {
