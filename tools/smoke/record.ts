@@ -6,6 +6,7 @@ import {
   restoreCommandForRecord,
   type StartPoint,
 } from './checkout.ts';
+import type { Targeted } from './checks.ts';
 import { ianSourceNames, type IanSource } from './source.ts';
 
 // A step the tool did. `leftToYou` is a step the tool only started: the
@@ -48,6 +49,8 @@ export type RecordInput = {
   log: { command: string; output: string }[];
   // Set when the tool stopped before the end.
   stopped: { step: string; message: string } | null;
+  // The checks a targeted run names; null for a full run.
+  targeted?: Targeted | null;
 };
 
 // A secret never reaches the record, whatever the output held.
@@ -128,6 +131,8 @@ export function renderRecord(input: RecordInput): string {
   lines.push(
     `- **Throwaway folder:** ${input.throwawayFolder ?? 'not created'}`,
   );
+  const targeted = input.targeted ?? null;
+  if (targeted) lines.push(`- **Targeted run:** ${targeted.label}`);
   lines.push(
     '',
     'Mark each step `pass`, `fail`, `n/a`, `not run` or `note`, with a few words for anything that is not a plain pass. Use `n/a` when a check does not apply and `not run` for a check outside a targeted run. A failure note never includes private data.',
@@ -163,12 +168,16 @@ export function renderRecord(input: RecordInput): string {
   for (const step of input.steps.filter(
     (entry) => !entry.id.startsWith('Step '),
   ))
-    lines.push(`- **${step.id}** ${step.hint}:`);
+    lines.push(
+      `- **${step.id}** ${step.hint}:${targeted && !targeted.ids.includes(step.id.replace(/^Check /, '')) ? ' not run' : ''}`,
+    );
   lines.push(
     '',
     input.stopped
       ? `**Result:** stopped at ${input.stopped.step}: ${input.stopped.message}`
-      : '**Result:** all steps passed | failing step numbers, with notes | for a targeted run, the checks that were run (the others `not run`)',
+      : targeted
+        ? `**Result:** ${targeted.label}: all passed | failing check numbers, with notes; all other checks not run`
+        : '**Result:** all steps passed | failing step numbers, with notes | for a targeted run, the checks that were run (the others `not run`)',
     '',
   );
   return lines.join('\n');

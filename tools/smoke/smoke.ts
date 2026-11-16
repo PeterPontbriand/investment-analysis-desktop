@@ -5,6 +5,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { arch, platform, release, type } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { Targeted } from './checks.ts';
 import { parseSteps } from './document.ts';
 import { fileSystem, run, startApplication } from './process.ts';
 import { renderRecord, type RecordInput } from './record.ts';
@@ -44,6 +45,7 @@ async function writeRecord(
   session: Session,
   now: Date,
   stopped: { step: string; message: string } | null,
+  targeted: Targeted | null,
 ): Promise<string | null> {
   if (session.throwawayFolder === null) return null;
   const application = await applicationCommit();
@@ -72,6 +74,7 @@ async function writeRecord(
     scripted: session.scripted,
     log: session.log,
     stopped,
+    targeted,
   };
   const path = join(repositoryRoot, session.throwawayFolder, 'SMOKE_RECORD.md');
   writeFileSync(path, renderRecord(input), 'utf8');
@@ -94,7 +97,16 @@ process.exitCode = await runSmoke(
     },
     signals: process,
     startApplication: (env) => startApplication(repositoryRoot, env),
-    writeRecord: (session, stopped) => writeRecord(session, now, stopped),
+    writeRecord: (session, stopped, targeted) =>
+      writeRecord(session, now, stopped, targeted),
+    checkIds: parseSteps(
+      readFileSync(
+        join(repositoryRoot, 'docs', 'project', 'SMOKE_TESTING.md'),
+        'utf8',
+      ),
+    )
+      .filter((step) => step.id.startsWith('Check '))
+      .map((step) => step.id.replace(/^Check /, '')),
     print: (text) => process.stdout.write(text),
     printError: (text) => process.stderr.write(text),
     exit: (code) => process.exit(code),

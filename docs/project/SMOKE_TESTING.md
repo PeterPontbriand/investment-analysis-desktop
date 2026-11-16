@@ -317,7 +317,13 @@ A pull request that adds or changes a screen updates this document in the same p
 
 A pull request records a manual run only when automated tests cannot cover something it changes, typically the real webviews (WebView2, WKWebView and WebKitGTK, which the browser tests do not run) or a real engine (which CI does not have). Each slice's decisions say "no manual run", or name the checks to run and the gap that justifies each, and the pull request description repeats it.
 
-`pnpm smoke` still does every setup step and writes every step into the record. In a targeted run you make only the named checks and mark every other check `not run`; the result line names the checks that were run, for example "Result: Checks C1 to C6, D1 to D6, H1 and H8 passed; all other checks not run". `not run` is separate from `n/a`, which means the check does not apply. Whether a release needs a complete run is GUI.6's decision.
+`pnpm smoke` still does every setup step and writes every step into the record. Name the checks with `--checks`, a comma-separated list of check ids and of ranges within one letter group; each slice's decisions and its pull request description give the exact command:
+
+```powershell
+pnpm smoke --checks C1-C6,D1-D6,H1,H8,L1,L3
+```
+
+A targeted run names whole checks only. The record then has a "Targeted run" line naming them, leaves each named check for you to mark, and writes `not run` after every other check; its result line names the checks that were run, for example "Result: Checks C1 to C6, D1 to D6, H1, H8, L1 and L3: all passed". `not run` is separate from `n/a`, which means the check does not apply. Without `--checks` the run is a full run. `pnpm smoke` stops before any setup, with the valid check ids, when the list is empty, names an id that is not a check in this document, has a range across two letter groups or a reversed range, or names a check twice. Whether a release needs a complete run is GUI.6's decision.
 
 ## If `pnpm smoke` stops
 

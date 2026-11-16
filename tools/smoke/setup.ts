@@ -107,7 +107,8 @@ export const stopMessages = {
     `After the switch, \`ian about\` reports commit ${found}, not the vendored commit ${wanted}, so the \`ian\` command does not run the checkout that was switched. The tool restores the checkout and stops.`,
   engineArgument: () =>
     '`--engine` is no longer needed: `pnpm smoke` finds the engine through `ian`. Run `pnpm smoke` without it.',
-  noArguments: () => '`pnpm smoke` takes no arguments.',
+  noArguments: () =>
+    '`pnpm smoke` takes only the `--checks` option, given once.',
   databaseUnreadable: () =>
     "The state of your real database could not be read from `ian db status --json`. Run `ian db status` yourself and use the engine's Local Database Operations guide.",
   databaseNotReady: (state: string) =>

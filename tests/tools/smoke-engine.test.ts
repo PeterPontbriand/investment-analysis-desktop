@@ -864,8 +864,13 @@ describe('arguments', () => {
   );
 
   it('takes no other arguments either', () => {
-    expect(checkArguments(['x'])).toBe('`pnpm smoke` takes no arguments.');
-    expect(checkArguments([])).toBeNull();
+    expect(checkArguments(['x'])).toEqual({
+      message: '`pnpm smoke` takes only the `--checks` option, given once.',
+    });
+    expect(checkArguments(['--checks', 'C1', '--checks', 'C2'])).toHaveProperty(
+      'message',
+    );
+    expect(checkArguments([])).toEqual({ targeted: null });
   });
 });
 
