@@ -403,6 +403,7 @@ function machine(
   const deps: RunDependencies = {
     setup: made.deps,
     signals,
+    checkIds: [],
     startApplication: (env) => {
       started = true;
       expect(env.IAN_DATABASE_URL).toMatch(/smoke-test\.sqlite3$/);
@@ -431,6 +432,7 @@ function machine(
           data: null,
           throwawayFolder: '.tmp/smoke/x',
           log: [],
+          targeted: null,
           stopped: stopped
             ? { step: stopped.step, message: stopped.message }
             : null,
@@ -864,13 +866,13 @@ describe('arguments', () => {
   );
 
   it('takes no other arguments either', () => {
-    expect(checkArguments(['x'])).toEqual({
+    expect(checkArguments(['x'], [])).toEqual({
       message: '`pnpm smoke` takes only the `--checks` option, given once.',
     });
-    expect(checkArguments(['--checks', 'C1', '--checks', 'C2'])).toHaveProperty(
-      'message',
-    );
-    expect(checkArguments([])).toEqual({ targeted: null });
+    expect(
+      checkArguments(['--checks', 'C1', '--checks', 'C2'], []),
+    ).toHaveProperty('message');
+    expect(checkArguments([], [])).toEqual({ targeted: null });
   });
 });
 
@@ -893,6 +895,7 @@ describe('the engine line of the record', () => {
     scripted: new Map(),
     log: [],
     stopped: null,
+    targeted: null,
   };
   const line = (input: Partial<Parameters<typeof renderRecord>[0]>) =>
     renderRecord({ ...base, ...input })

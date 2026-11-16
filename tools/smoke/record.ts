@@ -50,7 +50,7 @@ export type RecordInput = {
   // Set when the tool stopped before the end.
   stopped: { step: string; message: string } | null;
   // The checks a targeted run names; null for a full run.
-  targeted?: Targeted | null;
+  targeted: Targeted | null;
 };
 
 // A secret never reaches the record, whatever the output held.
@@ -131,7 +131,7 @@ export function renderRecord(input: RecordInput): string {
   lines.push(
     `- **Throwaway folder:** ${input.throwawayFolder ?? 'not created'}`,
   );
-  const targeted = input.targeted ?? null;
+  const targeted = input.targeted;
   if (targeted) lines.push(`- **Targeted run:** ${targeted.label}`);
   lines.push(
     '',
@@ -177,7 +177,7 @@ export function renderRecord(input: RecordInput): string {
       ? `**Result:** stopped at ${input.stopped.step}: ${input.stopped.message}`
       : targeted
         ? `**Result:** ${targeted.label}: all passed | failing check numbers, with notes; all other checks not run`
-        : '**Result:** all steps passed | failing step numbers, with notes | for a targeted run, the checks that were run (the others `not run`)',
+        : '**Result:** all steps passed | failing step numbers, with notes',
     '',
   );
   return lines.join('\n');

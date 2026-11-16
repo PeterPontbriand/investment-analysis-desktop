@@ -237,6 +237,7 @@ describe('record', () => {
     ]),
     log: [{ command: 'ian about --json', output: 'engine_version: 0.1.0' }],
     stopped: null,
+    targeted: null,
   };
 
   it('renders the layout from fixed inputs', () => {
@@ -273,7 +274,7 @@ describe('record', () => {
         '- **Check N1** Open the app:',
         '- **Check W1** List watchlists:',
         '',
-        '**Result:** all steps passed | failing step numbers, with notes | for a targeted run, the checks that were run (the others `not run`)',
+        '**Result:** all steps passed | failing step numbers, with notes',
         '',
       ].join('\n'),
     );

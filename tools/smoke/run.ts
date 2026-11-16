@@ -40,7 +40,7 @@ export type RunDependencies = {
     targeted: Targeted | null,
   ) => Promise<string | null>;
   // The ids of the checks in the smoke test document, for `--checks`.
-  checkIds?: string[];
+  checkIds: string[];
   print: (text: string) => void;
   printError: (text: string) => void;
   exit: (code: number) => void;
@@ -50,7 +50,7 @@ export type RunDependencies = {
 // `pnpm smoke` takes one option, `--checks`; it asks `ian` where the engine is.
 export function checkArguments(
   args: string[],
-  checkIds: string[] = [],
+  checkIds: string[],
 ): { targeted: Targeted | null } | { message: string } {
   if (args.some((arg) => arg === '--engine' || arg.startsWith('--engine=')))
     return { message: stopMessages.engineArgument() };

@@ -115,10 +115,10 @@ describe('the record of a targeted run', () => {
   });
 
   it('leaves a full run as it was', () => {
-    const full = renderRecord(base);
+    const full = renderRecord({ ...base, targeted: null });
     expect(full).not.toContain('Targeted run');
     expect(full).not.toContain(': not run');
     expect(full).toContain('- **Check C2** Look:\n');
-    expect(renderRecord({ ...base, targeted: null })).toBe(full);
+    expect(full).toBe(renderRecord({ ...base, targeted: null }));
   });
 });
