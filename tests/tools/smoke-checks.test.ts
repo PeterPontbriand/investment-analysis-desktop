@@ -67,8 +67,7 @@ describe('--checks', () => {
     expect(refusal('Z1')).toContain('D1 to D6');
   });
 
-  it('prints the refusal for an unknown id', () => {
-  });
+  it('prints the refusal for an unknown id', () => {});
 
   it('reads the option once, in either form', () => {
     expect(checksArgument(['--checks', 'C1'])).toBe('C1');
