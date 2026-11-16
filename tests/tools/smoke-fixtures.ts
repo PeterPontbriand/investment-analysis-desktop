@@ -71,18 +71,18 @@ export function healthy(overrides: Script = () => undefined): Script {
       );
     if (line === readCommands.refreshes.join(' '))
       return json({
-        items: [{ run_count: 4, outcome_counts: { completed: 3, failed: 1 } }],
+        items: [{ run_count: 5, outcome_counts: { completed: 3, failed: 1 } }],
         has_more: false,
       });
     if (line === readCommands.runs.join(' '))
       return json({
-        items: [1, 2, 3, 4, 5].map((n) => ({ n })),
+        items: [1, 2, 3, 4, 5, 6].map((n) => ({ n })),
         has_more: false,
       });
     if (line === readCommands.watchlists.join(' '))
       return json({
         items: [
-          { display_name: 'Smoke Test', entry_count: 4 },
+          { display_name: 'Smoke Test', entry_count: 5 },
           { display_name: 'Smoke Test Empty', entry_count: 0 },
         ],
       });

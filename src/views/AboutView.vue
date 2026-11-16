@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useScreenData } from '../api/useScreenData.ts';
-import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import ScreenState from '../components/ScreenState.vue';
 import { formatList } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
@@ -10,7 +9,6 @@ const { state, reload } = useScreenData((client) => client.get('/v1/info'), []);
 </script>
 
 <template>
-  <AppBreadcrumb :current="t('nav.about')" />
   <h1>{{ t('nav.about') }}</h1>
   <section aria-labelledby="engine-heading">
     <h2 id="engine-heading">{{ t('engine.heading') }}</h2>

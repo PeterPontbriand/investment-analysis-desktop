@@ -1,7 +1,26 @@
 <script setup lang="ts">
+/* global console -- the browser's console; src/ configures no browser globals */
+import { onErrorCaptured, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import { useMessages } from './i18n/index.ts';
 
 const { t } = useMessages();
+const route = useRoute();
+
+// A screen that fails to render is replaced by one message, and the navigation
+// keeps working (D171). Going to another screen clears the message.
+const renderFailed = ref(false);
+onErrorCaptured((error) => {
+  console.error(error);
+  renderFailed.value = true;
+  return false;
+});
+watch(
+  () => route.fullPath,
+  () => {
+    renderFailed.value = false;
+  },
+);
 </script>
 
 <template>
@@ -33,7 +52,10 @@ const { t } = useMessages();
       </nav>
     </header>
     <main class="content">
-      <RouterView />
+      <div v-if="renderFailed" role="alert" class="failure">
+        <p>{{ t('state.renderFailed') }}</p>
+      </div>
+      <RouterView v-else />
     </main>
   </div>
 </template>
@@ -78,12 +100,24 @@ const { t } = useMessages();
   color: var(--color-text-secondary);
   display: block;
   padding: var(--space-1) var(--space-2);
-  text-decoration: none;
+  text-decoration-line: none;
+}
+
+.sidebar a:hover,
+.sidebar a:focus-visible {
+  text-decoration-line: none;
 }
 
 .sidebar a[aria-current='page'] {
   background: var(--color-surface-raised);
   color: var(--color-text);
+}
+
+.failure {
+  background: var(--color-surface-raised);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-control);
+  padding: var(--space-3) var(--space-4);
 }
 
 .content {

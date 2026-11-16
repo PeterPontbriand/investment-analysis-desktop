@@ -6,6 +6,7 @@ import { coreId } from '../fixtures/api/data.ts';
 import { failure, ok } from '../fixtures/api/server.ts';
 import en from '../../src/locales/en.json' with { type: 'json' };
 import { dateText, instantText, plain, rangeText } from './expected-text.ts';
+import { focusByKeyboard } from './keyboard.ts';
 
 async function cells(row: Locator): Promise<string[]> {
   return (await row.locator('th, td').allInnerTexts()).map((text) =>
@@ -40,14 +41,14 @@ test.describe('shell and navigation', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       en.nav.watchlists,
     );
-    const crumb = page.getByRole('navigation', { name: en.breadcrumb.label });
-    await expect(crumb).toHaveText(en.nav.watchlists);
+    // A screen with no parent has no trail (D173).
+    await expect(
+      page.getByRole('navigation', { name: en.breadcrumb.label }),
+    ).toHaveCount(0);
     expect(new URL(page.url()).hash).toBe('');
   });
 
-  test('moves between screens and shows the breadcrumb of each', async ({
-    page,
-  }) => {
+  test('moves between screens, none with a breadcrumb', async ({ page }) => {
     await open(page);
     const nav = page.getByRole('navigation', { name: en.nav.label });
     for (const label of [en.nav.refreshes, en.nav.runs, en.nav.about]) {
@@ -59,7 +60,7 @@ test.describe('shell and navigation', () => {
       );
       await expect(
         page.getByRole('navigation', { name: en.breadcrumb.label }),
-      ).toHaveText(label);
+      ).toHaveCount(0);
     }
   });
 
@@ -141,11 +142,12 @@ test.describe('watchlists', () => {
     const engine = await open(page);
     await page.getByRole('link', { name: 'Core' }).click();
     const crumb = page.getByRole('navigation', { name: en.breadcrumb.label });
-    await expect(crumb).toContainText(en.nav.watchlists);
-    await expect(crumb).toContainText('Core');
+    // The trail is the way back: only Watchlists, as a link (D173).
+    await expect(crumb.getByRole('listitem')).toHaveText([en.nav.watchlists]);
     await expect(
       crumb.getByRole('link', { name: en.nav.watchlists }),
     ).toBeVisible();
+    await expect(crumb.locator('[aria-current]')).toHaveCount(0);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Core');
     const summary = en.watchlist.summary
       .split(' | ')[1]
@@ -319,6 +321,7 @@ test.describe('saved runs', () => {
       en.runs.columns.ticker,
       en.runs.columns.strategy,
       en.runs.columns.outcome,
+      en.runs.columns.savedBy,
     ]);
     await expect
       .poll(() => cells(rows(page).nth(0)))
@@ -327,6 +330,7 @@ test.describe('saved runs', () => {
         'MSFT',
         'Graham Number',
         'Completed',
+        en.runs.savedBy.direct,
       ]);
     await expect(
       rows(page).nth(0).locator('td').nth(1).locator('[data-term-id]'),
@@ -345,6 +349,7 @@ test.describe('saved runs', () => {
         'ZED',
         'Quality Screen',
         'Completed',
+        en.runs.savedBy.refresh,
       ]);
   });
 
@@ -531,6 +536,7 @@ test.describe('errors', () => {
         'MSFT',
         'Graham Number',
         'Completed',
+        en.runs.savedBy.direct,
       ]);
     await expect(
       page.getByLabel(en.runs.filters.strategy).locator('option'),
@@ -731,14 +737,10 @@ test.describe('styling layout', () => {
     page,
   }) => {
     await open(page);
-    // WebKit does not Tab to links by default, so a key press marks keyboard
-    // use and the link is then focused by script, as Tab does in Chromium.
-    await page.keyboard.press('Tab');
     const link = page
       .getByRole('navigation', { name: en.nav.label })
       .getByRole('link', { name: en.nav.watchlists });
-    await link.focus();
-    await expect(link).toBeFocused();
+    await focusByKeyboard(page, link);
     await expect(link).toHaveCSS('outline-style', 'solid');
     await expect(link).toHaveCSS('outline-width', '2px');
   });

@@ -75,6 +75,17 @@ describe('dates and instants', () => {
     expect(formatDate('en', '2024-01-01')).toBe('Jan 1, 2024');
   });
 
+  it('shows the UTC date of a period end served as a midnight-UTC instant', () => {
+    // Local midnight in the pinned America/Toronto zone is the evening before.
+    expect(formatDate('en', '2025-12-31T00:00:00+00:00')).toBe('Dec 31, 2025');
+    expect(formatDate('en', '2025-01-01T00:00:00Z')).toBe('Jan 1, 2025');
+    expect(formatDate('en', '2025-07-01T00:00:00+00:00')).toBe('Jul 1, 2025');
+  });
+
+  it('shows the UTC date of an instant with another offset', () => {
+    expect(formatDate('en', '2025-12-31T22:00:00-05:00')).toBe('Jan 1, 2026');
+  });
+
   it('chooses between a date and an instant', () => {
     expect(formatDateOrInstant('en', '2025-06-30')).toBe('Jun 30, 2025');
     expect(formatDateOrInstant('en', '2025-12-31')).toBe('Dec 31, 2025');

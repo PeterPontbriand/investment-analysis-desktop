@@ -44,6 +44,10 @@ export const setupCommands: SmokeCommand[] = [
     step: 'Step 6',
     args: ['watchlist', 'add-selection', 'graham-number', watchlistName, 'KO'],
   },
+  {
+    step: 'Step 6',
+    args: ['watchlist', 'add-selection', 'piotroski', watchlistName, 'SPY'],
+  },
   { step: 'Step 7', args: ['refresh', watchlistName] },
   { step: 'Step 8', args: ['momentum', 'MSFT', '--save-run'] },
   { step: 'Step 9', args: ['runs', 'list'] },

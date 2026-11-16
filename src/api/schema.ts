@@ -2819,6 +2819,19 @@ export interface components {
          */
         RunsCompareDocument: {
             /**
+             * First Completed At
+             * Format: date-time
+             * @description When the refresh's earliest stored run completed.
+             */
+            first_completed_at: string;
+            /**
+             * Last Completed At
+             * Format: date-time
+             * @description When the refresh's latest stored run completed.
+             */
+            last_completed_at: string;
+            outcome_counts: components["schemas"]["RefreshOutcomeCountsDocument"];
+            /**
              * Refresh Id
              * Format: uuid
              */
@@ -2829,11 +2842,16 @@ export interface components {
              */
             rows: components["schemas"]["CompareRowDocument"][];
             /**
+             * Run Count
+             * @description The number of stored runs; a stopped refresh stores fewer.
+             */
+            run_count: number;
+            /**
              * Schema Version
-             * @default 6
+             * @default 7
              * @constant
              */
-            schema_version: 6;
+            schema_version: 7;
             /**
              * Strategies
              * @description The columns, in order.
@@ -2841,12 +2859,12 @@ export interface components {
             strategies: components["schemas"]["CompareStrategyDocument"][];
             /**
              * Watchlist Id
-             * @description The watchlist the refresh ran; null if no readable run records it.
+             * @description The watchlist the refresh ran, as recorded when it ran; null for a refresh of a list of entries.
              */
             watchlist_id: string | null;
             /**
              * Watchlist Name
-             * @description The watchlist's name when the refresh ran.
+             * @description The watchlist's name when the refresh ran, not its current name; null when watchlist_id is null.
              */
             watchlist_name: string | null;
         };

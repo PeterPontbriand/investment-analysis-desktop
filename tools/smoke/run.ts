@@ -3,6 +3,7 @@
 // tests wire it to fakes.
 import { restoreCommand, restoreEngine } from './checkout.ts';
 import { throwawayFile } from './commands.ts';
+import { checksArgument, parseChecks, type Targeted } from './checks.ts';
 import { startAndFinish } from './finish.ts';
 import { scrub } from './record.ts';
 import {
@@ -36,18 +37,30 @@ export type RunDependencies = {
   writeRecord: (
     session: Session,
     stopped: { step: string; message: string } | null,
+    targeted: Targeted | null,
   ) => Promise<string | null>;
+  // The ids of the checks in the smoke test document, for `--checks`.
+  checkIds: string[];
   print: (text: string) => void;
   printError: (text: string) => void;
   exit: (code: number) => void;
 };
 
-// The one message when the arguments are wrong, or null. `pnpm smoke` takes
-// none: it asks `ian` where the engine is.
-export function checkArguments(args: string[]): string | null {
+// The targeted run the arguments name, or the one message when they are wrong.
+// `pnpm smoke` takes one option, `--checks`; it asks `ian` where the engine is.
+export function checkArguments(
+  args: string[],
+  checkIds: string[],
+): { targeted: Targeted | null } | { message: string } {
   if (args.some((arg) => arg === '--engine' || arg.startsWith('--engine=')))
-    return stopMessages.engineArgument();
-  return args.length > 0 ? stopMessages.noArguments() : null;
+    return { message: stopMessages.engineArgument() };
+  if (args.length === 0) return { targeted: null };
+  const list = checksArgument(args);
+  if (list === undefined) return { message: stopMessages.noArguments() };
+  const result = parseChecks(list, checkIds);
+  return result.ok
+    ? { targeted: result.targeted }
+    : { message: result.message };
 }
 
 const signalNumbers: Record<StopSignal, number> = {
@@ -65,11 +78,12 @@ export async function runSmoke(
   args: string[],
 ): Promise<number> {
   const { print, printError } = deps;
-  const message = checkArguments(args);
-  if (message !== null) {
-    printError(`${message}\n`);
+  const parsed = checkArguments(args, deps.checkIds);
+  if ('message' in parsed) {
+    printError(`${parsed.message}\n`);
     return 1;
   }
+  const targeted = parsed.targeted;
   const session = newSession();
   // 'setup' until the application starts, then 'application', then 'ending'.
   let phase: 'setup' | 'application' | 'ending' = 'setup';
@@ -93,7 +107,7 @@ export async function runSmoke(
     const next = writes.then(() =>
       !interruption && interrupted !== null
         ? null
-        : deps.writeRecord(session, stopped),
+        : deps.writeRecord(session, stopped, targeted),
     );
     writes = next.catch(() => null);
     return next;

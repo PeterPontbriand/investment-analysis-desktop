@@ -20,10 +20,13 @@
     "showMore": "Show more",
     "tryAgain": "Try again",
     "noValue": "—",
-    "multiple": "{value}×"
+    "multiple": "{value}×",
+    "separator": "·",
+    "loading": "Loading…"
   },
   "state": {
-    "defect": "Something went wrong in the analysis engine."
+    "defect": "Something went wrong in the analysis engine.",
+    "renderFailed": "Something went wrong in the application. Try another screen, or restart the application."
   },
   "watchlists": {
     "columns": {
@@ -69,10 +72,15 @@
       "completed": "Completed",
       "ticker": "Ticker",
       "strategy": "Strategy",
-      "outcome": "Outcome"
+      "outcome": "Outcome",
+      "savedBy": "Saved by"
     },
     "empty": "No saved runs yet.",
-    "emptyFiltered": "No saved runs match these filters."
+    "emptyFiltered": "No saved runs match these filters.",
+    "savedBy": {
+      "refresh": "Refresh",
+      "direct": "Direct analysis"
+    }
   },
   "engine": {
     "heading": "Analysis engine",
@@ -98,6 +106,33 @@
       "launchFailed": "The analysis engine could not start.",
       "timedOut": "The analysis engine did not start within 30 seconds.",
       "exited": "The analysis engine stopped unexpectedly. Restart the application to continue."
+    }
+  },
+  "compare": {
+    "heading": "{watchlist} · {time}",
+    "runCount": "{runs} run | {runs} runs",
+    "notRun": "Not run",
+    "refreshComparison": "Refresh comparison",
+    "columns": {
+      "ticker": "Ticker",
+      "outcome": "Outcome"
+    }
+  },
+  "runDetail": {
+    "title": "{name} ({ticker}) — {strategy}",
+    "titleNoName": "{ticker} — {strategy}",
+    "saved": "Saved {date}",
+    "asOf": "As of {date}",
+    "savedByRefresh": "Saved by refresh",
+    "savedByDirect": "Saved by direct analysis",
+    "warnings": "Warnings",
+    "limitations": "Limitations",
+    "tabs": {
+      "label": "Views of this run",
+      "summary": "Summary",
+      "details": "Details",
+      "diagnostics": "Diagnostics",
+      "json": "JSON"
     }
   }
 }

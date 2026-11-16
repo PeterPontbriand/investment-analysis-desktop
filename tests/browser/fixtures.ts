@@ -19,10 +19,16 @@ export const test = base.extend<{
   failOnViolations: void;
   // HTTP statuses a test sends on purpose: the browser logs each as a console error.
   allowedHttpStatuses: number[];
+  // Console errors a test provokes on purpose, by a part of their text.
+  allowedConsoleErrors: string[];
 }>({
   allowedHttpStatuses: [[], { option: true }],
+  allowedConsoleErrors: [[], { option: true }],
   failOnViolations: [
-    async ({ page, browserName, allowedHttpStatuses }, use) => {
+    async (
+      { page, browserName, allowedHttpStatuses, allowedConsoleErrors },
+      use,
+    ) => {
       const consoleErrors: string[] = [];
       page.on('console', (message) => {
         if (message.type() !== 'error') return;
@@ -33,6 +39,8 @@ export const test = base.extend<{
           status !== undefined &&
           allowedHttpStatuses.includes(Number(status))
         )
+          return;
+        if (allowedConsoleErrors.some((part) => message.text().includes(part)))
           return;
         consoleErrors.push(message.text());
       });

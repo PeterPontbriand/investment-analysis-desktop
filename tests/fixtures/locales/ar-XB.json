@@ -20,10 +20,13 @@
     "showMore": "[ar-XB] Show more",
     "tryAgain": "[ar-XB] Try again",
     "noValue": "[ar-XB] —",
-    "multiple": "[ar-XB] {value}×"
+    "multiple": "[ar-XB] {value}×",
+    "separator": "[ar-XB] ·",
+    "loading": "[ar-XB] Loading…"
   },
   "state": {
-    "defect": "[ar-XB] Something went wrong in the analysis engine."
+    "defect": "[ar-XB] Something went wrong in the analysis engine.",
+    "renderFailed": "[ar-XB] Something went wrong in the application. Try another screen, or restart the application."
   },
   "watchlists": {
     "columns": {
@@ -69,10 +72,15 @@
       "completed": "[ar-XB] Completed",
       "ticker": "[ar-XB] Ticker",
       "strategy": "[ar-XB] Strategy",
-      "outcome": "[ar-XB] Outcome"
+      "outcome": "[ar-XB] Outcome",
+      "savedBy": "[ar-XB] Saved by"
     },
     "empty": "[ar-XB] No saved runs yet.",
-    "emptyFiltered": "[ar-XB] No saved runs match these filters."
+    "emptyFiltered": "[ar-XB] No saved runs match these filters.",
+    "savedBy": {
+      "refresh": "[ar-XB] Refresh",
+      "direct": "[ar-XB] Direct analysis"
+    }
   },
   "engine": {
     "heading": "[ar-XB] Analysis engine",
@@ -98,6 +106,33 @@
       "launchFailed": "[ar-XB] The analysis engine could not start.",
       "timedOut": "[ar-XB] The analysis engine did not start within 30 seconds.",
       "exited": "[ar-XB] The analysis engine stopped unexpectedly. Restart the application to continue."
+    }
+  },
+  "compare": {
+    "heading": "[ar-XB] {watchlist} · {time}",
+    "runCount": "[ar-XB] {runs} run | {runs} runs",
+    "notRun": "[ar-XB] Not run",
+    "refreshComparison": "[ar-XB] Refresh comparison",
+    "columns": {
+      "ticker": "[ar-XB] Ticker",
+      "outcome": "[ar-XB] Outcome"
+    }
+  },
+  "runDetail": {
+    "title": "[ar-XB] {name} ({ticker}) — {strategy}",
+    "titleNoName": "[ar-XB] {ticker} — {strategy}",
+    "saved": "[ar-XB] Saved {date}",
+    "asOf": "[ar-XB] As of {date}",
+    "savedByRefresh": "[ar-XB] Saved by refresh",
+    "savedByDirect": "[ar-XB] Saved by direct analysis",
+    "warnings": "[ar-XB] Warnings",
+    "limitations": "[ar-XB] Limitations",
+    "tabs": {
+      "label": "[ar-XB] Views of this run",
+      "summary": "[ar-XB] Summary",
+      "details": "[ar-XB] Details",
+      "diagnostics": "[ar-XB] Diagnostics",
+      "json": "[ar-XB] JSON"
     }
   }
 }

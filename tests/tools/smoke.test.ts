@@ -228,7 +228,7 @@ describe('record', () => {
     engineVersion: '0.1.0',
     engineUncommitted: false,
     engineSwitch: null,
-    data: { watchlists: 2, entries: 4, runs: 5, refreshes: 1 },
+    data: { watchlists: 2, entries: 5, runs: 6, refreshes: 1 },
     throwawayFolder: '.tmp/smoke/20261113-090507',
     steps,
     scripted: new Map([
@@ -237,6 +237,7 @@ describe('record', () => {
     ]),
     log: [{ command: 'ian about --json', output: 'engine_version: 0.1.0' }],
     stopped: null,
+    targeted: null,
   };
 
   it('renders the layout from fixed inputs', () => {
@@ -249,10 +250,10 @@ describe('record', () => {
         '- **Operating system:** Windows_NT 10.0 (win32 x64)',
         '- **Application commit:** abc1234',
         '- **Engine:** beb58a2, matches vendor/ian/SOURCE.md; version 0.1.0, from `ian about`; `ian` from `PATH`; not switched',
-        '- **Data:** 2 watchlists, 4 entries, 5 runs, 1 refresh',
+        '- **Data:** 2 watchlists, 5 entries, 6 runs, 1 refresh',
         '- **Throwaway folder:** .tmp/smoke/20261113-090507',
         '',
-        'Mark each step `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass. A failure note never includes private data.',
+        'Mark each step `pass`, `fail`, `n/a`, `not run` or `note`, with a few words for anything that is not a plain pass. Use `n/a` when a check does not apply and `not run` for a check outside a targeted run. A failure note never includes private data.',
         '',
         '## Setup (scripted)',
         '',
@@ -390,7 +391,7 @@ describe('setup', () => {
       'Step 3: creating the throwaway database folder .tmp/smoke/20261113-090507…',
       "Step 4: creating the throwaway database's schema…",
       'Step 5: creating the Smoke Test and Smoke Test Empty watchlists…',
-      'Step 6: adding four entries to the Smoke Test watchlist…',
+      'Step 6: adding five entries to the Smoke Test watchlist…',
       'Step 7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
       'Step 8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
       'Step 9: reading back the saved runs, refreshes and watchlists to check their counts…',
@@ -421,8 +422,8 @@ describe('setup', () => {
     ]);
     expect(session.data).toEqual({
       watchlists: 2,
-      entries: 4,
-      runs: 5,
+      entries: 5,
+      runs: 6,
       refreshes: 1,
     });
     expect(session.engineVersion).toBe('0.1.0');
@@ -671,12 +672,12 @@ describe('setup', () => {
   });
 
   it.each([
-    ['runs', { items: [1, 2, 3].map((n) => ({ n })), has_more: false }],
+    ['runs', { items: [1, 2, 3, 4, 5].map((n) => ({ n })), has_more: false }],
     [
       'refreshes',
       { items: [{ run_count: 3, outcome_counts: { completed: 3 } }] },
     ],
-    ['watchlists', { items: [{ entry_count: 5 }, { entry_count: 0 }] }],
+    ['watchlists', { items: [{ entry_count: 4 }, { entry_count: 0 }] }],
   ] as const)(
     "stops when the %s counts are not the setup's",
     async (which, body) => {
@@ -691,7 +692,7 @@ describe('setup', () => {
           return json(body);
         },
         'Step 9',
-        /should leave 5 runs/,
+        /should leave 6 runs/,
       );
     },
   );

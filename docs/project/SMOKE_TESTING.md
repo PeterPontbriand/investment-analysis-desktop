@@ -8,7 +8,7 @@ At present, every step in this guide needs developer tooling, so this is a contr
 
 The test checks that the application starts the engine, that each screen shows what the engine holds, and that the application reports an engine that stops or is missing. It does not try to cover every control. This repository's automated browser tests cover what a real engine cannot easily produce: paging through many results, a stored [selection](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#selection) the engine cannot read, a busy database, and a [refresh](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#refresh) of [entries](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#entry) that belong to no [watchlist](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#watchlist).
 
-[Provider data](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#data-provider), the market and filing data the engine fetches live from Yahoo Finance and [SEC](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#sec) [EDGAR](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#edgar), changes over time, so exact values are not prescribed. For each step, judge whether the screen shows what the engine's own commands show, in readable words, with no raw code, traceback or `NaN` where a name or value belongs. Every step has a number (Step 1, Step 2, ... for setup, then Check N1, Check W1, ... for the checks, with a letter for each group of screens: N, W, R, H, L and E) so that [the record](#recording-the-result), the written account of a run, can refer to it.
+[Provider data](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#data-provider), the market and filing data the engine fetches live from Yahoo Finance and [SEC](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#sec) [EDGAR](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#edgar), changes over time, so exact values are not prescribed. For each step, judge whether the screen shows what the engine's own commands show, in readable words, with no raw code, traceback or `NaN` where a name or value belongs. Every step has a number (Step 1, Step 2, ... for setup, then Check N1, Check W1, ... for the checks, with a letter for each group of screens: N, W, R, C, H, D, L and E) so that [the record](#recording-the-result), the written account of a run, can refer to it.
 
 ## How the test runs
 
@@ -97,7 +97,7 @@ Expect the second command to name the throwaway file and report `State: ready`. 
 
 ### Create the data
 
-The commands are those of the engine's [local research workspace guide](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/WORKSPACE.md). The tickers are ordinary large companies, and the whole setup saves five runs.
+The commands are those of the engine's [local research workspace guide](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/WORKSPACE.md). The tickers are ordinary large companies, apart from SPY, an exchange-traded fund, and the whole setup saves six runs.
 
 Step 5. Create two watchlists, one of them left empty:
 
@@ -108,13 +108,14 @@ ian watchlist create "Smoke Test Empty"
 
 `pnpm smoke` runs this step.
 
-Step 6. Fill the first watchlist with four entries. They have no [as-of](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#as-of-date), a date as-of and a timestamp as-of with a timezone offset, in more than one strategy. `--as-of` takes `YYYY-MM-DD` or a timezone-aware ISO-8601 timestamp:
+Step 6. Fill the first watchlist with five entries. They have no [as-of](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#as-of-date), a date as-of and a timestamp as-of with a timezone offset, in more than one strategy. The last entry runs the Piotroski F-Score on SPY, an exchange-traded fund that the strategy cannot score, so its run is not applicable: the comparison then shows an outcome column, "Not run" cells and a third strategy group. `--as-of` takes `YYYY-MM-DD` or a timezone-aware ISO-8601 timestamp:
 
 ```powershell
 ian watchlist add-selection momentum "Smoke Test" KO
 ian watchlist add-selection momentum "Smoke Test" MSFT --as-of 2025-12-31
 ian watchlist add-selection momentum "Smoke Test" AAPL --as-of 2025-12-31T16:00:00-05:00
 ian watchlist add-selection graham-number "Smoke Test" KO
+ian watchlist add-selection piotroski "Smoke Test" SPY
 ```
 
 `pnpm smoke` runs this step.
@@ -129,7 +130,7 @@ ian refresh "Smoke Test"
 
 `pnpm smoke` runs this step.
 
-Expect nothing to print until the refresh finishes, then a summary headed by a refresh ID that lists the four entries with their outcomes. Some entries may be [unavailable](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#outcome-unavailable); a refresh with at least one [completed](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#outcome-completed) run is enough. Note the counts of each outcome: later steps compare the application with them.
+Expect nothing to print until the refresh finishes, then a summary headed by a refresh ID that lists the five entries with their outcomes. Some entries may be [unavailable](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#outcome-unavailable); a refresh with at least one [completed](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#outcome-completed) run is enough. Note the counts of each outcome: later steps compare the application with them.
 
 Step 8. Save one direct analysis. It saves a run that belongs to no refresh:
 
@@ -148,7 +149,7 @@ ian runs refreshes
 
 `pnpm smoke` runs this step.
 
-Expect five runs, and one refresh named `Smoke Test` with four runs.
+Expect six runs, and one refresh named `Smoke Test` with five runs.
 
 ### Start the application
 
@@ -168,40 +169,40 @@ If the start fails with "Access is denied" when removing the application's execu
 
 Check N1. The window opens on the Watchlists screen. The product name and the pre-release notice show beside a navigation with Watchlists, Refreshes, Saved runs and About; the navigation sits at the start side of the window, and the current item is marked.
 
-Check N2. Each navigation link opens its screen. The breadcrumb above each screen, the trail of names that shows where you are (such as Watchlists / Smoke Test), names it, and the current navigation item follows.
+Check N2. Each navigation link opens its screen, with its name as the heading, and the current navigation item follows. None of these four screens shows a breadcrumb trail above its heading, because no screen sits above any of them.
 
 Check N3. About shows the engine's details. They are its version, API versions, schema version, SEC identity and languages; compare them with the engine:
 
 - Compare the engine version with the version `ian about` prints on its first line, and say in the record that this is what you compared with. `pnpm smoke` records the version `ian about` reported.
 - SEC identity shows configured when the engine's configuration holds an SEC EDGAR identification, and not configured otherwise.
 
-Check N4. The shell follows the look of the preview mock-ups. The navigation at the start side has a thin rule on its inner edge; the current item has a raised background with rounded corners; the product name and the pre-release notice sit above the navigation; the content area fills the rest of the window with the breadcrumb as a small line above the heading.
+Check N4. The shell follows the look of the preview mock-ups. The navigation at the start side has a thin rule on its inner edge; the current item has a raised background with rounded corners; the product name and the pre-release notice sit above the navigation; the content area fills the rest of the window with the breadcrumb trail, on a screen that has one, as a small line above the heading.
 
 ## W. Watchlists
 
-Check W1. The Watchlists screen lists both watchlists. `Smoke Test` has 4 entries and `Smoke Test Empty` has 0, each with its created time. A watchlist that was never changed shows a dash for its last change; the one you added entries to shows a time.
+Check W1. The Watchlists screen lists both watchlists. `Smoke Test` has 5 entries and `Smoke Test Empty` has 0, each with its created time. A watchlist that was never changed shows a dash for its last change; the one you added entries to shows a time.
 
 Check W2. Times are in your time zone. They agree with the clock of the moment you ran the setup commands.
 
-Check W3. Open `Smoke Test` to see its entries. It shows the breadcrumb Watchlists / Smoke Test, a line with the entry count and created time, and the entries numbered 1 to 4 with ticker, strategy name and as-of. The tickers and numbering agree with `ian watchlist show "Smoke Test"`.
+Check W3. Open `Smoke Test` to see its entries. The trail above the heading `Smoke Test` is the single link `Watchlists`, with nothing after it. Below the heading is a line with the entry count and created time, and the entries numbered 1 to 5 with ticker, strategy name and as-of. The tickers and numbering agree with `ian watchlist show "Smoke Test"`.
 
 Check W4. Strategy names are the engine's names for the strategies. No raw method code such as `sma_crossover` shows.
 
-Check W5. The four entries show their three as-of forms correctly. Two entries have no as-of (KO's momentum entry and its Graham number entry), one has a date (MSFT) and one has a timestamp (AAPL):
+Check W5. The five entries show their three as-of forms correctly. Three entries have no as-of (KO's momentum entry, its Graham number entry and SPY's Piotroski entry), one has a date (MSFT) and one has a timestamp (AAPL):
 
-- The two entries with no as-of read as the latest data, not as an empty cell.
+- The three entries with no as-of read as the latest data, not as an empty cell.
 - The entry with a date shows that calendar day, 31 December 2025, with no time and not a day earlier or later. If it shows a time instead, note it.
 - The entry with a timestamp shows that instant as a local time, for 16:00 at UTC-5 on 31 December 2025.
 
-Check W6. The watchlist's refreshes are listed under its entries. They show the refresh from Step 7 with its time, its four runs and its outcome counts.
+Check W6. The watchlist's refreshes are listed under its entries. They show the refresh from Step 7 with its time, its five runs and its outcome counts. The completion time is a link to the refresh's comparison.
 
-Check W7. Open `Smoke Test Empty` to see that it has no entries. It shows that it has no entries and that it has not been refreshed yet. The breadcrumb leads back to Watchlists.
+Check W7. Open `Smoke Test Empty` to see that it has no entries. It shows that it has no entries and that it has not been refreshed yet. The trail above the heading is the single link `Watchlists`, and it leads back.
 
-Check W8. Tables follow the mock-ups: a thin rule under every row, secondary-coloured column headings, and the watchlist names as links in the accent colour. The entry counts are aligned to the end of their column.
+Check W8. Tables follow the mock-ups: a thin rule under every row, secondary-coloured column headings, and the watchlist names as links in the accent colour, with no underline until the pointer is over one or it has keyboard focus. The entry counts are aligned to the end of their column.
 
 ## R. Refreshes
 
-Check R1. Refreshes lists the refresh from Step 7. It shows its completion time (a range when its first and last runs completed a minute or more apart), the watchlist name `Smoke Test`, a run count of 4, and a count for each outcome. The counts agree with `ian runs refreshes`.
+Check R1. Refreshes lists the refresh from Step 7. It shows its completion time (a range when its first and last runs completed a minute or more apart), the watchlist name `Smoke Test`, a run count of 5, and a count for each outcome. The counts agree with `ian runs refreshes`.
 
 Check R2. The outcome column headings are names the engine gives its outcomes. They come in the engine's order, and the counts add up to the run count.
 
@@ -209,9 +210,23 @@ Check R3. The direct analysis from Step 8 is not a refresh and does not appear h
 
 Check R4. The count columns line up at the end of the column, and their digits are the same width, so counts of different sizes stay in line.
 
+## C. Refresh comparison
+
+Check C1. Open the comparison from Refreshes. The completion time of the refresh is a link; it opens the comparison. The trail above the heading is the single link `Refreshes`. The heading is plain text, not a link: `Smoke Test`, a dot and the refresh's completion time or time range, formatted as on Refreshes. Under the heading a line gives the run count (5 runs) and then one pill for each outcome that has runs, with its count inside the pill, in the engine's order, such as `Completed 4` and `Not Applicable 1`. The counts agree with Refreshes and with `ian runs refreshes`.
+
+Check C2. The table groups the runs by ticker and strategy. The ticker column is at the start; the three strategy groups (Momentum, Graham Number and Piotroski F-Score) sit beside it, each with its strategy name over its own column labels, and the values are in a slightly heavier weight than the labels. Numbers are formatted by their unit (a percentage, a price with its currency code, a score) and no raw code or `NaN` shows. When the table has a number with no value, it shows a dash with the engine's name for its status beside it in small grey text; a text with no value shows a dash alone.
+
+Check C3. A ticker with no run in a group shows one cell across the group with a dash and "Not run": KO in the Piotroski group, and SPY in the Momentum and Graham Number groups. A group shows an Outcome column only when one of its runs did not complete: the Piotroski group shows one, with SPY's outcome (Not applicable) as a pill, and a group whose runs all completed shows none.
+
+Check C4. The ticker column stays in place. Narrow the window to about half the screen width and scroll the table to the end side: the ticker column stays at the start and the strategy groups scroll under it, and the page itself does not scroll sideways.
+
+Check C5. Every value of a run is a link. Move the pointer over a value, or press Tab until one has focus: it is a link with a visible outline that opens that run's detail. "Not run" is not a link.
+
+Check C6. The comparison has no "Refresh now" and no "Download JSON".
+
 ## H. Saved runs
 
-Check H1. Saved runs lists five runs, newest first. Each shows a completion time, ticker, strategy name and outcome. The five runs can complete within the same minute, and the refresh's MSFT run and the direct analysis of MSFT show the same ticker, strategy, outcome and minute, so the first and last rows look the same. Check the order by the three middle rows instead: after the newest run, KO with Graham Number, then AAPL with Momentum, then KO with Momentum, matching `ian runs list` (newest first). The run from Step 8 is among the five, which is how a run saved by a direct analysis is reached.
+Check H1. Saved runs lists six runs, newest first, matching `ian runs list`. Each shows a completion time, ticker, strategy name, outcome and where it was saved. The rows can look alike, because runs of the same ticker, strategy and outcome can complete in the same minute, but the "Saved by" column tells them apart: the direct analysis from Step 8 shows "Direct analysis" as plain text, and each of the five runs the refresh saved shows "Refresh" as a link.
 
 Check H2. Filter by ticker. Type `msft` in lower case and press Enter: only the MSFT runs remain. Clear the field, type `ko` and move to another control instead of pressing Enter: the filter applies.
 
@@ -219,19 +234,37 @@ Check H3. Filter by strategy. The choices are the engine's strategies, led by "A
 
 Check H4. Filter by outcome. The choices are the engine's outcomes, led by "All outcomes". Choosing one keeps only its runs.
 
-Check H5. A filter that matches nothing says that no saved runs match the filters. Use a ticker the setup never used. "Clear filters" empties all three filters and shows all five runs again.
+Check H5. A filter that matches nothing says that no saved runs match the filters. Use a ticker the setup never used. "Clear filters" empties all three filters and shows all six runs again.
 
 Check H6. The outcome column shows each outcome as a pill: green for completed, amber for unavailable, red for failed and grey for not applicable. The pill's words are the engine's outcome names, and the Refreshes headings stay plain text.
 
 Check H7. Keyboard focus is visible. Press Tab to move through the navigation links and then through the Saved runs filters and buttons: each control shows a clear outline when it has focus, and the order follows the screen from the start side to the end side and top to bottom. On macOS, if Tab skips links, turn on "Press Tab to highlight each item on a webpage" in Safari's settings, or use Option+Tab.
 
+Check H8. The links in the list. "Refresh" in the "Saved by" column opens the comparison of the refresh that saved the run, with the trail `Refreshes` above the comparison's heading. The completion time of each row is a link that opens the run's detail.
+
+## D. Run detail
+
+Check D1. Open a run from the comparison by one of its values. The title is the company's name, the ticker in brackets, a dash and the strategy name, such as "Coca-Cola Co (KO) — Graham Number". Under it a line shows the outcome as a pill, when the run was saved, "As of" with its date, the fiscal period end in the strategy's own words, and "Saved by refresh" as a link to the comparison, with a thin underline at rest. The trail above the title is `Refreshes` and `Refresh comparison`, both links, and does not repeat the title; "Refresh comparison" returns to the comparison.
+
+Check D2. The headline cards. There is one card for each headline cell, in the comparison's order: the cell's label in small grey text and its value in a large type step, formatted as in the comparison. The values agree with the comparison's row.
+
+Check D3. Warnings and limitations. When the run has any, a "Warnings" list and a "Limitations" list sit under the cards, each under its own heading and written by the engine; a list the run does not have is left out.
+
+Check D4. A cell with no value. Open SPY's Piotroski run. Its Score and Completeness cards each show a dash alone, at the size of body text and in grey, because a text with no value has no status, and its line under the title has no period end. If any run's card has a number with no value, it shows a dash, then the engine's name for its status and, when there is one, for its reason (such as `— Input Unavailable · EPS Not Positive`), all at the size of body text in grey, as a table cell shows them; this is the only place a reason shows. Mark that part `n/a` when no run has such a card. A run with no headline shows the engine's name for why, in a neutral panel, in place of the cards.
+
+Check D5. The tabs. Summary, Details, Diagnostics and JSON are tabs, with Summary open first. The left and right arrow keys move to the next and previous tab and open it (in the other direction in a right-to-left layout), and Home and End go to the first and last. Each tab shows the engine's own text, or the document as indented JSON, in a block that does not wrap; the block scrolls sideways when a line is wide, and you can focus it with Tab and scroll it with the arrow keys. The text can be selected, and there is no copy button. Each text is fetched when its tab first opens: a failure on one tab leaves the others usable.
+
+Check D6. Opened from Saved runs, the trail above the title is `Saved runs`. Filter Saved runs by ticker `ko`, open a run by its completion time, then choose "Saved runs" in the trail: the filter is still applied and the list starts at its first page.
+
+Check D7. For the direct analysis from Step 8, the line under the title ends with "Saved by direct analysis" as plain text.
+
 ## L. Language and layout
 
-Check L1. Engine text carries its language. With the application running from `pnpm tauri dev`, open the developer tools (right-click a screen and choose Inspect, or press `Ctrl+Shift+I`, or `Cmd+Option+I` on macOS), and inspect a strategy name in Saved runs and an outcome heading in Refreshes. Each sits in an element with a `lang` attribute holding the engine's language, such as `en`, and a `data-term-id` attribute, which names the help term that explains the text.
+Check L1. Engine text carries its language. With the application running from `pnpm tauri dev`, open the developer tools (right-click a screen and choose Inspect, or press `Ctrl+Shift+I`, or `Cmd+Option+I` on macOS), and inspect a strategy name in Saved runs, an outcome heading in Refreshes, a column label in the comparison, and a headline card label and the strategy in the title of run detail. Each sits in an element with a `lang` attribute holding the engine's language, such as `en`, and a `data-term-id` attribute, which names the help term that explains the text.
 
 Check L2. No screen shows a raw code, such as a method identifier or an outcome code, where a name should be.
 
-Check L3. A narrow window stays usable. Narrow the window to about half the screen width. The navigation and the tables stay usable, and a wide table scrolls instead of being cut off.
+Check L3. A narrow window stays usable. Narrow the window to about half the screen width. The navigation and the tables stay usable, and a wide table scrolls instead of being cut off; open the comparison, whose table is the widest.
 
 Check L4. The application follows the operating system's colour theme while it runs. Switch the system between light and dark in the system's settings: the window changes with it, with no restart, and text stays readable in both. Note any white flash when the application starts in dark mode.
 
@@ -274,13 +307,25 @@ With `pnpm smoke`, the throwaway `IAN_DATABASE_URL` setting never reaches your t
 
 ## Recording the result
 
-`pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. Steps 1 to 9 of the setup are filled in as `pass (scripted)`, each with its command output under "Command output". Step 10 and every check are yours: the tool only started the application, so mark whether its window opened, and mark each check `pass`, `fail`, `n/a` or `note`, with a few words for anything that is not a plain pass, and finish the result line. Use `note` for something worth reporting that is neither a pass nor a fail, such as a difference you cannot judge or an oddity outside the check. A check that this document says cannot be made here no longer exists, so it has no line in the record and is not marked `n/a`; [What smoke testing does not cover](#what-smoke-testing-does-not-cover) lists what browser tests cover instead. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
+`pnpm smoke` writes the record to `SMOKE_RECORD.md` in the throwaway folder, and prints its path before it starts the application. Steps 1 to 9 of the setup are filled in as `pass (scripted)`, each with its command output under "Command output". Step 10 and every check are yours: the tool only started the application, so mark whether its window opened, and mark each check `pass`, `fail`, `n/a`, `not run` or `note`, with a few words for anything that is not a plain pass, and finish the result line. Use `n/a` for a check that does not apply to this run. Use `not run` for a check outside a targeted run, as [Targeted runs](#targeted-runs) explains; `not run` is not `n/a`. Use `note` for something worth reporting that is neither a pass nor a fail, such as a difference you cannot judge or an oddity outside the check. A check that this document says cannot be made here no longer exists, so it has no line in the record and is not marked `n/a`; [What smoke testing does not cover](#what-smoke-testing-does-not-cover) lists what browser tests cover instead. A failure note never includes private data. The record lists the steps of this document, so a step added here shows up in the next record.
 
 Once the application starts, the tool never changes the record, for any reason, because your editor may hold unsaved marks and a change on disk would conflict with them. If the application exits with a failure status, the terminal tells you to mark Step 10 `fail`, with the exit status. The Engine line was written before the application started, so it says whether the checkout was switched for the test and never whether it was restored: the restore's result is in the terminal. The "Command output" section is the tool's, and is kept as written. A run whose application failed to start is not a record for a pull request: fix the cause and run `pnpm smoke` again.
 
 If you followed the steps by hand, write the same record yourself: the date, time zone, operating system, application commit, engine commit, the engine version from `ian about`, whether you switched your engine checkout and restored it, the data you created, and each step with its mark.
 
-Record a run in the description of the pull request that adds or changes a screen, naming the engine commit from [the source record](../../vendor/ian/SOURCE.md). Keep the record as the run's record; do not summarise it as "passed".
+A pull request that adds or changes a screen updates this document in the same pull request. It records a run only when the slice's decisions call for one, as [Targeted runs](#targeted-runs) says; the record then goes in the pull request description, naming the engine commit from [the source record](../../vendor/ian/SOURCE.md). Keep the record as the run's record; do not summarise it as "passed".
+
+### Targeted runs
+
+A pull request records a manual run only when automated tests cannot cover something it changes, typically the real webviews (WebView2, WKWebView and WebKitGTK, which the browser tests do not run) or a real engine (which CI does not have). Each slice's decisions say "no manual run", or name the checks to run and the gap that justifies each, and the pull request description repeats it.
+
+`pnpm smoke` still does every setup step and writes every step into the record. Name the checks with `--checks`, a comma-separated list of check ids and of ranges within one letter group; each slice's decisions and its pull request description give the exact command:
+
+```powershell
+pnpm smoke --checks C1-C6,D1-D7,H1,H8,L1,L3
+```
+
+A targeted run names whole checks only. The record then has a "Targeted run" line naming them, leaves each named check for you to mark, and writes `not run` after every other check; its result line names the checks that were run, for example "Result: Checks C1 to C6, D1 to D7, H1, H8, L1 and L3: all passed". `not run` is separate from `n/a`, which means the check does not apply. The list may be separated by commas or spaces, so the command works the same in PowerShell, cmd and bash. Without `--checks` the run is a full run. `pnpm smoke` stops before any setup, with the valid check ids, when the list is empty, names an id that is not a check in this document, has a range across two letter groups or a reversed range, or names a check twice. Whether a release needs a complete run is GUI.6's decision.
 
 ## If `pnpm smoke` stops
 
@@ -301,7 +346,7 @@ It stops with a plain message instead of guessing, and writes the record so far 
 - **A setup command failed:** the message names the step and the command, and its output is in the record. For a provider failure, see the engine's troubleshooting guide.
 - **The start fails with "Access is denied" removing the application's executable:** an earlier copy of the application is still running. Close it, or end it with `Get-Process investment-analysis-desktop -ErrorAction SilentlyContinue | Stop-Process`, and run `pnpm smoke` again.
 - **The refresh completed no run:** check the providers with `ian health`, then run `pnpm smoke` again, which makes a new throwaway database.
-- **The counts are not the setup's:** the setup leaves 5 runs, 1 refresh of 4 runs and 2 watchlists with 4 entries in all. Run `pnpm smoke` again, which makes a new throwaway database.
+- **The counts are not the setup's:** the setup leaves 6 runs, 1 refresh of 5 runs and 2 watchlists with 5 entries in all. Run `pnpm smoke` again, which makes a new throwaway database.
 
 Cleaning up, and restarting the application for the engine-problem checks (Checks E1 and E2), stay manual.
 
@@ -319,4 +364,4 @@ Do not treat a changed market value, an outcome that depends on live data or a s
 
 A smoke test shows that the application works against a real engine on one day. It proves nothing about boundaries that a real engine cannot easily force, such as paging beyond one page, a stored selection the engine cannot read, a refresh of entries that belong to no watchlist, or a busy database. Browser tests cover those.
 
-No run of this setup can check three things, so this document has no check for them and browser tests cover them: a busy database (the engine's documents give no safe way to cause one), paging of refreshes (it needs more than 50 refreshes) and paging of runs (it needs more than 50 runs). The setup creates one refresh and five runs. The check for such a refresh is added to this document when the application can start refreshes itself, because the command line cannot start one.
+No run of this setup can check three things, so this document has no check for them and browser tests cover them: a busy database (the engine's documents give no safe way to cause one), paging of refreshes (it needs more than 50 refreshes) and paging of runs (it needs more than 50 runs). The setup creates one refresh and six runs. The check for such a refresh is added to this document when the application can start refreshes itself, because the command line cannot start one.
