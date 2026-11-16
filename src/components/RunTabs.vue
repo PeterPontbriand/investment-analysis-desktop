@@ -32,6 +32,9 @@ const tabs: { key: Mode | 'json'; label: MessageKey }[] = [
 ];
 
 const selected = ref<Mode | 'json'>('concise');
+// The fetched texts live as long as this component. The run detail screen
+// remounts it when the locale or the run changes (its data reload passes
+// through the loading state), so a locale change fetches them again (D163).
 const texts = ref<Partial<Record<Mode, TextState>>>({});
 
 async function loadText(mode: Mode): Promise<void> {

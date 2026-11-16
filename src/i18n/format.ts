@@ -150,14 +150,3 @@ export function formatCellValue(
     );
   return String(cell.value);
 }
-
-// A parameter value that stands in for a piece of engine text or a link inside
-// a catalog template, so the caller can split the formatted message around it.
-export const placeholderMark = '⁣';
-
-export function aroundPlaceholder(message: string): [string, string] {
-  const at = message.indexOf(placeholderMark);
-  return at < 0
-    ? [message, '']
-    : [message.slice(0, at), message.slice(at + placeholderMark.length)];
-}

@@ -9,12 +9,7 @@ import StrategyName from '../components/StrategyName.vue';
 import TableScroll from '../components/TableScroll.vue';
 import TermName from '../components/TermName.vue';
 import { useRouteParam } from '../composables/useRouteParam.ts';
-import {
-  aroundPlaceholder,
-  formatCompletion,
-  formatCount,
-  placeholderMark,
-} from '../i18n/format.ts';
+import { formatCompletion, formatCount } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 import { groupsOf, outcomeCountsOf } from './compareModel.ts';
 import { compareCrumbs } from './navigation.ts';
@@ -57,8 +52,7 @@ const time = computed(() =>
       ),
 );
 
-// The heading as text, for the breadcrumb, and as the parts around the
-// watchlist's name, which links to the watchlist when there is one.
+// The heading as text, for the breadcrumb.
 const headingText = computed(() =>
   loaded.value === null
     ? null
@@ -67,12 +61,6 @@ const headingText = computed(() =>
         time: time.value,
       }),
 );
-const headingParts = computed(() =>
-  aroundPlaceholder(
-    t('compare.heading', { watchlist: placeholderMark, time: time.value }),
-  ),
-);
-
 const crumbs = computed(() =>
   compareCrumbs(t('nav.refreshes'), headingText.value),
 );
@@ -93,17 +81,20 @@ const counts = computed(() =>
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <template v-else>
     <h1>
-      {{ headingParts[0] }}
-      <RouterLink
-        v-if="state.data.document.watchlist_id !== null"
-        :to="{
-          name: 'watchlist',
-          params: { watchlistId: state.data.document.watchlist_id },
-        }"
-        >{{ watchlistName }}</RouterLink
-      >
-      <template v-else>{{ watchlistName }}</template>
-      {{ headingParts[1] }}
+      <i18n-t keypath="compare.heading" scope="global" tag="span">
+        <template #watchlist>
+          <RouterLink
+            v-if="state.data.document.watchlist_id !== null"
+            :to="{
+              name: 'watchlist',
+              params: { watchlistId: state.data.document.watchlist_id },
+            }"
+            >{{ watchlistName }}</RouterLink
+          >
+          <template v-else>{{ watchlistName }}</template>
+        </template>
+        <template #time>{{ time }}</template>
+      </i18n-t>
     </h1>
     <ul class="counts">
       <li>

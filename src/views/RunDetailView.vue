@@ -11,11 +11,9 @@ import ScreenState from '../components/ScreenState.vue';
 import TermName from '../components/TermName.vue';
 import { useRouteParam } from '../composables/useRouteParam.ts';
 import {
-  aroundPlaceholder,
   formatDate,
   formatDateOrInstant,
   formatInstant,
-  placeholderMark,
 } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 import { compareLocation, runCrumbs } from './navigation.ts';
@@ -71,26 +69,6 @@ const companyName = computed(
   () => fullDocument.value?.data.security_identity.instrument_name ?? null,
 );
 
-const titleParams = computed(() => ({
-  ticker: loaded.value?.overview.data.ticker ?? '',
-  name: companyName.value ?? '',
-}));
-
-// The title splits around the strategy, which carries its term (D161).
-const titleParts = computed(() =>
-  aroundPlaceholder(
-    companyName.value === null
-      ? t('runDetail.titleNoName', {
-          ...titleParams.value,
-          strategy: placeholderMark,
-        })
-      : t('runDetail.title', {
-          ...titleParams.value,
-          strategy: placeholderMark,
-        }),
-  ),
-);
-
 const crumbs = computed(() => {
   const overview = loaded.value?.overview.data;
   const labels = {
@@ -130,12 +108,23 @@ const asOf = computed(() =>
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <template v-else>
     <h1>
-      {{ titleParts[0]
-      }}<span
-        :data-term-id="state.data.overview.data.strategy.term ?? undefined"
-        :lang="state.data.overview.contentLanguage ?? undefined"
-        >{{ state.data.overview.data.strategy.label }}</span
-      >{{ titleParts[1] }}
+      <i18n-t
+        :keypath="
+          companyName === null ? 'runDetail.titleNoName' : 'runDetail.title'
+        "
+        scope="global"
+        tag="span"
+      >
+        <template #name>{{ companyName }}</template>
+        <template #ticker>{{ state.data.overview.data.ticker }}</template>
+        <template #strategy>
+          <span
+            :data-term-id="state.data.overview.data.strategy.term ?? undefined"
+            :lang="state.data.overview.contentLanguage ?? undefined"
+            >{{ state.data.overview.data.strategy.label }}</span
+          >
+        </template>
+      </i18n-t>
     </h1>
     <ul class="meta">
       <li><OutcomePill :code="state.data.overview.data.outcome" /></li>
