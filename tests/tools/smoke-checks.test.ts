@@ -46,7 +46,7 @@ describe('--checks', () => {
 
   it.each([
     ['', 'empty'],
-    ['C1,', 'is not a check id or a range'],
+    [' , ,', 'empty'],
     ['C9', 'is not a check'],
     ['Z1', 'is not a check'],
     ['c1', 'is not a check id'],
@@ -57,6 +57,22 @@ describe('--checks', () => {
     ['C1-C99', 'is not a check'],
   ])('refuses %j', (list, reason) => {
     expect(refusal(list)).toContain(reason);
+  });
+
+  it('accepts spaces, as PowerShell passes a comma list, and any mix', () => {
+    const expected = ok('C1-C6,D1-D6,H1,H8,L1,L3');
+    expect(ok('C1-C6 D1-D6 H1 H8 L1 L3')).toEqual(expected);
+    expect(ok('C1-C6, H1 H8').ids).toEqual([
+      'C1',
+      'C2',
+      'C3',
+      'C4',
+      'C5',
+      'C6',
+      'H1',
+      'H8',
+    ]);
+    expect(ok('C1,,H1 , ,H8,').ids).toEqual(['C1', 'H1', 'H8']);
   });
 
   it('lists the valid checks with each letter group as a range', () => {

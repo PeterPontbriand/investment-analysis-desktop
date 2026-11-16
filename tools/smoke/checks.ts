@@ -62,10 +62,13 @@ export function parseChecks(list: string, valid: string[]): ChecksResult {
     ok: false,
     message: `\`--checks\` cannot use "${list}": ${reason}. The checks in docs/project/SMOKE_TESTING.md are ${describeValid(valid)}. Give check ids and ranges within one letter group, for example \`--checks C1-C6,H1\`.`,
   });
-  if (list.trim() === '') return refuse('the list is empty');
+  // Commas, whitespace or a mix separate the items: PowerShell passes an
+  // unquoted comma list on as words, and repeated separators leave empty items.
+  const tokens = list.split(/[\s,]+/).filter((token) => token !== '');
+  if (tokens.length === 0) return refuse('the list is empty');
   const ids: string[] = [];
   const phrases: string[] = [];
-  for (const token of list.split(',')) {
+  for (const token of tokens) {
     const [from, to, ...extra] = token.split('-');
     if (from === undefined || from === '' || extra.length > 0)
       return refuse(`"${token}" is not a check id or a range`);

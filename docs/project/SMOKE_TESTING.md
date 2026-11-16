@@ -323,7 +323,7 @@ A pull request records a manual run only when automated tests cannot cover somet
 pnpm smoke --checks C1-C6,D1-D6,H1,H8,L1,L3
 ```
 
-A targeted run names whole checks only. The record then has a "Targeted run" line naming them, leaves each named check for you to mark, and writes `not run` after every other check; its result line names the checks that were run, for example "Result: Checks C1 to C6, D1 to D6, H1, H8, L1 and L3: all passed". `not run` is separate from `n/a`, which means the check does not apply. Without `--checks` the run is a full run. `pnpm smoke` stops before any setup, with the valid check ids, when the list is empty, names an id that is not a check in this document, has a range across two letter groups or a reversed range, or names a check twice. Whether a release needs a complete run is GUI.6's decision.
+A targeted run names whole checks only. The record then has a "Targeted run" line naming them, leaves each named check for you to mark, and writes `not run` after every other check; its result line names the checks that were run, for example "Result: Checks C1 to C6, D1 to D6, H1, H8, L1 and L3: all passed". `not run` is separate from `n/a`, which means the check does not apply. The list may be separated by commas or spaces, so the command works the same in PowerShell, cmd and bash. Without `--checks` the run is a full run. `pnpm smoke` stops before any setup, with the valid check ids, when the list is empty, names an id that is not a check in this document, has a range across two letter groups or a reversed range, or names a check twice. Whether a release needs a complete run is GUI.6's decision.
 
 ## If `pnpm smoke` stops
 
