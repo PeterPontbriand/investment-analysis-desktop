@@ -15,7 +15,7 @@ const { state, reload } = useScreenData(
 </script>
 
 <template>
-  <AppBreadcrumb :current="t('nav.watchlists')" />
+  <AppBreadcrumb :crumbs="[{ label: t('nav.watchlists') }]" />
   <h1>{{ t('nav.watchlists') }}</h1>
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <EmptyMessage v-else-if="state.data.items.length === 0">{{

@@ -72,6 +72,48 @@ export const helpIndex: Schemas['HelpIndexDocument'] = {
       ],
     },
     {
+      id: 'statuses',
+      title: 'Statuses and reasons',
+      terms: [
+        { id: 'status-ok', name: 'Calculated', definition: 'A value.' },
+        {
+          id: 'status-unavailable',
+          name: 'Not available',
+          definition: 'No value.',
+        },
+        {
+          id: 'status-not-applicable',
+          name: 'Does not apply',
+          definition: 'The strategy does not apply.',
+        },
+        {
+          id: 'status-input-unavailable',
+          name: 'Input not available',
+          definition: 'An input was missing.',
+        },
+        {
+          id: 'reason-insufficient-history',
+          name: 'Not enough history',
+          definition: 'Too few observations.',
+        },
+        {
+          id: 'reason-instrument-kind',
+          name: 'Instrument kind does not apply',
+          definition: 'The kind of instrument is not covered.',
+        },
+        {
+          id: 'headline-no-result',
+          name: 'No result was stored',
+          definition: 'The run stored no result.',
+        },
+        {
+          id: 'headline-not-declared',
+          name: 'Strategy no longer available',
+          definition: 'The engine no longer declares the strategy.',
+        },
+      ],
+    },
+    {
       id: 'strategies',
       title: 'Strategies',
       terms: [
@@ -104,7 +146,20 @@ export const references: Schemas['HelpReferencesDocument'] = {
       not_applicable: 'outcome-not-applicable',
       failed: 'outcome-failed',
     },
-    CellStatusValue: {},
+    CellStatusValue: {
+      ok: 'status-ok',
+      unavailable: 'status-unavailable',
+      not_applicable: 'status-not-applicable',
+      input_unavailable: 'status-input-unavailable',
+    },
+    ReasonCode: {
+      insufficient_history: 'reason-insufficient-history',
+      instrument_kind_not_applicable: 'reason-instrument-kind',
+    },
+    HeadlineUnavailable: {
+      no_result_stored: 'headline-no-result',
+      strategy_not_declared: 'headline-not-declared',
+    },
   },
 };
 
@@ -233,20 +288,28 @@ const run = (
   method: string,
   outcome: Schemas['RunOutcome'],
   completed: string,
+  refreshId: string | null = null,
 ): Schemas['RunSummaryDocument'] => ({
   analysis_run_id: `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`,
   ticker,
   method_id: method,
   outcome,
   completed_at: completed,
-  refresh_id: null,
+  refresh_id: refreshId,
 });
 
 // Newest first. The first four are distinct; the rest fill a second page.
 export const runs: Schemas['RunSummaryDocument'][] = [
   run(1, 'MSFT', 'graham_number', 'completed', '2026-11-02T14:41:00+00:00'),
   run(2, 'MSFT', 'sma_crossover', 'unavailable', '2026-10-30T18:02:00+00:00'),
-  run(3, 'ZED', 'quality_screen', 'completed', '2026-10-29T18:02:00+00:00'),
+  run(
+    3,
+    'ZED',
+    'quality_screen',
+    'completed',
+    '2026-10-29T18:02:00+00:00',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  ),
   run(4, 'OLD', 'retired_method', 'failed', '2026-10-28T18:02:00+00:00'),
   ...Array.from({ length: 51 }, (_unused, index) =>
     run(

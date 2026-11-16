@@ -10,7 +10,7 @@ const { state, reload } = useScreenData((client) => client.get('/v1/info'), []);
 </script>
 
 <template>
-  <AppBreadcrumb :current="t('nav.about')" />
+  <AppBreadcrumb :crumbs="[{ label: t('nav.about') }]" />
   <h1>{{ t('nav.about') }}</h1>
   <section aria-labelledby="engine-heading">
     <h2 id="engine-heading">{{ t('engine.heading') }}</h2>

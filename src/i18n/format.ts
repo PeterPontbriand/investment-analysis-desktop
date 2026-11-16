@@ -124,3 +124,40 @@ export function formatCompletion(
     return formatInstant(locale, last);
   return new Intl.DateTimeFormat(locale, instantFormat).formatRange(start, end);
 }
+
+export type CellValueParts = {
+  kind: 'number' | 'text';
+  value: number | string | null;
+  unit: CellUnit | null;
+  currency: string | null;
+};
+
+// A headline cell's value as text, by its unit (D85); null when the cell has
+// no value, so the caller shows its dash and status.
+export function formatCellValue(
+  locale: string,
+  cell: CellValueParts,
+  withMultipleSuffix: (formatted: string) => string,
+): string | null {
+  if (cell.value === null) return null;
+  if (typeof cell.value === 'number' && cell.unit !== null)
+    return formatCellNumber(
+      locale,
+      cell.value,
+      cell.unit,
+      cell.currency,
+      withMultipleSuffix,
+    );
+  return String(cell.value);
+}
+
+// A parameter value that stands in for a piece of engine text or a link inside
+// a catalog template, so the caller can split the formatted message around it.
+export const placeholderMark = '⁣';
+
+export function aroundPlaceholder(message: string): [string, string] {
+  const at = message.indexOf(placeholderMark);
+  return at < 0
+    ? [message, '']
+    : [message.slice(0, at), message.slice(at + placeholderMark.length)];
+}

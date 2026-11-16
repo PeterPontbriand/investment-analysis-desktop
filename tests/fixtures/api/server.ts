@@ -1,6 +1,7 @@
 // A fake engine: answers a request URL with a fixture document, the way the
 // real API does, for both test runners.
 import type { components } from '../../../src/api/schema.ts';
+import * as compare from './compare.ts';
 import * as data from './data.ts';
 
 export type Reply = {
@@ -99,6 +100,34 @@ export function respond(url: URL): Reply {
     return document
       ? ok(document)
       : failure(404, 'watchlist_not_found', 'No such watchlist.');
+  }
+  const comparison = /^\/v1\/refreshes\/([^/]+)\/compare$/.exec(path);
+  if (comparison) {
+    const document = compare.comparisons[comparison[1] ?? ''];
+    return document
+      ? ok(document)
+      : failure(404, 'analysis_run_not_found', 'No such refresh.');
+  }
+  const run = /^\/v1\/runs\/([^/]+)(\/overview|\/text)?$/.exec(path);
+  if (run) {
+    const id = run[1] ?? '';
+    const detail = compare.runDetails[id];
+    if (!detail)
+      return failure(404, 'analysis_run_not_found', 'No such saved run.');
+    if (run[2] === '/overview') return ok(detail.overview);
+    if (run[2] === '/text') {
+      const mode = parameters.get('mode');
+      return compare.textModes.find((item) => item === mode)
+        ? ok(compare.textFor(id, mode as (typeof compare.textModes)[number]))
+        : failure(400, 'invalid_parameter', 'Unknown mode.');
+    }
+    return detail.document
+      ? ok(detail.document)
+      : failure(
+          409,
+          'unsupported_projection',
+          'This run cannot be shown as a document.',
+        );
   }
   return failure(404, 'endpoint_not_found', 'No such endpoint.');
 }

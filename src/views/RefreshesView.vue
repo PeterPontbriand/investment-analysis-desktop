@@ -7,7 +7,7 @@ const { t } = useMessages();
 </script>
 
 <template>
-  <AppBreadcrumb :current="t('nav.refreshes')" />
+  <AppBreadcrumb :crumbs="[{ label: t('nav.refreshes') }]" />
   <h1>{{ t('nav.refreshes') }}</h1>
   <RefreshesTable empty-key="refreshes.empty" />
 </template>

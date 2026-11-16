@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { useMessages } from '../i18n/index.ts';
+import type { Crumb } from './crumbs.ts';
 
-// The current screen, and optionally the Watchlists screen above it.
-defineProps<{ current: string; inWatchlists?: boolean }>();
+// The path to the current screen; the last crumb is the current screen.
+defineProps<{ crumbs: Crumb[] }>();
 
 const { t } = useMessages();
 </script>
@@ -10,13 +11,14 @@ const { t } = useMessages();
 <template>
   <nav :aria-label="t('breadcrumb.label')" class="breadcrumb">
     <ol>
-      <li v-if="inWatchlists">
-        <RouterLink :to="{ name: 'watchlists' }">{{
-          t('nav.watchlists')
+      <li v-for="(crumb, index) in crumbs" :key="index">
+        <span v-if="index === crumbs.length - 1" aria-current="page">{{
+          crumb.label
+        }}</span>
+        <RouterLink v-else-if="crumb.to" :to="crumb.to">{{
+          crumb.label
         }}</RouterLink>
-      </li>
-      <li>
-        <span aria-current="page">{{ current }}</span>
+        <span v-else>{{ crumb.label }}</span>
       </li>
     </ol>
   </nav>

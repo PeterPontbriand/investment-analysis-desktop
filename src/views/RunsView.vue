@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useEngine } from '../api/engine.ts';
 import type { ResolvedName } from '../api/terms.ts';
 import { pageSize, usePagedList } from '../api/useScreenData.ts';
@@ -11,19 +12,57 @@ import StrategyName from '../components/StrategyName.vue';
 import TableScroll from '../components/TableScroll.vue';
 import { formatInstant } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
+import {
+  compareLocation,
+  filtersFromQuery,
+  filtersToQuery,
+  runFromRunsLocation,
+} from './navigation.ts';
 
 const { t, locale } = useMessages();
 const engine = useEngine();
 
-// What the fields hold, and the filters they have applied to the list.
-const tickerText = ref('');
-const ticker = ref('');
-const method = ref('');
-const outcome = ref('');
+const route = useRoute();
+const router = useRouter();
+
+// What the fields hold, and the filters they have applied to the list. The
+// applied filters are kept in the route query (D157), so a run opened from the
+// list can send the reader back to the same filters.
+const initial = filtersFromQuery(route.query);
+const tickerText = ref(initial.ticker);
+const ticker = ref(initial.ticker);
+const method = ref(initial.method);
+const outcome = ref(initial.outcome);
 
 function applyTicker(): void {
   ticker.value = tickerText.value.trim();
 }
+
+const appliedFilters = computed(() => ({
+  ticker: ticker.value,
+  method: method.value,
+  outcome: outcome.value,
+}));
+
+// Applying a filter writes it to the query; a query written by a link (the
+// Saved runs navigation item, a breadcrumb) sets the filters. The route is
+// shared and changes before this screen goes away, so only this screen's own
+// route counts.
+watch(appliedFilters, (filters) => {
+  if (route.name !== 'runs') return;
+  void router.replace({ name: 'runs', query: filtersToQuery(filters) });
+});
+watch(
+  () => route.query,
+  (query) => {
+    if (route.name !== 'runs') return;
+    const filters = filtersFromQuery(query);
+    tickerText.value = filters.ticker;
+    ticker.value = filters.ticker;
+    method.value = filters.method;
+    outcome.value = filters.outcome;
+  },
+);
 
 function clearFilters(): void {
   tickerText.value = '';
@@ -72,7 +111,7 @@ const list = usePagedList(
 </script>
 
 <template>
-  <AppBreadcrumb :current="t('nav.runs')" />
+  <AppBreadcrumb :crumbs="[{ label: t('nav.runs') }]" />
   <h1>{{ t('nav.runs') }}</h1>
   <form class="filters" @submit.prevent="applyTicker">
     <label>
@@ -135,6 +174,7 @@ const list = usePagedList(
             <th scope="col">{{ t('runs.columns.ticker') }}</th>
             <th scope="col">{{ t('runs.columns.strategy') }}</th>
             <th scope="col">{{ t('runs.columns.outcome') }}</th>
+            <th scope="col">{{ t('runs.columns.savedBy') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -142,10 +182,23 @@ const list = usePagedList(
             v-for="run in list.state.value.data.items"
             :key="run.analysis_run_id"
           >
-            <th scope="row">{{ formatInstant(locale, run.completed_at) }}</th>
+            <th scope="row">
+              <RouterLink
+                :to="runFromRunsLocation(run.analysis_run_id, appliedFilters)"
+                >{{ formatInstant(locale, run.completed_at) }}</RouterLink
+              >
+            </th>
             <td>{{ run.ticker }}</td>
             <td><StrategyName :method-id="run.method_id" /></td>
             <td><OutcomePill :code="run.outcome" /></td>
+            <td>
+              <RouterLink
+                v-if="run.refresh_id !== null"
+                :to="compareLocation(run.refresh_id)"
+                >{{ t('runs.savedBy.refresh') }}</RouterLink
+              >
+              <template v-else>{{ t('runs.savedBy.direct') }}</template>
+            </td>
           </tr>
         </tbody>
       </table>

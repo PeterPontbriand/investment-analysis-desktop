@@ -29,10 +29,14 @@ const { state, reload } = useScreenData(
 
 <template>
   <AppBreadcrumb
-    :current="
-      state.kind === 'ready' ? state.data.display_name : t('nav.watchlists')
+    :crumbs="
+      state.kind === 'ready'
+        ? [
+            { label: t('nav.watchlists'), to: { name: 'watchlists' } },
+            { label: state.data.display_name },
+          ]
+        : [{ label: t('nav.watchlists') }]
     "
-    :in-watchlists="state.kind === 'ready'"
   />
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <template v-else>

@@ -4,6 +4,7 @@ import { useEngine } from '../api/engine.ts';
 import { pageSize, usePagedList } from '../api/useScreenData.ts';
 import { formatCompletion, formatCount } from '../i18n/format.ts';
 import { useMessages, type MessageKey } from '../i18n/index.ts';
+import { compareLocation } from '../views/navigation.ts';
 import EmptyMessage from './EmptyMessage.vue';
 import ScreenState from './ScreenState.vue';
 import TableScroll from './TableScroll.vue';
@@ -76,13 +77,13 @@ function countOf(counts: Record<string, number>, code: string): string {
             :key="refresh.refresh_id"
           >
             <th scope="row">
-              {{
+              <RouterLink :to="compareLocation(refresh.refresh_id)">{{
                 formatCompletion(
                   locale,
                   refresh.first_completed_at,
                   refresh.last_completed_at,
                 )
-              }}
+              }}</RouterLink>
             </th>
             <td>{{ refresh.watchlist_name ?? t('refreshes.adHoc') }}</td>
             <td class="num">{{ formatCount(locale, refresh.run_count) }}</td>

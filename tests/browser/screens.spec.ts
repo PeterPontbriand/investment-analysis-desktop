@@ -319,6 +319,7 @@ test.describe('saved runs', () => {
       en.runs.columns.ticker,
       en.runs.columns.strategy,
       en.runs.columns.outcome,
+      en.runs.columns.savedBy,
     ]);
     await expect
       .poll(() => cells(rows(page).nth(0)))
@@ -327,6 +328,7 @@ test.describe('saved runs', () => {
         'MSFT',
         'Graham Number',
         'Completed',
+        en.runs.savedBy.direct,
       ]);
     await expect(
       rows(page).nth(0).locator('td').nth(1).locator('[data-term-id]'),
@@ -345,6 +347,7 @@ test.describe('saved runs', () => {
         'ZED',
         'Quality Screen',
         'Completed',
+        en.runs.savedBy.refresh,
       ]);
   });
 
@@ -531,6 +534,7 @@ test.describe('errors', () => {
         'MSFT',
         'Graham Number',
         'Completed',
+        en.runs.savedBy.direct,
       ]);
     await expect(
       page.getByLabel(en.runs.filters.strategy).locator('option'),
