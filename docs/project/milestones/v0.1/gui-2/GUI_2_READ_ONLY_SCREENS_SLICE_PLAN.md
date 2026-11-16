@@ -15,7 +15,7 @@
 | GUI.2b1 | [Shared groundwork, watchlists, refreshes and saved runs](#gui2b1--shared-groundwork-watchlists-refreshes-and-saved-runs) | Complete | 2026-11-13 |
 | GUI.2b1a | [Smoke tool follows `ian`](#gui2b1a--smoke-tool-follows-ian) | Complete | 2026-11-14 |
 | GUI.2b2 | [Styling foundation](#gui2b2--styling-foundation) | Complete | 2026-11-15 |
-| GUI.2b3 | [Comparison and run detail](#gui2b3--comparison-and-run-detail) | Next | |
+| GUI.2b3 | [Comparison and run detail](#gui2b3--comparison-and-run-detail) | Complete | 2026-11-15 |
 
 ## Sub-slices
 
@@ -62,11 +62,9 @@
 ### GUI.2b3 — Comparison and run detail
 
 - **Problem:** Investors need to compare a refresh's runs across tickers and strategies and read one run in full.
-- **Decision:** Build the refresh comparison and run detail on the GUI.2b1 groundwork and the GUI.2b2 styling foundation (D86, D91, D92, D94, D120).
-- **Scope:** the refresh comparison screen; the run detail screen with its header, headline cards, warnings and limitations, the concise, details and diagnostics text, and the JSON document; links from refresh and run rows to them.
-- **Branch:** `feat/gui-2b3-compare-detail`, from main after GUI.2b2 merges, built on the styling foundation; its own pull request. Its own open decisions are taken before it starts (D96).
-- **Open decisions for this sub-slice:**
-  - Saved runs rows can look identical: runs of the same ticker, strategy and outcome completed in the same minute, such as a refresh's run and a direct analysis, show the same row. Decide whether the list shows seconds, where a run came from (a refresh or a direct analysis), or both, together with the links to run detail (found in GUI.2b1's second smoke run).
+- **Decision:** Build the refresh comparison and run detail on the GUI.2b1 groundwork and the GUI.2b2 styling foundation (D86, D91, D92, D94, D120), as D155 to D168 decide.
+- **Scope:** the IAN re-vendor (D155); the refresh comparison screen (D160); the run detail screen with its header, headline cards, warnings and limitations, the concise, details and diagnostics text, and the JSON document (D161 to D164); the routes, breadcrumbs and links from refresh and run rows (D157, D158); the Saved runs "Saved by" column and its filters in the route query (D157, D159); typed fixtures and tests (D166); the smoke test documentation, its setup and its targeted run (D167, D168).
+- **Branch:** `feat/gui-2b3-compare-detail`, from main after GUI.2b2 merges, built on the styling foundation; one pull request (D156). Its decisions are D155 to D168.
 - **Detail:** This plan owns GUI.2b3's [file scope](#file-scope-5) and [acceptance criteria](#acceptance-criteria-5).
 
 ## Scope limits
@@ -234,21 +232,26 @@
 
 ### File scope
 
+- `vendor/ian/openapi.json`, `vendor/ian/SOURCE.md` and `src/api/schema.ts`, for the re-vendor (D155).
 - The comparison and run detail screens and their components under `src/`, and router entries.
-- Catalog entries for the application's own text on those screens.
+- The Saved runs screen, `RefreshesTable`, `AppBreadcrumb` and their existing users, for the links, the breadcrumb list and the "Saved by" column (D157 to D159).
+- Catalog entries for the application's own text on those screens, and the test catalog.
 - Typed fixtures and Vitest and Playwright tests for the screens.
-- This plan's status row and the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md)'s GUI.2 row.
+- `docs/project/SMOKE_TESTING.md`, `tools/smoke/` and its tests under `tests/tools/`, and `AGENTS.md` (D167, D168).
+- This plan's status row and decision rows, the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md)'s GUI.2 and GUI.3 rows, and its GUI.4 section (D165).
 
 ### Acceptance criteria
 
-- The run detail header shows the company name and ticker, the strategy name, the status as its term name and the effective as-of; headline cards come from the run overview, with `warnings` and `limitations` as lists below them (D86).
-- The comparison follows D91: a sticky ticker column, horizontally scrolling strategy groups, an outcome column only in a group with a non-completed run, "Not run" for a null run, and no "Refresh now" or "Download JSON".
-- Run detail has Summary, Details, Diagnostics and JSON views as read-only selectable blocks, with `lang` and `dir` as D92 sets them.
+- The run detail header shows the company name and ticker, the strategy name from the overview, the outcome as a pill, when the run was saved, the effective as-of, the period end and where it was saved; headline cards come from the run overview, with `warnings` and `limitations` as lists below them, and the overview shows even when the full document fails (D86, D161 to D163).
+- The comparison follows D91 and D160: a heading and counts line from the document, a sticky ticker column, horizontally scrolling strategy groups, an outcome column only in a group with a non-completed run, "Not run" for a null run, every cell of a run a link to its detail, and no "Refresh now" or "Download JSON".
+- Run detail has Summary, Details, Diagnostics and JSON views as read-only selectable blocks, with `lang` and `dir` as D92 sets them, in the WAI-ARIA tabs pattern of D164.
+- The breadcrumbs follow D157, the Saved runs filters survive a visit to run detail, and the Saved runs "Saved by" column follows D159.
 - Every displayed number, label, status, code and unit comes from an API document; numbers and dates are formatted with `Intl` from raw values and the document's unit (D85).
 - A status, outcome or reason code is shown as its help term's name, and each such element carries its term id.
 - A made-up strategy appears in the comparison and run detail with no GUI code change (D94).
 - The comparison puts ticker and strategy first and the headline value most prominent, following the user answer to Q3 in the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md#questions-for-potential-users-before-gui2-scope-is-fixed).
-- The pull request records a manual run against a real engine at the vendored IAN commit.
+- The vendored API description is IAN commit `4ddfbb6` (D155).
+- The pull request records the targeted run D167 names.
 - `pnpm gate` passes on Windows, macOS and Linux.
 
 ## Background

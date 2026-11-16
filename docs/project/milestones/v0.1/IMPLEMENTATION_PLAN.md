@@ -12,8 +12,8 @@
 | :--- | :--- | :--- | :--- |
 | GUI.0 | [Charter and governance](#gui0-charter-and-governance) | Complete | 2026-10-30 |
 | GUI.1 | [Technology decision and scaffold](#gui1-technology-decision-and-scaffold) | Complete | 2026-11-02 |
-| GUI.2 | [Read-only screens against IAN API.2](#gui2-read-only-screens) | Next | |
-| GUI.3 | [Actions and refresh progress against IAN API.4](#gui3-actions-and-refresh-progress) | Planned | |
+| GUI.2 | [Read-only screens against IAN API.2](#gui2-read-only-screens) | Complete | 2026-11-15 |
+| GUI.3 | [Actions and refresh progress against IAN API.4](#gui3-actions-and-refresh-progress) | Next | |
 | GUI.4 | [Help in place against IAN API.6](#gui4-help-in-place) | Planned | |
 | GUI.5 | [First-run screen and installer](#gui5-first-run-and-installer) | Planned | |
 | GUI.6 | [Preview release and feedback intake](#gui6-preview-release-and-feedback) | Planned | |
@@ -60,7 +60,7 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 
 - **Problem:** New investors need explanations without leaving the application.
 - **Decision:** Load all analysis explanations and term links from IAN's /v1/help endpoints.
-- **Scope:** Show a short definition popup on hover or keyboard focus; open a help panel on click with the full entry, linked terms, and longer guide. Make the same help available through explicit controls on touch screens. Keep help links inside the application; optional further-reading links may open externally. A run's own derivation stays in its Details view.
+- **Scope:** Show a short definition popup on hover or keyboard focus; open a help panel on click with the full entry, linked terms, and longer guide. Make the same help available through explicit controls on touch screens. Keep help links inside the application; optional further-reading links may open externally. A run's own derivation stays in its Details view. GUI.4 also decides whether the application's own labels that the comparison and run detail show with no term id ("Saved", "As of", "Saved by", "Warnings", "Limitations", "Not run", "Refresh comparison" and "Ad hoc entries") get help; IAN's glossary has an "As-of Date" term, for example (D165 in the [GUI.2 read-only screens slice plan](gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record)).
 - **Branch:** A dedicated GUI.4 branch after IAN API.6 merges and GUI.1 establishes the scaffold.
 - **Detail:** ⚠ no slice plan yet.
 
