@@ -25,7 +25,8 @@
     "loading": "Loading…"
   },
   "state": {
-    "defect": "Something went wrong in the analysis engine."
+    "defect": "Something went wrong in the analysis engine.",
+    "renderFailed": "Something went wrong in the application. Try another screen, or restart the application."
   },
   "watchlists": {
     "columns": {

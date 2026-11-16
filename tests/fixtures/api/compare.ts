@@ -190,7 +190,13 @@ export const coreComparison: Schemas['RunsCompareDocument'] = {
         },
         {
           method_id: 'graham_number',
-          run: compareRun(2, 'completed', grahamCells(), null, '2025-12-31'),
+          run: compareRun(
+            2,
+            'completed',
+            grahamCells(),
+            null,
+            '2025-12-31T00:00:00+00:00',
+          ),
         },
         {
           method_id: 'quality_screen',
@@ -379,7 +385,7 @@ export const runDetails: Record<string, RunDetail> = {
       null,
       grahamCells(),
       null,
-      '2025-12-31',
+      '2025-12-31T00:00:00+00:00',
     ),
     document: documentOf(
       'MSFT',
@@ -461,7 +467,7 @@ export const runDetails: Record<string, RunDetail> = {
       coreRefreshId,
       grahamCells(),
       null,
-      '2025-12-31',
+      '2025-12-31T00:00:00+00:00',
     ),
     document: documentOf('ACME', 'Acme Corp', 'graham_number', '2026-10-30'),
   },

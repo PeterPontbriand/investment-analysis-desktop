@@ -25,7 +25,8 @@
     "loading": "[ar-XB] Loading…"
   },
   "state": {
-    "defect": "[ar-XB] Something went wrong in the analysis engine."
+    "defect": "[ar-XB] Something went wrong in the analysis engine.",
+    "renderFailed": "[ar-XB] Something went wrong in the application. Try another screen, or restart the application."
   },
   "watchlists": {
     "columns": {

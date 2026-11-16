@@ -857,3 +857,44 @@ test.describe('request failures by reason code group', () => {
     });
   }
 });
+
+test.describe('served period end', () => {
+  test('shows the UTC date of a period end served as a midnight-UTC instant', async ({
+    page,
+  }) => {
+    // The first saved run is a Graham Number run whose period end is served
+    // as 2025-12-31T00:00:00+00:00, the form the engine uses.
+    expect(runDetails[savedId(1)]?.overview.headline?.period_end).toBe(
+      '2025-12-31T00:00:00+00:00',
+    );
+    await openRun(page, 0);
+    await expect(page.locator('.meta li').nth(3)).toContainText(
+      'fiscal year-end Dec 31, 2025',
+    );
+  });
+});
+
+test.describe('render errors', () => {
+  test.use({
+    allowedConsoleErrors: ['Invalid time value', 'date value is not finite'],
+  });
+
+  test('shows one message in place of a screen that fails to render, and keeps the navigation working', async ({
+    page,
+  }) => {
+    const broken = structuredClone(runDetails[savedId(1)]!.overview);
+    broken.headline!.period_end = 'not a date';
+    await openRuns(page, (url) =>
+      url.pathname === `/v1/runs/${savedId(1)}/overview`
+        ? ok(broken)
+        : undefined,
+    );
+    await rows(page).nth(0).locator('th a').click();
+    await expect(page.getByRole('alert')).toHaveText(en.state.renderFailed);
+    await nav(page).getByRole('link', { name: en.nav.refreshes }).click();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      en.nav.refreshes,
+    );
+  });
+});

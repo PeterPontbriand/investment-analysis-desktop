@@ -92,16 +92,18 @@ export function formatInstant(locale: string, instant: string): string {
   );
 }
 
+const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
+
 // A date with no time of day (a period end, an as-of date), formatted in UTC so
-// the day never shifts with the user's time zone.
-export function formatDate(locale: string, date: string): string {
+// the day never shifts with the user's time zone. The value is a bare date or
+// an instant (the engine serves a period end as a midnight-UTC instant): the
+// date shown is its calendar date in UTC.
+export function formatDate(locale: string, value: string): string {
   return new Intl.DateTimeFormat(locale, {
     dateStyle: 'medium',
     timeZone: 'UTC',
-  }).format(new Date(`${date}T00:00:00Z`));
+  }).format(new Date(dateOnly.test(value) ? `${value}T00:00:00Z` : value));
 }
-
-const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
 
 // A value that is a date or an instant, such as an entry's as-of. Null is the
 // caller's catalog text.
