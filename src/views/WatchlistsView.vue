@@ -57,15 +57,13 @@ async function submit(name: string): Promise<void> {
 
 <template>
   <h1 ref="heading" tabindex="-1">{{ t('nav.watchlists') }}</h1>
-  <div role="status">
-    <p v-if="notice !== null">
-      {{
-        notice.count === undefined
-          ? t(notice.key, notice.parameters)
-          : plural(notice.key, notice.count, notice.parameters)
-      }}
-    </p>
-  </div>
+  <p v-if="notice !== null" role="status">
+    {{
+      notice.count === undefined
+        ? t(notice.key, notice.parameters)
+        : plural(notice.key, notice.count, notice.parameters)
+    }}
+  </p>
   <p v-if="!creating">
     <button ref="newButton" type="button" @click="openForm()">
       {{ t('watchlists.newWatchlist') }}
