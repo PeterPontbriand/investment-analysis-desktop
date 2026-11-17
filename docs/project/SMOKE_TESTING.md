@@ -99,16 +99,19 @@ Expect the second command to name the throwaway file and report `State: ready`. 
 
 The commands are those of the engine's [local research workspace guide](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/WORKSPACE.md). The tickers are ordinary large companies, apart from SPY, an exchange-traded fund, and the whole setup saves six runs.
 
-Step 5. Create two watchlists, one of them left empty:
+Step 5. Create three watchlists, one of them left empty and one kept for the checks that change a watchlist:
 
 ```powershell
 ian watchlist create "Smoke Test"
 ian watchlist create "Smoke Test Empty"
+ian watchlist create "Smoke Test Scratch"
 ```
 
 `pnpm smoke` runs this step.
 
-Step 6. Fill the first watchlist with five entries. They have no [as-of](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#as-of-date), a date as-of and a timestamp as-of with a timezone offset, in more than one strategy. The last entry runs the Piotroski F-Score on SPY, an exchange-traded fund that the strategy cannot score, so its run is not applicable: the comparison then shows an outcome column, "Not run" cells and a third strategy group. `--as-of` takes `YYYY-MM-DD` or a timezone-aware ISO-8601 timestamp:
+Step 6. Fill the first watchlist with five entries, then give `Smoke Test Scratch` four entries of its own, with no as-of: KO and MSFT, each under momentum and Graham number. `Smoke Test Scratch` is never refreshed.
+
+The first watchlist's five entries They have no [as-of](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#as-of-date), a date as-of and a timestamp as-of with a timezone offset, in more than one strategy. The last entry runs the Piotroski F-Score on SPY, an exchange-traded fund that the strategy cannot score, so its run is not applicable: the comparison then shows an outcome column, "Not run" cells and a third strategy group. `--as-of` takes `YYYY-MM-DD` or a timezone-aware ISO-8601 timestamp:
 
 ```powershell
 ian watchlist add-selection momentum "Smoke Test" KO
@@ -116,11 +119,15 @@ ian watchlist add-selection momentum "Smoke Test" MSFT --as-of 2025-12-31
 ian watchlist add-selection momentum "Smoke Test" AAPL --as-of 2025-12-31T16:00:00-05:00
 ian watchlist add-selection graham-number "Smoke Test" KO
 ian watchlist add-selection piotroski "Smoke Test" SPY
+ian watchlist add-selection momentum "Smoke Test Scratch" KO
+ian watchlist add-selection momentum "Smoke Test Scratch" MSFT
+ian watchlist add-selection graham-number "Smoke Test Scratch" KO
+ian watchlist add-selection graham-number "Smoke Test Scratch" MSFT
 ```
 
 `pnpm smoke` runs this step.
 
-Expect each command to print the watchlist with the new entry numbered after the earlier ones.
+Expect each command to print the watchlist with the new entry numbered after the earlier ones. `Smoke Test Scratch` ends with four entries and `Smoke Test` with five.
 
 Step 7. Refresh the first watchlist:
 
@@ -180,7 +187,7 @@ Check N4. The shell follows the look of the preview mock-ups. The navigation at 
 
 ## W. Watchlists
 
-Check W1. The Watchlists screen lists both watchlists. `Smoke Test` has 5 entries and `Smoke Test Empty` has 0, each with its created time. A watchlist that was never changed shows a dash for its last change; the one you added entries to shows a time.
+Check W1. The Watchlists screen lists all three watchlists. `Smoke Test` has 5 entries, `Smoke Test Empty` has 0 and `Smoke Test Scratch` has 4, each with its created time. A watchlist that was never changed shows a dash for its last change; the two you added entries to show a time.
 
 Check W2. Times are in your time zone. They agree with the clock of the moment you ran the setup commands.
 
@@ -346,7 +353,7 @@ It stops with a plain message instead of guessing, and writes the record so far 
 - **A setup command failed:** the message names the step and the command, and its output is in the record. For a provider failure, see the engine's troubleshooting guide.
 - **The start fails with "Access is denied" removing the application's executable:** an earlier copy of the application is still running. Close it, or end it with `Get-Process investment-analysis-desktop -ErrorAction SilentlyContinue | Stop-Process`, and run `pnpm smoke` again.
 - **The refresh completed no run:** check the providers with `ian health`, then run `pnpm smoke` again, which makes a new throwaway database.
-- **The counts are not the setup's:** the setup leaves 6 runs, 1 refresh of 5 runs and 2 watchlists with 5 entries in all. Run `pnpm smoke` again, which makes a new throwaway database.
+- **The counts are not the setup's:** the setup leaves 6 runs, 1 refresh of 5 runs and 3 watchlists with 9 entries in all. Run `pnpm smoke` again, which makes a new throwaway database.
 
 Cleaning up, and restarting the application for the engine-problem checks (Checks E1 and E2), stay manual.
 

@@ -390,8 +390,8 @@ describe('setup', () => {
       'Step 2: reading the state of your real database (read only)…',
       'Step 3: creating the throwaway database folder .tmp/smoke/20261113-090507…',
       "Step 4: creating the throwaway database's schema…",
-      'Step 5: creating the Smoke Test and Smoke Test Empty watchlists…',
-      'Step 6: adding five entries to the Smoke Test watchlist…',
+      'Step 5: creating the Smoke Test, Smoke Test Empty and Smoke Test Scratch watchlists…',
+      'Step 6: adding five entries to the Smoke Test watchlist and four to Smoke Test Scratch…',
       'Step 7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
       'Step 8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
       'Step 9: reading back the saved runs, refreshes and watchlists to check their counts…',
@@ -421,8 +421,8 @@ describe('setup', () => {
       'Step 9',
     ]);
     expect(session.data).toEqual({
-      watchlists: 2,
-      entries: 5,
+      watchlists: 3,
+      entries: 9,
       runs: 6,
       refreshes: 1,
     });
