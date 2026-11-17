@@ -17,6 +17,48 @@ const watchlistPath = `/v1/watchlists/${coreId}`;
 const loadsOf = (engine: Awaited<ReturnType<typeof mockEngine>>) =>
   engine.actions('GET', watchlistPath).length;
 
+// With a dialog open: it is modal, the page behind it cannot take focus or
+// clicks, and Escape still closes it. The caller checks where focus returns.
+async function expectInert(
+  page: Page,
+  engine: Awaited<ReturnType<typeof mockEngine>>,
+) {
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  expect(await dialog.evaluate((element) => element.matches(':modal'))).toBe(
+    true,
+  );
+  const url = page.url();
+  const requests = engine.requests.length;
+  const rename = page.getByRole('button', { name: en.watchlist.rename });
+  const navigation = page
+    .getByRole('navigation', { name: en.nav.label })
+    .getByRole('link', { name: en.nav.watchlists });
+  for (const behind of [rename, navigation]) {
+    await behind.evaluate((element) => (element as HTMLElement).focus());
+    expect(
+      await page.evaluate(
+        () => document.activeElement?.closest('dialog') != null,
+      ),
+      'focus stays in the dialog',
+    ).toBe(true);
+    // A real click at the centre of the control, not an element click.
+    const box = await behind.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.click(
+      (box?.x ?? 0) + (box?.width ?? 0) / 2,
+      (box?.y ?? 0) + (box?.height ?? 0) / 2,
+    );
+    await expect(dialog).toBeVisible();
+    expect(page.url()).toBe(url);
+    await expect(page.getByLabel(en.actions.nameLabel)).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Core');
+  }
+  expect(engine.requests.length).toBe(requests);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+}
+
 async function open(page: Page, handler?: Handler) {
   const engine = await mockEngine(page, handler);
   await page.goto(engineUrl);
@@ -301,21 +343,59 @@ test.describe('remove entries', () => {
     const name = removeButton(1, 'ACME', 'Momentum');
     await press(page, name);
     const dialog = page.getByRole('dialog');
-    for (let i = 0; i < 8; i += 1) {
-      await page.keyboard.press('Tab');
-      // The browser may hand focus to its own window; the page behind the
-      // dialog is inert, so focus is never on it.
+    const controls = ['radio', en.actions.cancel, en.watchlist.removeAction];
+    // Two full cycles each way: every control is reached at least twice. A
+    // step where the document has no focus means the browser handed focus to
+    // its own window; it is the only exception and it is not a stop. WebKit
+    // also stops once per cycle on the dialog element itself, which is inside
+    // the dialog; any other element, or the body with the document focused,
+    // fails.
+    for (const direction of ['Tab', 'Shift+Tab']) {
+      const reached = new Map<string, number>();
+      for (let presses = 0; ; presses += 1) {
+        if (controls.every((control) => (reached.get(control) ?? 0) >= 2))
+          break;
+        expect(presses, `${direction} never completed two cycles`).toBeLessThan(
+          20,
+        );
+        await page.keyboard.press(direction);
+        const focus = await page.evaluate(() => {
+          const element = document.activeElement;
+          const dialog = document.querySelector('dialog');
+          const inside = element !== null && dialog?.contains(element) === true;
+          return {
+            documentFocused: document.hasFocus(),
+            inside,
+            stop:
+              element === dialog
+                ? 'dialog'
+                : element instanceof HTMLInputElement &&
+                    element.type === 'radio'
+                  ? 'radio'
+                  : (element?.textContent?.trim() ?? ''),
+          };
+        });
+        if (!focus.documentFocused) continue;
+        expect(focus.inside, `${direction}: focus left the dialog`).toBe(true);
+        reached.set(focus.stop, (reached.get(focus.stop) ?? 0) + 1);
+      }
       expect(
-        await page.evaluate(
-          () =>
-            document.activeElement === document.body ||
-            document.activeElement?.closest('dialog') != null,
-        ),
-      ).toBe(true);
+        [...reached.keys()].filter((stop) => stop !== 'dialog').sort(),
+        direction,
+      ).toEqual([...controls].sort());
     }
     await page.keyboard.press('Escape');
     await expect(dialog).toHaveCount(0);
     await expect(page.getByRole('button', { name })).toBeFocused();
+  });
+
+  test('keeps the page behind the remove dialog inert', async ({ page }) => {
+    const engine = await openCore(page);
+    await press(page, removeButton(1, 'ACME', 'Momentum'));
+    await expectInert(page, engine);
+    await expect(
+      page.getByRole('button', { name: removeButton(1, 'ACME', 'Momentum') }),
+    ).toBeFocused();
   });
 
   test('shows an action failure inside the dialog and keeps it open', async ({
@@ -422,6 +502,15 @@ test.describe('delete', () => {
       page.getByRole('status').filter({ hasText: 'Deleted Core.' }),
     ).toBeVisible();
     expect(engine.actions('DELETE', watchlistPath)).toHaveLength(1);
+  });
+
+  test('keeps the page behind the delete dialog inert', async ({ page }) => {
+    const engine = await openCore(page);
+    await press(page, en.watchlist.delete);
+    await expectInert(page, engine);
+    await expect(
+      page.getByRole('button', { name: en.watchlist.delete }),
+    ).toBeFocused();
   });
 
   test('Escape closes the dialog and returns focus to Delete', async ({
