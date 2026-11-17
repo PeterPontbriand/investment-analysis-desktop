@@ -162,10 +162,22 @@ test.describe('watchlists', () => {
     const entries = page.locator('table').first().locator('tbody tr');
     await expect
       .poll(() => cells(entries.nth(0)))
-      .toEqual(['1', 'ACME', 'Momentum', en.watchlist.latestData]);
+      .toEqual([
+        '1',
+        'ACME',
+        'Momentum',
+        en.watchlist.latestData,
+        en.watchlist.removeAction,
+      ]);
     await expect
       .poll(() => cells(entries.nth(1)))
-      .toEqual(['2', 'ACME', 'Graham Number', dec31]);
+      .toEqual([
+        '2',
+        'ACME',
+        'Graham Number',
+        dec31,
+        en.watchlist.removeAction,
+      ]);
     // The made-up strategy needs no GUI code.
     await expect
       .poll(() => cells(entries.nth(2)))
@@ -174,6 +186,7 @@ test.describe('watchlists', () => {
         'ZED',
         'Quality Screen',
         await instantText(page, '2026-10-30T18:02:00+00:00'),
+        en.watchlist.removeAction,
       ]);
     await expect(entries.nth(2).locator('[data-term-id]')).toHaveAttribute(
       'data-term-id',

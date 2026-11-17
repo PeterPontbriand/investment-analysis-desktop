@@ -111,7 +111,10 @@ function closeRemove(): void {
   if (failed) void reload();
 }
 
+let lastChoice: RemoveChoice = 'entry';
+
 async function confirmRemove(choice: RemoveChoice): Promise<void> {
+  lastChoice = choice;
   const entry = removing.value;
   if (entry === null) return;
   const result = await remove.run((client) => {
@@ -247,7 +250,6 @@ const deleteTitle = computed(() =>
         :error="rename.failure.value"
         @submit="submitRename"
         @cancel="closeRename()"
-        @retry="rename.clear()"
       />
       <h1 v-else ref="heading" tabindex="-1">{{ state.data.display_name }}</h1>
       <div class="actions">
@@ -331,7 +333,7 @@ const deleteTitle = computed(() =>
       :opener="removeOpener"
       @confirm="confirmRemove"
       @cancel="closeRemove()"
-      @retry="remove.clear()"
+      @retry="confirmRemove(lastChoice)"
     />
   </template>
   <ConfirmDialog
@@ -344,7 +346,7 @@ const deleteTitle = computed(() =>
     :opener="deleteOpener"
     @confirm="confirmDelete()"
     @cancel="closeDelete()"
-    @retry="removeWatchlist.clear()"
+    @retry="confirmDelete()"
   >
     <p v-if="deleting.entries !== null">
       {{ plural('watchlist.deleteEntries', deleting.entries) }}

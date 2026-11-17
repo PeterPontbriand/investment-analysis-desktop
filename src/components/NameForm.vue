@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* global HTMLInputElement -- DOM types; src/ configures no browser globals */
-import { computed, nextTick, ref, useId, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, useId, watch } from 'vue';
 import { useMessages } from '../i18n/index.ts';
 import ActionFailure from './ActionFailure.vue';
 
@@ -18,7 +18,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   submit: [name: string];
   cancel: [];
-  retry: [];
 }>();
 
 const { t } = useMessages();
@@ -32,6 +31,12 @@ const hasError = computed(
   () => blank.value || (props.error !== null && props.error !== undefined),
 );
 
+let lastName = props.initial;
+
+function retry(): void {
+  emit('submit', lastName);
+}
+
 function submit(): void {
   if (props.pending) return;
   if (name.value.trim() === '') {
@@ -39,8 +44,14 @@ function submit(): void {
     return;
   }
   blank.value = false;
+  lastName = name.value;
   emit('submit', name.value);
 }
+
+onMounted(() => {
+  input.value?.focus();
+  input.value?.select();
+});
 
 // Focus goes to the field when a message appears at it, so the message is read.
 watch(hasError, async (shown) => {
@@ -88,7 +99,7 @@ defineExpose({ focus: () => input.value?.focus() });
       :id="messageId"
       class="field-message"
       :error="error"
-      @retry="$emit('retry')"
+      @retry="retry()"
     />
   </form>
 </template>

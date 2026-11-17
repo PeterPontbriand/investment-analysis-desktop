@@ -27,20 +27,18 @@ onMounted(() => {
 });
 
 const creating = ref(false);
-const opener = ref<HTMLElement | null>(null);
 const newButton = ref<HTMLButtonElement | null>(null);
 const create = useAction();
 
 function openForm(): void {
   create.clear();
   creating.value = true;
-  opener.value = newButton.value;
 }
 
 function closeForm(): void {
   creating.value = false;
   create.clear();
-  void nextTick(() => opener.value?.focus());
+  void nextTick(() => newButton.value?.focus());
 }
 
 async function submit(name: string): Promise<void> {
@@ -78,7 +76,6 @@ async function submit(name: string): Promise<void> {
     :error="create.failure.value"
     @submit="submit"
     @cancel="closeForm()"
-    @retry="create.clear()"
   />
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <EmptyMessage v-else-if="state.data.items.length === 0">{{
