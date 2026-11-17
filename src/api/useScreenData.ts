@@ -29,7 +29,13 @@ export function useScreenData<T>(
   load: (client: ApiClient) => Promise<T>,
   terms: TermDocument[],
   sources: WatchSource[] = [],
-): { state: ShallowRef<ScreenState<T>>; reload: () => Promise<void> } {
+): {
+  state: ShallowRef<ScreenState<T>>;
+  reload: () => Promise<void>;
+  // Shows a document the engine answered an action with, with no request. A
+  // load still pending is dropped, so it cannot overwrite the newer document.
+  replace: (data: T) => void;
+} {
   const engine = useEngine();
   const { locale } = useMessages();
   const state = shallowRef<ScreenState<T>>({ kind: 'connecting' });
@@ -56,8 +62,13 @@ export function useScreenData<T>(
     }
   }
 
+  function replace(data: T): void {
+    latest += 1;
+    state.value = { kind: 'ready', data };
+  }
+
   watch([engine.state, locale, ...sources], reload, { immediate: true });
-  return { state, reload };
+  return { state, reload, replace };
 }
 
 export type Page<Item> = { items: Item[]; has_more: boolean };

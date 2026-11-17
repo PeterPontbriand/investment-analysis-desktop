@@ -35,7 +35,11 @@
       "created": "Created",
       "updated": "Last changed"
     },
-    "empty": "There are no watchlists yet."
+    "empty": "There are no watchlists yet.",
+    "newWatchlist": "New watchlist",
+    "create": "Create",
+    "deleted": "Deleted {name}.",
+    "deletedUnnamed": "Deleted the watchlist."
   },
   "watchlist": {
     "summary": "{count} entry · created {date} | {count} entries · created {date}",
@@ -43,12 +47,30 @@
       "position": "#",
       "ticker": "Ticker",
       "strategy": "Strategy",
-      "asOf": "As of"
+      "asOf": "As of",
+      "actions": "Actions"
     },
     "latestData": "Latest data",
     "noEntries": "This watchlist has no entries.",
     "refreshesHeading": "Refreshes of this watchlist",
-    "noRefreshes": "This watchlist has not been refreshed yet."
+    "noRefreshes": "This watchlist has not been refreshed yet.",
+    "rename": "Rename",
+    "save": "Save",
+    "delete": "Delete",
+    "deleteThis": "Delete this watchlist",
+    "removeAction": "Remove",
+    "removeEntry": "Remove entry {index}: {ticker}, {strategy}",
+    "removeTitle": "Remove from {watchlist}",
+    "removeChoices": "What to remove",
+    "optionEntry": "Entry {index}: {ticker}, {strategy}",
+    "optionTicker": "Every entry for {ticker} ({count})",
+    "optionMethod": "Every {strategy} entry ({count})",
+    "confirmEntry": "Remove entry {index}: {ticker}, {strategy}?",
+    "removed": "Removed {count} entry. | Removed {count} entries.",
+    "removedNone": "No entries were removed. The watchlist had already changed.",
+    "deleteTitle": "Delete {name}?",
+    "deleteTitleNoName": "Delete this watchlist?",
+    "deleteEntries": "It has {count} entry, which will be deleted with it. | It has {count} entries, which will be deleted with it."
   },
   "refreshes": {
     "columns": {
@@ -134,5 +156,15 @@
       "diagnostics": "Diagnostics",
       "json": "JSON"
     }
+  },
+  "actions": {
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "removing": "Removing…",
+    "deleting": "Deleting…",
+    "refreshRunning": "A refresh is already running.",
+    "runsKept": "Saved runs are kept.",
+    "nameLabel": "Name",
+    "nameRequired": "Enter a name."
   }
 }

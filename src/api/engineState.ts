@@ -37,9 +37,13 @@ export function connectionMessage(
   }
 }
 
-// Failures about one stored thing: the API's reason message is shown as given.
-const resourceStateCodes = new Set([
+// Failures whose reason message the API words for a person: shown as given.
+// They are failures about one stored thing, or about an action's request.
+const reasonShownCodes = new Set([
   'watchlist_not_found',
+  'watchlist_name_conflict',
+  'watchlist_empty',
+  'watchlist_entry_not_found',
   'analysis_run_not_found',
   'stored_selection_unreadable',
   'unsupported_run_version',
@@ -60,12 +64,15 @@ export function failureView(error: unknown): FailureView {
     if (error.kind === 'unreachable')
       return { kind: 'message', key: 'engine.unreachable', retry: false };
     const code = error.reasonCode;
-    if (code !== null && resourceStateCodes.has(code) && error.reason)
+    if (code !== null && reasonShownCodes.has(code) && error.reason)
       return {
         kind: 'reason',
         text: error.reason,
         lang: error.contentLanguage,
       };
+    // The engine's text for this failure names a raw refresh identifier.
+    if (code === 'refresh_job_running')
+      return { kind: 'message', key: 'actions.refreshRunning', retry: false };
     const database = databaseMessage(code);
     if (database !== null)
       return {
