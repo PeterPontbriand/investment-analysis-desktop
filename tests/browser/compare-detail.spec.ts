@@ -695,6 +695,12 @@ test.describe('run detail views', () => {
     await page.getByRole('tab', { name: en.runDetail.tabs.summary }).click();
     await expect(page.getByRole('tabpanel')).toContainText('in concise mode');
     await page.getByRole('tab', { name: en.runDetail.tabs.details }).click();
+    await expect(page.getByRole('status')).toContainText(
+      en.engine.state.databaseBusy,
+    );
+    await expect(
+      page.getByRole('button', { name: en.common.tryAgain }),
+    ).toBeVisible();
     down = false;
     await page.getByRole('button', { name: en.common.tryAgain }).click();
     await expect(page.getByRole('tabpanel')).toContainText('in details mode');

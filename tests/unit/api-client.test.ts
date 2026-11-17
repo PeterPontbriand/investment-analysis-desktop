@@ -78,7 +78,11 @@ describe('API adapter', () => {
 
     const result = await client(fetchStub).get('/v1/info');
 
-    expect(result).toEqual({ data: info, contentLanguage: 'en' });
+    expect(result).toEqual({
+      data: info,
+      contentLanguage: 'en',
+      status: 200,
+    });
   });
 
   it('returns no language when the response has no Content-Language', async () => {
@@ -154,6 +158,85 @@ describe('API adapter', () => {
       reasonCode: null,
       reason: null,
       contentLanguage: null,
+    });
+  });
+
+  it('sends POST with a JSON body, the content type and the 201 status', async () => {
+    const created = { watchlist_id: 'w1' };
+    const fetchStub = vi.fn().mockResolvedValue(json(created, { status: 201 }));
+
+    const result = await client(fetchStub).post('/v1/watchlists', {
+      body: { name: ' Core ' },
+    });
+
+    const [url, init] = fetchStub.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://127.0.0.1:5000/v1/watchlists');
+    expect(init.method).toBe('POST');
+    expect(init.headers).toEqual({
+      Authorization: 'Bearer secret',
+      'Accept-Language': 'pt-BR',
+      'Content-Type': 'application/json',
+    });
+    expect(JSON.parse(init.body as string)).toEqual({ name: ' Core ' });
+    expect(result.status).toBe(201);
+    expect(result.data).toEqual(created);
+  });
+
+  it('sends PATCH with its path parameter and body', async () => {
+    const fetchStub = vi.fn().mockResolvedValue(json({}));
+
+    await client(fetchStub).patch('/v1/watchlists/{watchlist_id}', {
+      path: { watchlist_id: 'a b' },
+      body: { name: 'New' },
+    });
+
+    const [url, init] = fetchStub.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://127.0.0.1:5000/v1/watchlists/a%20b');
+    expect(init.method).toBe('PATCH');
+    expect(JSON.parse(init.body as string)).toEqual({ name: 'New' });
+  });
+
+  it('sends DELETE with no body and no content type', async () => {
+    const fetchStub = vi.fn().mockResolvedValue(json({}));
+
+    await client(fetchStub).delete(
+      '/v1/watchlists/{watchlist_id}/entries/{entry_number}',
+      { path: { watchlist_id: 'w', entry_number: '3' } },
+    );
+
+    const [url, init] = fetchStub.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('http://127.0.0.1:5000/v1/watchlists/w/entries/3');
+    expect(init.method).toBe('DELETE');
+    expect(init.body).toBeUndefined();
+    expect(init.headers).toEqual({
+      Authorization: 'Bearer secret',
+      'Accept-Language': 'pt-BR',
+    });
+  });
+
+  it("keeps a failure's reason code, reason, errors and language", async () => {
+    const errors = [{ message: 'Bad.', parameters: ['name'] }];
+    const fetchStub = vi
+      .fn()
+      .mockResolvedValue(
+        json(
+          { reason_code: 'invalid_parameter', reason: 'Bad name.', errors },
+          { status: 400, headers: { 'Content-Language': 'en' } },
+        ),
+      );
+
+    const error = await client(fetchStub)
+      .post('/v1/watchlists', { body: { name: '' } })
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({
+      kind: 'failure',
+      status: 400,
+      reasonCode: 'invalid_parameter',
+      reason: 'Bad name.',
+      contentLanguage: 'en',
+      errors,
     });
   });
 });

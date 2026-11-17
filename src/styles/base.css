@@ -111,6 +111,28 @@ button:disabled {
   color: var(--color-text-muted);
 }
 
+/* An action's button stays focusable and announced while it is pending, and
+   ignores activation (D218), so it is marked with aria-disabled, never with
+   the native attribute. */
+button[aria-disabled='true'] {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+/* The button of the main action of a form (D222). */
+button.primary {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-surface);
+}
+
+/* The button of an action that removes something (D222). */
+button.danger {
+  background: var(--color-negative-bg);
+  border-color: var(--color-negative);
+  color: var(--color-negative);
+}
+
 input,
 select {
   padding: var(--space-1) var(--space-2);
@@ -119,4 +141,14 @@ select {
 :focus-visible {
   outline: var(--focus-width) solid var(--color-accent);
   outline-offset: var(--focus-offset);
+}
+
+/* Text for assistive technology only. */
+.visually-hidden {
+  block-size: 1px;
+  clip-path: inset(50%);
+  inline-size: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
 }

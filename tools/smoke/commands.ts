@@ -6,12 +6,14 @@ export type SmokeCommand = { step: string; args: string[] };
 export const throwawayFile = 'smoke-test.sqlite3';
 export const watchlistName = 'Smoke Test';
 export const emptyWatchlistName = 'Smoke Test Empty';
+export const scratchWatchlistName = 'Smoke Test Scratch';
 
 export const setupCommands: SmokeCommand[] = [
   { step: 'Step 4', args: ['db', 'upgrade'] },
   { step: 'Step 4', args: ['db', 'status'] },
   { step: 'Step 5', args: ['watchlist', 'create', watchlistName] },
   { step: 'Step 5', args: ['watchlist', 'create', emptyWatchlistName] },
+  { step: 'Step 5', args: ['watchlist', 'create', scratchWatchlistName] },
   {
     step: 'Step 6',
     args: ['watchlist', 'add-selection', 'momentum', watchlistName, 'KO'],
@@ -47,6 +49,66 @@ export const setupCommands: SmokeCommand[] = [
   {
     step: 'Step 6',
     args: ['watchlist', 'add-selection', 'piotroski', watchlistName, 'SPY'],
+  },
+  {
+    step: 'Step 6',
+    args: [
+      'watchlist',
+      'add-selection',
+      'momentum',
+      scratchWatchlistName,
+      'KO',
+    ],
+  },
+  {
+    step: 'Step 6',
+    args: [
+      'watchlist',
+      'add-selection',
+      'momentum',
+      scratchWatchlistName,
+      'MSFT',
+    ],
+  },
+  {
+    step: 'Step 6',
+    args: [
+      'watchlist',
+      'add-selection',
+      'momentum',
+      scratchWatchlistName,
+      'AAPL',
+    ],
+  },
+  {
+    step: 'Step 6',
+    args: [
+      'watchlist',
+      'add-selection',
+      'graham-number',
+      scratchWatchlistName,
+      'KO',
+    ],
+  },
+  {
+    step: 'Step 6',
+    args: [
+      'watchlist',
+      'add-selection',
+      'graham-number',
+      scratchWatchlistName,
+      'MSFT',
+    ],
+  },
+  {
+    step: 'Step 6',
+    args: [
+      'watchlist',
+      'add-selection',
+      'graham-number',
+      scratchWatchlistName,
+      'AAPL',
+    ],
   },
   { step: 'Step 7', args: ['refresh', watchlistName] },
   { step: 'Step 8', args: ['momentum', 'MSFT', '--save-run'] },

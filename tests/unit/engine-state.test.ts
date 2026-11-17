@@ -56,6 +56,9 @@ describe('failure views', () => {
     'unsupported_run_version',
     'invalid_stored_run',
     'unsupported_projection',
+    'watchlist_name_conflict',
+    'watchlist_empty',
+    'watchlist_entry_not_found',
   ])('shows the API reason as given for %s', (code) => {
     expect(failureView(failure(code, 'Why'))).toEqual({
       kind: 'reason',
@@ -94,6 +97,23 @@ describe('failure views', () => {
       kind: 'message',
       key: 'state.defect',
       retry: false,
+    });
+  });
+
+  it('shows the catalog message for refresh_job_running, not the engine text', () => {
+    expect(
+      failureView(failure('refresh_job_running', 'Job 1234 is running.')),
+    ).toEqual({
+      kind: 'message',
+      key: 'actions.refreshRunning',
+      retry: false,
+    });
+  });
+
+  it('offers "Try again" for database_busy from an action', () => {
+    expect(failureView(failure('database_busy'))).toMatchObject({
+      kind: 'message',
+      retry: true,
     });
   });
 

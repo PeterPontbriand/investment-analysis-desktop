@@ -35,7 +35,11 @@
       "created": "[ar-XB] Created",
       "updated": "[ar-XB] Last changed"
     },
-    "empty": "[ar-XB] There are no watchlists yet."
+    "empty": "[ar-XB] There are no watchlists yet.",
+    "newWatchlist": "[ar-XB] New watchlist",
+    "create": "[ar-XB] Create",
+    "deleted": "[ar-XB] Deleted {name}.",
+    "deletedUnnamed": "[ar-XB] Deleted the watchlist."
   },
   "watchlist": {
     "summary": "[ar-XB] {count} entry · created {date} | {count} entries · created {date}",
@@ -43,12 +47,30 @@
       "position": "[ar-XB] #",
       "ticker": "[ar-XB] Ticker",
       "strategy": "[ar-XB] Strategy",
-      "asOf": "[ar-XB] As of"
+      "asOf": "[ar-XB] As of",
+      "actions": "[ar-XB] Actions"
     },
     "latestData": "[ar-XB] Latest data",
     "noEntries": "[ar-XB] This watchlist has no entries.",
     "refreshesHeading": "[ar-XB] Refreshes of this watchlist",
-    "noRefreshes": "[ar-XB] This watchlist has not been refreshed yet."
+    "noRefreshes": "[ar-XB] This watchlist has not been refreshed yet.",
+    "rename": "[ar-XB] Rename",
+    "save": "[ar-XB] Save",
+    "delete": "[ar-XB] Delete",
+    "deleteThis": "[ar-XB] Delete this watchlist",
+    "removeAction": "[ar-XB] Remove",
+    "removeEntry": "[ar-XB] Remove entry {index}: {ticker}, {strategy}",
+    "removeTitle": "[ar-XB] Remove from {watchlist}",
+    "removeChoices": "[ar-XB] What to remove",
+    "optionEntry": "[ar-XB] Entry {index}: {ticker}, {strategy}",
+    "optionTicker": "[ar-XB] Every entry for {ticker} ({count})",
+    "optionMethod": "[ar-XB] Every {strategy} entry ({count})",
+    "confirmEntry": "[ar-XB] Remove entry {index}: {ticker}, {strategy}?",
+    "removed": "[ar-XB] Removed {count} entry. | Removed {count} entries.",
+    "removedNone": "[ar-XB] No entries were removed. The watchlist had already changed.",
+    "deleteTitle": "[ar-XB] Delete {name}?",
+    "deleteTitleNoName": "[ar-XB] Delete this watchlist?",
+    "deleteEntries": "[ar-XB] It has {count} entry, which will be deleted with it. | It has {count} entries, which will be deleted with it."
   },
   "refreshes": {
     "columns": {
@@ -134,5 +156,15 @@
       "diagnostics": "[ar-XB] Diagnostics",
       "json": "[ar-XB] JSON"
     }
+  },
+  "actions": {
+    "cancel": "[ar-XB] Cancel",
+    "saving": "[ar-XB] Saving…",
+    "removing": "[ar-XB] Removing…",
+    "deleting": "[ar-XB] Deleting…",
+    "refreshRunning": "[ar-XB] A refresh is already running.",
+    "runsKept": "[ar-XB] Saved runs are kept.",
+    "nameLabel": "[ar-XB] Name",
+    "nameRequired": "[ar-XB] Enter a name."
   }
 }

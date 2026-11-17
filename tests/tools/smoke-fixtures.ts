@@ -84,6 +84,7 @@ export function healthy(overrides: Script = () => undefined): Script {
         items: [
           { display_name: 'Smoke Test', entry_count: 5 },
           { display_name: 'Smoke Test Empty', entry_count: 0 },
+          { display_name: 'Smoke Test Scratch', entry_count: 6 },
         ],
       });
     return ok(`ran: ian ${line}\n`);

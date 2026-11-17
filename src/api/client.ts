@@ -1,54 +1,73 @@
 import type { components, paths } from './schema.ts';
 import type { EngineStatus } from '../platform/index.ts';
 
-// GET endpoints that answer 200 with JSON.
-export type GetPath = {
-  [P in keyof paths]: paths[P] extends {
-    get: {
-      responses: { 200: { content: { 'application/json': unknown } } };
-    };
-  }
-    ? P
+// The request methods the adapter sends, each as the API description names it.
+export type Method = 'get' | 'post' | 'patch' | 'delete';
+
+type Operation<M extends Method, P extends keyof paths> = paths[P] extends {
+  [K in M]: infer O;
+}
+  ? O
+  : never;
+
+// The JSON document of an operation's success responses, whatever 2xx status
+// it answers with.
+type SuccessBody<Responses> = {
+  [S in keyof Responses]: S extends 200 | 201 | 202
+    ? Responses[S] extends { content: { 'application/json': infer T } }
+      ? T
+      : never
     : never;
+}[keyof Responses];
+
+type ResponseOf<M extends Method, P extends keyof paths> =
+  Operation<M, P> extends { responses: infer R } ? SuccessBody<R> : never;
+
+// Paths that have the method and answer a JSON document on success.
+export type MethodPath<M extends Method> = {
+  [P in keyof paths]: [ResponseOf<M, P>] extends [never] ? never : P;
 }[keyof paths];
 
-export type GetResponse<P extends GetPath> = paths[P] extends {
-  get: {
-    responses: { 200: { content: { 'application/json': infer T } } };
-  };
-}
-  ? T
-  : never;
+export type GetPath = MethodPath<'get'>;
+export type GetResponse<P extends GetPath> = ResponseOf<'get', P>;
 
-type OperationParameters<P extends GetPath> = paths[P] extends {
-  get: { parameters: infer X };
-}
-  ? X
-  : never;
+type OperationParameters<M extends Method, P extends keyof paths> =
+  Operation<M, P> extends { parameters: infer X } ? X : never;
 
 // The path and query parameters an operation declares, typed from the API
 // description. An operation with none of a kind has `never` for it.
-export type PathParameters<P extends GetPath> =
-  OperationParameters<P> extends { path?: infer A }
+export type PathParameters<M extends Method, P extends keyof paths> =
+  OperationParameters<M, P> extends { path?: infer A }
     ? Exclude<A, undefined>
     : never;
-export type QueryParameters<P extends GetPath> =
-  OperationParameters<P> extends { query?: infer Q }
+export type QueryParameters<M extends Method, P extends keyof paths> =
+  OperationParameters<M, P> extends { query?: infer Q }
     ? Exclude<Q, undefined>
     : never;
 
-export type RequestOptions<P extends GetPath> = ([PathParameters<P>] extends [
-  never,
-]
-  ? { path?: undefined }
-  : { path: PathParameters<P> }) &
-  ([QueryParameters<P>] extends [never]
-    ? { query?: undefined }
-    : { query?: QueryParameters<P> });
+type BodyOf<M extends Method, P extends keyof paths> =
+  Operation<M, P> extends {
+    requestBody: { content: { 'application/json': infer B } };
+  }
+    ? { body: B }
+    : { body?: undefined };
 
-type OptionsArgument<P extends GetPath> = [PathParameters<P>] extends [never]
-  ? [options?: RequestOptions<P>]
-  : [options: RequestOptions<P>];
+export type RequestOptions<M extends Method, P extends keyof paths> = ([
+  PathParameters<M, P>,
+] extends [never]
+  ? { path?: undefined }
+  : { path: PathParameters<M, P> }) &
+  ([QueryParameters<M, P>] extends [never]
+    ? { query?: undefined }
+    : { query?: QueryParameters<M, P> }) &
+  BodyOf<M, P>;
+
+// The options argument is required when the operation needs a path parameter
+// or a body.
+type OptionsArgument<M extends Method, P extends keyof paths> =
+  Record<string, never> extends RequestOptions<M, P>
+    ? [options?: RequestOptions<M, P>]
+    : [options: RequestOptions<M, P>];
 
 export type FailureEnvelope = components['schemas']['FailureEnvelope'];
 
@@ -56,6 +75,8 @@ export type ApiResult<T> = {
   data: T;
   // The tag of the locale the engine's text is in, from Content-Language.
   contentLanguage: string | null;
+  // The HTTP status of the success answer (200, 201 and so on).
+  status: number;
 };
 
 export type ApiErrorDetails = {
@@ -64,6 +85,8 @@ export type ApiErrorDetails = {
   // The failure envelope's message for a person, written in the response's language.
   reason?: string | null;
   contentLanguage?: string | null;
+  // The failure envelope's list of rule errors, kept as served.
+  errors?: FailureEnvelope['errors'];
 };
 
 // Why a request failed: the engine process has exited, the engine could not be
@@ -74,6 +97,7 @@ export class ApiError extends Error {
   readonly reasonCode: string | null;
   readonly reason: string | null;
   readonly contentLanguage: string | null;
+  readonly errors: FailureEnvelope['errors'];
 
   constructor(kind: ApiError['kind'], details: ApiErrorDetails = {}) {
     super(`API request failed: ${kind}`);
@@ -83,6 +107,7 @@ export class ApiError extends Error {
     this.reasonCode = details.reasonCode ?? null;
     this.reason = details.reason ?? null;
     this.contentLanguage = details.contentLanguage ?? null;
+    this.errors = details.errors ?? null;
   }
 }
 
@@ -96,27 +121,33 @@ export type ApiClientOptions = {
 };
 
 export type ApiClient = {
-  get<P extends GetPath>(
+  [M in Method]: <P extends MethodPath<M>>(
     path: P,
-    ...options: OptionsArgument<P>
-  ): Promise<ApiResult<GetResponse<P>>>;
+    ...options: OptionsArgument<M, P>
+  ) => Promise<ApiResult<ResponseOf<M, P>>>;
 };
 
-async function failureOf(
-  response: Response,
-): Promise<{ reasonCode: string | null; reason: string | null }> {
+async function failureOf(response: Response): Promise<{
+  reasonCode: string | null;
+  reason: string | null;
+  errors: FailureEnvelope['errors'];
+}> {
   try {
     const body = (await response.json()) as {
       reason_code?: unknown;
       reason?: unknown;
+      errors?: unknown;
     };
     return {
       reasonCode:
         typeof body.reason_code === 'string' ? body.reason_code : null,
       reason: typeof body.reason === 'string' ? body.reason : null,
+      errors: Array.isArray(body.errors)
+        ? (body.errors as FailureEnvelope['errors'])
+        : null,
     };
   } catch {
-    return { reasonCode: null, reason: null };
+    return { reasonCode: null, reason: null, errors: null };
   }
 }
 
@@ -137,16 +168,21 @@ function urlOf(
   return `${baseUrl}${path}${text === '' ? '' : `?${text}`}`;
 }
 
+const methods: Method[] = ['get', 'post', 'patch', 'delete'];
+
 export function createApiClient(options: ApiClientOptions): ApiClient {
   const send = options.fetch ?? ((...args) => fetch(...args));
-  return {
-    async get<P extends GetPath>(path: P, ...rest: OptionsArgument<P>) {
-      const requestOptions = rest[0] as
-        | {
-            path?: Record<string, unknown>;
-            query?: Record<string, unknown>;
-          }
-        | undefined;
+
+  function request(method: Method) {
+    return async (
+      path: string,
+      requestOptions?: {
+        path?: Record<string, unknown>;
+        query?: Record<string, unknown>;
+        body?: unknown;
+      },
+    ): Promise<ApiResult<unknown>> => {
+      const hasBody = requestOptions?.body !== undefined;
       let response: Response;
       try {
         response = await send(
@@ -157,11 +193,13 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
             requestOptions?.query,
           ),
           {
-            method: 'GET',
+            method: method.toUpperCase(),
             headers: {
               Authorization: `Bearer ${options.token}`,
               'Accept-Language': options.locale(),
+              ...(hasBody ? { 'Content-Type': 'application/json' } : {}),
             },
+            ...(hasBody ? { body: JSON.stringify(requestOptions?.body) } : {}),
           },
         );
       } catch {
@@ -179,9 +217,14 @@ export function createApiClient(options: ApiClientOptions): ApiClient {
         });
       }
       return {
-        data: (await response.json()) as GetResponse<P>,
+        data: await response.json(),
         contentLanguage,
+        status: response.status,
       };
-    },
-  };
+    };
+  }
+
+  return Object.fromEntries(
+    methods.map((method) => [method, request(method)]),
+  ) as ApiClient;
 }
