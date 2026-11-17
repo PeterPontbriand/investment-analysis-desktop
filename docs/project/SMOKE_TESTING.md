@@ -109,7 +109,7 @@ ian watchlist create "Smoke Test Scratch"
 
 `pnpm smoke` runs this step.
 
-Step 6. Fill the first watchlist with five entries, then give `Smoke Test Scratch` four entries of its own, with no as-of: KO and MSFT, each under momentum and Graham number. `Smoke Test Scratch` is never refreshed.
+Step 6. Fill the first watchlist with five entries, then give `Smoke Test Scratch` six entries of its own, with no as-of: KO, MSFT and AAPL, each under momentum and Graham number. `Smoke Test Scratch` is never refreshed.
 
 The first watchlist's five entries They have no [as-of](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#as-of-date), a date as-of and a timestamp as-of with a timezone offset, in more than one strategy. The last entry runs the Piotroski F-Score on SPY, an exchange-traded fund that the strategy cannot score, so its run is not applicable: the comparison then shows an outcome column, "Not run" cells and a third strategy group. `--as-of` takes `YYYY-MM-DD` or a timezone-aware ISO-8601 timestamp:
 
@@ -121,13 +121,15 @@ ian watchlist add-selection graham-number "Smoke Test" KO
 ian watchlist add-selection piotroski "Smoke Test" SPY
 ian watchlist add-selection momentum "Smoke Test Scratch" KO
 ian watchlist add-selection momentum "Smoke Test Scratch" MSFT
+ian watchlist add-selection momentum "Smoke Test Scratch" AAPL
 ian watchlist add-selection graham-number "Smoke Test Scratch" KO
 ian watchlist add-selection graham-number "Smoke Test Scratch" MSFT
+ian watchlist add-selection graham-number "Smoke Test Scratch" AAPL
 ```
 
 `pnpm smoke` runs this step.
 
-Expect each command to print the watchlist with the new entry numbered after the earlier ones. `Smoke Test Scratch` ends with four entries and `Smoke Test` with five.
+Expect each command to print the watchlist with the new entry numbered after the earlier ones. `Smoke Test Scratch` ends with six entries and `Smoke Test` with five.
 
 Step 7. Refresh the first watchlist:
 
@@ -187,7 +189,7 @@ Check N4. The shell follows the look of the preview mock-ups. The navigation at 
 
 ## W. Watchlists
 
-Check W1. The Watchlists screen lists all three watchlists. `Smoke Test` has 5 entries, `Smoke Test Empty` has 0 and `Smoke Test Scratch` has 4, each with its created time. A watchlist that was never changed shows a dash for its last change; the two you added entries to show a time.
+Check W1. The Watchlists screen lists all three watchlists. `Smoke Test` has 5 entries, `Smoke Test Empty` has 0 and `Smoke Test Scratch` has 6, each with its created time. A watchlist that was never changed shows a dash for its last change; the two you added entries to show a time.
 
 Check W2. Times are in your time zone. They agree with the clock of the moment you ran the setup commands.
 
@@ -206,6 +208,16 @@ Check W6. The watchlist's refreshes are listed under its entries. They show the 
 Check W7. Open `Smoke Test Empty` to see that it has no entries. It shows that it has no entries and that it has not been refreshed yet. The trail above the heading is the single link `Watchlists`, and it leads back.
 
 Check W8. Tables follow the mock-ups: a thin rule under every row, secondary-coloured column headings, and the watchlist names as links in the accent colour, with no underline until the pointer is over one or it has keyboard focus. The entry counts are aligned to the end of their column.
+
+Check W9. Create a watchlist. On Watchlists, choose `New watchlist`. A field named `Name` appears with `Create` and `Cancel`, and the field has focus. Choose `Create` with the field empty, then with only spaces: `Enter a name.` shows at the field and nothing is created. Type `smoke test` (not capitalized like the existing watchlist) and choose `Create`: the engine's message that the name is already in use shows at the field, and the form stays open. Replace the name with `Smoke Test New` and choose `Create`: the new watchlist opens, with its name as the heading and no entries. Watchlists then lists four watchlists.
+
+Check W10. Rename it. On `Smoke Test New`, choose `Rename`. The heading becomes a field holding the current name, with `Save` and `Cancel`. Change the name to `Smoke Test Renamed` and choose `Save`: the heading shows the new name. Watchlists lists the watchlist under the new name and shows a time for its last change.
+
+Check W11. Remove one entry. Open `Smoke Test Scratch`, which has six entries. Choose `Remove` on entry 6, AAPL, Graham Number. The dialog offers three choices: this entry (entry 6: AAPL, Graham Number), every entry for AAPL (2) and every Graham Number entry (3), and says that saved runs are kept. With the first choice selected, choose `Remove`: the dialog closes, the screen says one entry was removed, and five entries are left, numbered 1 to 5.
+
+Check W12. Remove by ticker and by strategy. On `Smoke Test Scratch`, choose `Remove` on KO's Momentum row (entry 1). The dialog offers this entry, every entry for KO (2) and every Momentum entry (3). Choose every entry for KO and `Remove`: the screen says two entries were removed, and three are left: MSFT Momentum, AAPL Momentum and MSFT Graham Number. Choose `Remove` on MSFT's Momentum row. The dialog offers this entry, every entry for MSFT (2) and every Momentum entry (2). Choose every Momentum entry and `Remove`: two more entries are removed, and one is left, MSFT, Graham Number. Choose `Remove` on it: the dialog is a plain confirmation, "Remove entry 1: MSFT, Graham Number?", with no choices and a note that saved runs are kept. Choose `Cancel`: the dialog closes and the entry is still there.
+
+Check W13. Delete a watchlist. On `Smoke Test Scratch`, which still holds one entry, choose `Delete`. The dialog names the watchlist, says it has one entry that will be deleted with it, and says saved runs are kept. Choose `Delete`: Watchlists opens and says the watchlist was deleted, and it is no longer listed. `Smoke Test` still has its five entries and its refresh, and Saved runs still lists the six runs.
 
 ## R. Refreshes
 
@@ -353,7 +365,7 @@ It stops with a plain message instead of guessing, and writes the record so far 
 - **A setup command failed:** the message names the step and the command, and its output is in the record. For a provider failure, see the engine's troubleshooting guide.
 - **The start fails with "Access is denied" removing the application's executable:** an earlier copy of the application is still running. Close it, or end it with `Get-Process investment-analysis-desktop -ErrorAction SilentlyContinue | Stop-Process`, and run `pnpm smoke` again.
 - **The refresh completed no run:** check the providers with `ian health`, then run `pnpm smoke` again, which makes a new throwaway database.
-- **The counts are not the setup's:** the setup leaves 6 runs, 1 refresh of 5 runs and 3 watchlists with 9 entries in all. Run `pnpm smoke` again, which makes a new throwaway database.
+- **The counts are not the setup's:** the setup leaves 6 runs, 1 refresh of 5 runs and 3 watchlists with 11 entries in all. Run `pnpm smoke` again, which makes a new throwaway database.
 
 Cleaning up, and restarting the application for the engine-problem checks (Checks E1 and E2), stay manual.
 

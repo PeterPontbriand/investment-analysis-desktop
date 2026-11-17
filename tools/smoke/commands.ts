@@ -75,6 +75,16 @@ export const setupCommands: SmokeCommand[] = [
     args: [
       'watchlist',
       'add-selection',
+      'momentum',
+      scratchWatchlistName,
+      'AAPL',
+    ],
+  },
+  {
+    step: 'Step 6',
+    args: [
+      'watchlist',
+      'add-selection',
       'graham-number',
       scratchWatchlistName,
       'KO',
@@ -88,6 +98,16 @@ export const setupCommands: SmokeCommand[] = [
       'graham-number',
       scratchWatchlistName,
       'MSFT',
+    ],
+  },
+  {
+    step: 'Step 6',
+    args: [
+      'watchlist',
+      'add-selection',
+      'graham-number',
+      scratchWatchlistName,
+      'AAPL',
     ],
   },
   { step: 'Step 7', args: ['refresh', watchlistName] },
