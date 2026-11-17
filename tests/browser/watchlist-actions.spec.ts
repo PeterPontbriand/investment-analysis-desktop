@@ -336,8 +336,15 @@ test.describe('remove entries', () => {
     await expect(page.getByText(en.watchlist.removedNone)).toBeVisible();
   });
 
+  // macOS WebKit's Tab skips buttons by default; Option+Tab reaches every control.
+  const tabKeys = (browserName: string) =>
+    browserName === 'webkit' && process.platform === 'darwin'
+      ? { forward: 'Alt+Tab', backward: 'Alt+Shift+Tab' }
+      : { forward: 'Tab', backward: 'Shift+Tab' };
+
   test('traps focus, closes on Escape and returns focus to the row button', async ({
     page,
+    browserName,
   }) => {
     await openCore(page);
     const name = removeButton(1, 'ACME', 'Momentum');
@@ -350,7 +357,8 @@ test.describe('remove entries', () => {
     // also stops once per cycle on the dialog element itself, which is inside
     // the dialog; any other element, or the body with the document focused,
     // fails.
-    for (const direction of ['Tab', 'Shift+Tab']) {
+    const keys = tabKeys(browserName);
+    for (const direction of [keys.forward, keys.backward]) {
       const reached = new Map<string, number>();
       for (let presses = 0; ; presses += 1) {
         if (controls.every((control) => (reached.get(control) ?? 0) >= 2))
