@@ -51,16 +51,16 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 ### GUI.3: Actions and refresh progress
 
 - **Problem:** Users need to manage their saved tickers and follow long-running refreshes.
-- **Decision:** Add state-changing actions and refresh controls through IAN API.4 only.
+- **Decision:** Add state-changing actions and refresh controls through IAN's action requests only, in four sub-slices, after one small additive IAN slice that serves what the forms and the progress screen need.
 - **Scope:** Analyze a ticker with chosen strategies; create and edit watchlists; refresh with progress reporting and a stop control.
-- **Branch:** A dedicated GUI.3 branch after IAN API.4 merges and GUI.1 establishes the scaffold.
-- **Detail:** ⚠ no slice plan yet.
+- **Branch:** `feat/gui-3a-watchlist-actions`, then `feat/gui-3b-selection-form`, then `feat/gui-3c-refresh-progress`, then `feat/gui-3d-analyze`; GUI.3b needs the IAN slice named in the slice plan.
+- **Detail:** [GUI.3 actions and refresh progress slice plan](gui-3/GUI_3_ACTIONS_AND_REFRESH_PROGRESS_SLICE_PLAN.md).
 
 ### GUI.4: Help in place
 
 - **Problem:** New investors need explanations without leaving the application.
 - **Decision:** Load all analysis explanations and term links from IAN's /v1/help endpoints.
-- **Scope:** Show a short definition popup on hover or keyboard focus; open a help panel on click with the full entry, linked terms, and longer guide. Make the same help available through explicit controls on touch screens. Keep help links inside the application; optional further-reading links may open externally. A run's own derivation stays in its Details view. GUI.4 also decides whether the application's own labels that the comparison and run detail show with no term id ("Saved", "As of", "Saved by", "Warnings", "Limitations", "Not run", "Refresh comparison" and "Ad hoc entries") get help; IAN's glossary has an "As-of Date" term, for example (D165 in the [GUI.2 read-only screens slice plan](gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record)).
+- **Scope:** Show a short definition popup on hover or keyboard focus; open a help panel on click with the full entry, linked terms, and longer guide. Make the same help available through explicit controls on touch screens. Keep help links inside the application; optional further-reading links may open externally. A run's own derivation stays in its Details view. GUI.4 also decides whether the application's own labels that the comparison and run detail show with no term id ("Saved", "As of", "Saved by", "Warnings", "Limitations", "Not run", "Refresh comparison" and "Ad hoc entries") get help; IAN's glossary has an "As-of Date" term, for example (D165 in the [GUI.2 read-only screens slice plan](gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record)). GUI.4 also plans ticker details from any ticker cell (IAD issue #19), which needs an IAN endpoint for a ticker's instrument profile first.
 - **Branch:** A dedicated GUI.4 branch after IAN API.6 merges and GUI.1 establishes the scaffold.
 - **Detail:** ⚠ no slice plan yet.
 

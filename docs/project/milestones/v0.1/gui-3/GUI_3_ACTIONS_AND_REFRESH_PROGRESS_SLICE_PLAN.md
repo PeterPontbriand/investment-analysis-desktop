@@ -1,0 +1,363 @@
+# GUI.3 — Actions and refresh progress slice plan
+
+## At a glance
+
+- **What GUI.3 is:** the first screens that change anything. A user can create, rename and delete a watchlist, add and remove its entries, refresh it and follow the refresh while it runs, stop it, and analyze one ticker with the strategies they choose.
+- **What GUI.3 is not:** help popups and the help panel (GUI.4), the first-run screen or the installer (GUI.5), a language picker, editing engine settings, or any financial calculation.
+- **Rules:** [AGENTS.md](../../../../../AGENTS.md) and the [project charter](../../../CHARTER.md) govern the work. The decisions of the [GUI.2 slice plan](../gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record) still apply unless a decision in [Appendix A](#appendix-a-2026-11-16-decision-record) amends one by number.
+- **Needs from the engine:** one small additive engine slice (D181), proposed as the engine's API.13 and needed by GUI.3b and later. GUI.3a can start without it.
+
+## Sequence and status
+
+| Sub-slice | Scope | Status | Completed |
+| :--- | :--- | :--- | :--- |
+| GUI.3a | [Action groundwork and watchlist management](#gui3a--action-groundwork-and-watchlist-management) | Next | |
+| GUI.3b | [Selection form and adding entries](#gui3b--selection-form-and-adding-entries) | Planned | |
+| GUI.3c | [Refresh with progress and stop](#gui3c--refresh-with-progress-and-stop) | Planned | |
+| GUI.3d | [Analyze a ticker](#gui3d--analyze-a-ticker) | Planned | |
+
+## Sub-slices
+
+### GUI.3a — Action groundwork and watchlist management
+
+- **Problem:** The adapter can only read, no screen can change anything, and a user cannot create or tidy a watchlist without a command line.
+- **Decision:** Extend the adapter to the engine's action requests, add the shared pieces every action needs (a pending state, a confirmation dialog, action failures), and build the watchlist actions that need no selection form (D182 to D188).
+- **Scope:** typed `POST`, `PATCH` and `DELETE` in the adapter, with the failure's error list kept (D182); the action helper and the reload after success (D183); the confirmation dialog (D184); create, rename and delete a watchlist (D185, D186); remove entries, singly or by ticker or strategy (D187); action failures (D188).
+- **Branch:** `feat/gui-3a-watchlist-actions`, from main; its own pull request. No re-vendor.
+- **Detail:** [GUI.3a detail](#gui3a-detail) in this plan.
+
+### GUI.3b — Selection form and adding entries
+
+- **Problem:** Adding an entry needs a strategy's options, which differ for every strategy and must appear with no application change when the engine gains a strategy.
+- **Decision:** Build one form generated from the engine's selection form document, and use it to add entries to a watchlist and to show an entry's stored options (D189 to D196).
+- **Scope:** the re-vendor to the engine slice of D181; the generated selection form and its supported schema constructs (D189 to D192); the strategy chooser with one shared as-of date (D193); the "Add entries" form on the watchlist screen (D194); field errors placed on their fields (D195); an entry's stored options, read-only, and the remedy for an unreadable entry (D196).
+- **Branch:** `feat/gui-3b-selection-form`, from main after GUI.3a merges and the engine slice of D181 merges; its own pull request.
+- **Detail:** [GUI.3b detail](#gui3b-detail) in this plan.
+
+### GUI.3c — Refresh with progress and stop
+
+- **Problem:** A refresh runs for minutes. A user needs to start one, see it advance, stop it, and find its results.
+- **Decision:** Start the engine's refresh job, follow it by polling from one application-wide follower, and show it on its own screen with a stop control (D197 to D204).
+- **Scope:** "Refresh now" on the watchlist screen and the comparison (D197); the application-wide follower (D198); the refresh progress screen and its route (D199, D200); the navigation marker (D201); the stop control (D202); the finished, stopped and failed states (D203); closing the window while a refresh runs (D204); the SEC identity notice (D205).
+- **Branch:** `feat/gui-3c-refresh-progress`, from main after GUI.3b merges; its own pull request.
+- **Detail:** [GUI.3c detail](#gui3c-detail) in this plan.
+
+### GUI.3d — Analyze a ticker
+
+- **Problem:** A user who wants one answer about one ticker should not have to build a watchlist first.
+- **Decision:** An "Analyze a ticker" screen that reuses the strategy chooser of GUI.3b and the refresh job of GUI.3c: the chosen strategies run as one refresh of entries that belong to no watchlist, and the result is a comparison with one row (D206 to D208).
+- **Scope:** the screen, its navigation item and route (D206); starting the refresh of entries and handing over to the progress screen (D207); what the screen does not offer (D208).
+- **Branch:** `feat/gui-3d-analyze`, from main after GUI.3c merges; its own pull request.
+- **Detail:** [GUI.3d detail](#gui3d-detail) in this plan.
+
+## Screen sketches
+
+These are layouts to review, not final wording. Text in round brackets is an outcome pill. Every strategy name, field label, option name and outcome name in them is served by the engine; the application's own words are the headings, buttons and the lines marked *app*.
+
+### Watchlist screen with actions (GUI.3a, GUI.3b)
+
+```text
+Watchlists
+Core                                   [ Refresh now ] [ Add entries ] [ Rename ] [ Delete ]
+4 entries · created Oct 30, 2026, 2:02 PM
+
+#   Ticker   Strategy              As of          Options
+1   ACME     Momentum              Latest data    Show      [ Remove ]
+2   ACME     Graham Growth Value   Latest data    Hide      [ Remove ]
+       Expected growth      6.5
+       AAA yield            4.9
+       EPS basis            Three-Year-Average EPS
+       Use cache            Yes
+3   BOLT     Momentum              Jun 30, 2026   Show      [ Remove ]
+4   BOLT     Graham Number         Latest data    Show      [ Remove ]
+
+Refreshes of this watchlist
+...
+```
+
+### Remove dialog (GUI.3a)
+
+```text
++----------------------------------------------------------+
+| Remove from Core                                         |
+|                                                          |
+| (o) This entry: ACME, Momentum                           |
+| ( ) Every entry for ACME                                 |
+| ( ) Every Momentum entry                                 |
+|                                                          |
+| Saved runs are kept.                               *app* |
+|                                                          |
+|                                   [ Cancel ] [ Remove ]  |
++----------------------------------------------------------+
+```
+
+### Add entries (GUI.3b) and Analyze a ticker (GUI.3d)
+
+The two forms share the strategy chooser. "Add entries" takes several tickers and ends in "Add"; "Analyze a ticker" takes one ticker and ends in "Analyze".
+
+```text
+Add entries to Core
+
+Tickers        [ ACME, BOLT                    ]
+               Separate tickers with commas or spaces.              *app*
+
+As of          [ yyyy-mm-dd ]
+               Leave empty for the latest data.                     *app*
+
+Strategies
+[x] Momentum                                              Options: Show
+[x] Graham Growth Value                                   Options: Hide
+      Expected growth *     [ 6.5  ]
+          Expected annual earnings growth, in percentage points.
+      AAA yield *           [      ]
+          AAA yield is required.
+      EPS basis             [ Three-Year-Average EPS  v ]
+      EPS override          [      ]
+      Quote override        [      ]
+      Use cache             [x]
+[ ] Graham Number
+...
+
+* Required                                                          *app*
+
+                                                   [ Cancel ] [ Add ]
+```
+
+### Refresh in progress (GUI.3c)
+
+```text
+Refreshes
+Refreshing Core                                  [ Stop after running entries ]
+7 of 12 entries finished
+
+Ticker   Strategy        Result
+ACME     Momentum        (Completed)          <- links to the saved run
+ACME     FCF Growth      Running…
+BOLT     Graham Number   (Unavailable)
+BOLT     Momentum        Running…
+...
+3 entries not started yet
+```
+
+### Refresh ended (GUI.3c)
+
+```text
+Refreshes
+Refresh of Core finished                                    [ Open comparison ]
+12 runs  (Completed 9)  (Unavailable 2)  (Failed 1)
+
+Data providers checked after a failure:
+Yahoo Finance     Unreachable
+
+Ticker   Strategy        Result
+ACME     Momentum        (Completed)
+...
+```
+
+A stopped refresh reads "Refresh of Core stopped" with "3 entries were not started." under the counts line. A failed one reads "Refresh of Core failed" with the failure shown as D188 sets it, and keeps the rows it had.
+
+### Navigation while a refresh runs (GUI.3c)
+
+```text
+Investment Analysis Desktop
+Pre-release: ...
+
+Analyze a ticker
+Watchlists
+Refreshes
+   Refresh running · 7 of 12        <- links to the progress screen
+Saved runs
+About
+```
+
+## Scope limits
+
+- Every action goes through the engine's published action requests; no action reads or writes anything else.
+- No help popup or help panel. Every element that shows an engine term keeps its term id for GUI.4, form fields included (D192).
+- No first-run screen: until GUI.5 the SEC identity still comes from the environment the application was started in. GUI.3 only says when it is missing (D205).
+- No choice of worker count, saving or provider check for a refresh; the engine's defaults apply (D197).
+- No editing of a stored entry in place and no reordering of entries (D196).
+- No analysis that is not saved (D207).
+- No ticker lookup, company-name suggestion or check that a ticker exists before the engine analyzes it. Company details for a ticker, and any check of a typed ticker, are IAD issue #19, planned with GUI.4.
+- No language picker, no in-application theme toggle, no log file; GUI.2's limits stand.
+- No dependency is added. If a sub-slice finds it needs one, it stops and asks.
+- No release build or bundle, as [AGENTS.md](../../../../../AGENTS.md) requires before GUI.5.
+- [docs/design/preview-mockups.html](../../../../design/preview-mockups.html) is not edited.
+
+## GUI.3a detail
+
+### File scope
+
+- `src/api/client.ts` and its tests, for the action requests and the kept failure (D182).
+- New shared pieces under `src/api/`, `src/components/` and `src/composables/` for the action helper and the confirmation dialog (D183, D184).
+- `src/views/WatchlistsView.vue` and `src/views/WatchlistView.vue`, for the watchlist actions (D185 to D187).
+- Catalog entries in `src/locales/en.json` and the test catalog.
+- Typed fixtures under `tests/fixtures/api/`, the Playwright engine mock, and Vitest and Playwright tests (D209).
+- `docs/project/SMOKE_TESTING.md` and, if its setup changes, `tools/smoke/` with its tests (D210).
+- This plan's status row and decision rows, and the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md)'s GUI.3 section.
+
+### Acceptance criteria
+
+- The adapter sends `POST`, `PATCH` and `DELETE` with paths, queries and bodies typed from the generated types; a failure keeps its `reason_code`, `reason`, `errors` and `Content-Language`.
+- A watchlist can be created, renamed and deleted, and entries removed singly, by ticker and by strategy, each from the screen that shows it, by mouse and by keyboard alone.
+- Delete and remove ask for confirmation in a dialog that traps focus, closes on Escape and returns focus to the control that opened it; both dialogs say that saved runs are kept.
+- After an action succeeds the screen shows what the engine now holds; the application never edits its own copy.
+- While an action is pending its control cannot be used again, and a failure is shown beside the control as D188 sets.
+- A rename or removal that the engine committed and then answered with an unreadable entry shows that entry's reason message.
+- No user-facing message names internal shorthand, a command, an option or an environment variable.
+- The pull request records the targeted run D210 names for GUI.3a.
+- `pnpm gate` passes on Windows, macOS and Linux.
+
+## GUI.3b detail
+
+### File scope
+
+- `vendor/ian/openapi.json`, `vendor/ian/SOURCE.md` and `src/api/schema.ts`, for the re-vendor (D181).
+- The selection form, its schema reader and the strategy chooser under `src/` (D189 to D193).
+- `src/views/WatchlistView.vue`, for "Add entries", an entry's options and the unreadable-entry remedy (D194, D196).
+- Catalog entries, typed fixtures, the engine mock, and Vitest and Playwright tests (D209).
+- `docs/project/SMOKE_TESTING.md` (D210), and this plan's status row and decision rows.
+
+### Acceptance criteria
+
+- The form for a strategy is built only from `GET /v1/strategies/{method_id}/selection`: field labels, descriptions, option names, required marks and starting values all come from that document and the help references. The application holds no field name of any strategy other than `as_of`.
+- A made-up strategy with a made-up selection schema, present only in a test fixture, gets a working form with no application code change.
+- A unit test walks every selection schema in the vendored API description and fails if one uses a construct the form does not support (D190); at run time such a field shows the message of D190 and the strategy cannot be submitted, while the other strategies still can.
+- Entries can be added for several tickers and several strategies in one submission; the result of each strategy's request is reported, and a later failure does not hide an earlier success (D194).
+- Each error the engine lists is shown at the field it names, worded with the field's label; an error that names no visible field is shown above the submit button (D195).
+- Each entry's stored options can be shown in the entries table (D196).
+- A watchlist the engine refuses because of an unreadable entry offers the remedy of D196.
+- Every form control has a visible label, required fields are marked in text and with `aria-required`, each error is tied to its field with `aria-describedby`, and focus moves to the first field with an error.
+- The vendored API description is the engine commit D181's slice merged as.
+- The pull request records the targeted run D210 names for GUI.3b.
+- `pnpm gate` passes on Windows, macOS and Linux.
+
+## GUI.3c detail
+
+### File scope
+
+- The refresh follower under `src/api/` and its provision in `src/main.ts` or `src/App.vue` (D198).
+- The refresh progress screen, its components and its route in `src/router.ts`, named by refresh id (D199, D200).
+- `src/App.vue` or the navigation component, for the marker (D201).
+- `src/views/WatchlistView.vue` and `src/views/RefreshCompareView.vue`, for "Refresh now" (D197); `src/components/RefreshesTable.vue` only if D201 needs it.
+- `src/platform/` and `src-tauri/`, only for the close confirmation of D204, including one capability entry if it needs one.
+- Catalog entries, typed fixtures, the engine mock (a scripted job), and Vitest and Playwright tests; the shell smoke test only if D204 changes what it sees (D209).
+- `docs/project/SMOKE_TESTING.md` and `tools/smoke/` if setup changes (D210), and this plan's status row and decision rows.
+
+### Acceptance criteria
+
+- "Refresh now" starts a refresh of the watchlist and opens the progress screen; it cannot be used while the follower knows a refresh is running.
+- The progress screen shows what the engine reports and nothing else: the counts line from `totals`, one row per entry that has started, each finished row's outcome as a pill linking to its saved run, and the count of entries not yet started (D200).
+- A client that passes on each answer's `next_after`, the stop answer included, shows every event exactly once; the follower polls again at once when `has_more` is true (D198).
+- The follower keeps no analysis document from an event in memory (D198).
+- Leaving the progress screen and returning, or opening it from the navigation marker, shows the same refresh without losing a row; the progress screen of a refresh the engine no longer keeps shows the message of D199.
+- Stop asks the engine to stop, shows that it is stopping, and ends in the stopped or finished state the engine reports (D202).
+- A finished or stopped refresh links to its comparison and shows its outcome counts and provider check from the summary; a failed one shows its failure and keeps its rows (D203).
+- A start the engine refuses because a refresh is already running links to the progress screen (D197).
+- Progress is announced to assistive technology from the counts line only, politely, and no more than once per poll.
+- Closing the window while a refresh runs follows D204.
+- When the engine reports no SEC identity, the notice of D205 is shown wherever a refresh or an analysis can be started.
+- The pull request records the targeted run D210 names for GUI.3c.
+- `pnpm gate` passes on Windows, macOS and Linux.
+
+## GUI.3d detail
+
+### File scope
+
+- The "Analyze a ticker" screen under `src/views/`, its route and its navigation item (D206).
+- The strategy chooser of GUI.3b, only where the screen needs a variation of it.
+- Catalog entries, typed fixtures, and Vitest and Playwright tests (D209).
+- `docs/project/SMOKE_TESTING.md` (D210); this plan's status row and decision rows; the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md)'s GUI.3 and GUI.4 rows.
+
+### Acceptance criteria
+
+- The screen takes one ticker, one shared as-of date and the chosen strategies with their options, and starts one refresh of entries (D207).
+- Field errors the engine names by entry index are shown on that strategy's fields (D195).
+- After the start the user is on the progress screen; when the refresh ends, "Open comparison" shows one row for the ticker with a group per chosen strategy.
+- The screen cannot start a refresh while one is running, and says why with a link to the progress screen.
+- A made-up strategy can be chosen and analyzed with no application code change.
+- The pull request records the targeted run D210 names for GUI.3d.
+- `pnpm gate` passes on Windows, macOS and Linux.
+
+## Background
+
+GUI.2 finished on 2026-11-15 with every screen read-only. The engine's action requests and refresh jobs have been available since its API.4 slices merged on 2026-11-07, and they are described in the engine's [API guide](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/API.md), in its "Actions", "Refresh jobs", "Request bodies" and "Selection forms" sections.
+
+Three GUI.2 decisions left work for GUI.3, all in the [GUI.2 slice plan](../gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record): D89 (an entry's full selection, and the remedy for an unreadable entry), D93 (the running refresh view) and D154 (the "Analyze a ticker" navigation item and "Refresh now").
+
+Reading the vendored API description at engine commit `0a767d2` for this plan found five things the screens need that the engine does not yet serve. They are the content of D181:
+
+| Need | What is served today |
+| :--- | :--- |
+| A label for each selection field | A machine-made title ("Bvps Override") and a term id that several fields share (in one strategy three fields name the Override term, and in another two fields share one term) |
+| An error message that can name a field by its label | The finished message only, with fields spelled as request paths ("selection.long_window") |
+| Which entry is unreadable, when a watchlist is refused for one | The reason message only |
+| The number of entries in a refresh | The entries started and the entries not yet started, separately |
+| A name for a data provider in a provider check | The provider's identifier only |
+
+## Appendix A: 2026-11-16 decision record
+
+Approved by the project owner on 2026-11-16. The numbering continues [Appendix A of the GUI.2 slice plan](../gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record), D32 to D179. Each row gives the decision first and what was rejected after it.
+
+### Plan and engine
+
+| # | Decision |
+| :--- | :--- |
+| D180 | Split and order: four sub-slices, each its own pull request, in the order GUI.3a, GUI.3b, GUI.3c, GUI.3d. This plan lands first as a documentation pull request (`docs/gui-3-slice-plan`) with the edit to the v0.1 implementation plan's GUI.3 section. Rejected: three sub-slices with "Analyze a ticker" inside GUI.3c, because GUI.3c already carries the follower, the progress screen and the close confirmation. |
+| D181 | Engine slice before GUI.3b: one additive engine slice, proposed as the engine's API.13, with five parts. (a) Every selection field, a nested group included, carries a curated label a person reads, enforced by a test. (b) Each item of a failure's `errors` carries its message template, with each parameter as a placeholder spelled as in `parameters`. (c) The failure for `stored_selection_unreadable` carries the unreadable entry (entry number, ticker and stored method identifier). (d) A refresh job's `totals` carries the total number of entries. (e) A provider check item carries the provider's name beside its identifier. Rejected, part by part: (a) show the machine-made title; (b) show the engine's message as served, with request paths in it; (c) offer only "Delete this watchlist"; (d) the application adds `admitted` and `remaining`; (e) show the identifier. |
+
+### GUI.3a
+
+| # | Decision |
+| :--- | :--- |
+| D182 | Adapter: one typed request function behind `get`, `post`, `patch` and `delete`, each typed from the generated types for path, query, body and the success document, whatever 2xx status it answers with. `ApiError` also keeps the envelope's `errors`. It stays a thin layer over `fetch` (D38). |
+| D183 | After an action: the screen loads its data again from the engine and shows that; no optimistic update. A removal uses the entry numbers of the list as last loaded. Recorded limit: if another program changed the watchlist in between, a numbered removal can remove a different entry; the confirmation dialog names the entry so the user sees what was asked for, and the reload shows what happened. |
+| D184 | Confirmation dialog: the native `<dialog>` element opened with `showModal()`, no dependency. Used for delete and remove only; create, rename, add, refresh and stop need none. |
+| D185 | Create and rename: "New watchlist" on the Watchlists screen opens an inline form with one name field; after creating, the application opens the new watchlist. "Rename" on the watchlist screen turns the heading into the same field. A blank name cannot be submitted. A name already in use shows the engine's reason message at the field. |
+| D186 | Delete: "Delete" on the watchlist screen, confirmed in a dialog that names the watchlist, gives its entry count and says saved runs are kept; afterwards the application returns to Watchlists. |
+| D187 | Remove entries: each entry row has "Remove", which opens one dialog offering this entry, every entry for its ticker, or every entry of its strategy, as the sketch shows. Rejected: per-entry removal only (many clicks for a large watchlist); checkboxes on rows with one bulk button (more to build, and the engine has no request for an arbitrary set). |
+| D188 | Action failures (amends D84 for actions): `watchlist_name_conflict`, `watchlist_empty`, `watchlist_entry_not_found` and `refresh_job_running` join D84's first group and show the engine's reason message as given, beside the control. `invalid_parameter` on a form follows D195. `database_busy` keeps its catalog message and "Try again" repeats the action. Before GUI.3a shows any of these, it confirms that none of the four messages names a command, an option or an environment variable, and stops if one does. |
+
+### GUI.3b
+
+| # | Decision |
+| :--- | :--- |
+| D189 | The form is generated: one component renders `schema` and `defaults` from the selection form document. Label: the field's served label (D181(a)). Hint: the field's `description`, shown under the field with the response's `lang`. Starting value: the schema's `default`, else the document's `defaults`, else empty. An empty optional field is left out of the request, so the engine applies its own value. |
+| D190 | Supported constructs: boolean (checkbox); integer and number (number field, with the schema's bounds); string (text field); a closed set of values (native select); "this or null" (the same field, optional); a nested object (a labelled group); required. Anything else shows "This option cannot be set in this version of the application." at the field. If such a field is required, the strategy cannot be submitted. A unit test fails when a vendored selection schema uses an unsupported construct, so the gap is found at re-vendor time, not by a user. Rejected: a JSON Schema form library, a large dependency for a handful of constructs, with its own styling to override. |
+| D191 | Option names: a value of a closed set is shown as its help term's name, through the references the application already loads (D83), with its term id kept. A value with no reference shows as served. |
+| D192 | Term ids on fields: each field's label element carries the field's `x-term` as its term id, ready for GUI.4. |
+| D193 | One as-of for the form: the form has a single "As of" date field above the strategies. Its value is sent as `as_of` in the selection of every chosen strategy whose schema declares `as_of`, and `as_of` is not repeated inside each strategy's options. The field is a native date input; empty means the latest data. Timestamps are not offered. Rejected: `as_of` inside every strategy's options, which makes a user type one date several times and allows mixed dates in one submission. If the native date input does not work in one of the three webviews, GUI.3b stops and asks. |
+| D194 | Add entries: "Add entries" on the watchlist screen opens the form of the sketch: tickers (free text, split on commas and spaces, sent as typed because the engine trims and upper-cases), the as-of date, and the strategy chooser. A strategy's options are collapsed unless it has a required field with no starting value. One request is sent per chosen strategy, in the engine's strategy order; the form stops at the first failure, says which strategies were added, and keeps the rest for another try. Rejected: one strategy per submission, which is atomic but slower for the common "these tickers, these strategies" case; or a new engine request that adds several strategies at once. |
+| D195 | Field errors: for `invalid_parameter` with `errors`, each item is shown at the field its `parameters` name (`selection.<field>`, `tickers`, `name`, and for GUI.3d `entries[i].selection.<field>` on the i-th chosen strategy). The message is built from the item's template (D181(b)) with each parameter replaced by its field label and each argument by its value. An item that names no visible field, or any `invalid_parameter` without `errors`, shows its message above the submit button. The application also blocks what the schema alone decides (a missing required field, a value outside the stated bounds) before sending, using catalog messages. |
+| D196 | Stored options and unreadable entries: each entry row can show its stored selection, read-only, with the same labels and option names as the form. There is no edit in place: the engine has no request for it, so changing an entry is remove and add. For a watchlist refused with `stored_selection_unreadable`, the screen shows the reason message and, using D181(c), "Remove this entry"; "Delete this watchlist" is offered as well. |
+
+### GUI.3c
+
+| # | Decision |
+| :--- | :--- |
+| D197 | Starting: "Refresh now" appears on the watchlist screen and, when the comparison has a watchlist, on the comparison. The request names only the watchlist; worker count, saving and the provider check are left to the engine's defaults and are not offered. A refusal with `refresh_job_running` shows the reason message with a link to the progress screen; `watchlist_empty` shows its reason message. |
+| D198 | The follower: one application-wide object, created with the shared engine client (D82), follows a refresh job by its refresh id until it ends, whichever screen is open: again at once when `has_more` is true, otherwise after one second. When the engine is ready it asks for the engine's latest job once, to find a refresh that is already running; after that it follows the id a start request returned. It is written for a job named by its id, not for "the one job", so an engine that later runs more than one refresh at a time needs no change to how a job is followed (D207). It keeps each row's position, ticker, method, state, outcome, reason code and saved run id, and drops the event's analysis document. A request that fails is tried again on the next tick; the screen shows the usual failure state after three failures in a row and keeps trying. |
+| D199 | Route: the progress screen is at `/refreshes/:refreshId/progress`, under the comparison's route, with "Refreshes" above it in the trail. It shows that refresh's job, running or ended. The engine keeps only its latest job, so for an id it no longer keeps the screen shows "This refresh's progress is no longer available." with a link to the refresh's comparison. |
+| D200 | Progress screen: as the sketches show. Heading "Refreshing <watchlist name>" or, for entries of no watchlist, "Refreshing ad hoc entries"; the watchlist name is read with the existing name lookup. The counts line reads "<finished> of <total> entries finished", both served (D181(d)). Rows are in entry order with no number column; a started row reads "Running…"; a finished row shows its outcome pill, linked to the saved run when there is one; a row that ended in an unexpected problem shows its reason code's term name, never the engine's error text, which may name a command. A last line gives the entries not yet started. The engine's word "job" is not used; the glossary's Entry and Refresh are. |
+| D201 | Navigation marker: while a refresh runs, a line under "Refreshes" reads "Refresh running · <finished> of <total>" and links to the progress screen. When it ends the line reads "Refresh finished", "Refresh stopped" or "Refresh failed" until the progress screen has been opened once. |
+| D202 | Stop: the button reads "Stop after running entries", as in the mock-ups, with no confirmation, because nothing saved is lost and the refresh can be run again. After it is pressed the heading reads "Stopping…" and the button cannot be used again. |
+| D203 | Ended states: finished and stopped show the summary's run count and outcome pills (the same component as the comparison's counts line, D176), the provider check when the summary has one (provider name from D181(e), verdict as its term name) and "Open comparison". Stopped adds the entries never started. Failed shows the job's failure by D84's groups and D188. The application does not open the comparison by itself. |
+| D204 | Closing the window while a refresh runs: the application asks "A refresh is running. Entries that have not finished will not be saved. Close anyway?" The engine gives running entries five seconds after the application exits and abandons the rest. This needs a close-requested handler in the platform module and may need one window permission; if it needs more than that, GUI.3c stops and asks. Rejected: no confirmation, relying on the user knowing a refresh is running. |
+| D205 | SEC identity notice: when `/v1/info` reports no SEC identity, the watchlist screen, the "Add entries" result and the "Analyze a ticker" screen show "Strategies that read company filings need an SEC identity, and none is set up. Those analyses will fail until it is." The message names no environment variable; `docs/project/SMOKE_TESTING.md` tells contributors how to set it. The first-run screen stays in GUI.5. |
+
+### GUI.3d
+
+| # | Decision |
+| :--- | :--- |
+| D206 | Screen and navigation: "Analyze a ticker" is the first navigation item, as in the mock-ups, at `/analyze`. Watchlists stays the start screen, following the answer to Q2 in the [v0.1 implementation plan](../IMPLEMENTATION_PLAN.md#questions-for-potential-users-before-gui2-scope-is-fixed). |
+| D207 | One path for analysis: the screen always starts a refresh of entries, one entry per chosen strategy, saved, even when one strategy is chosen. Results are found afterwards under Refreshes as "Ad hoc entries" and under Saved runs. The engine's single-analysis request is not used. Accepted limit for the preview: the engine runs one refresh at a time, so a ticker cannot be analyzed while a watchlist refresh is running; the screen says so and links to the progress screen. The limit is the engine's, and lifting it is engine work (more than one refresh at a time, or a queue), recorded as an engine issue when this plan lands; D198 and D199 name a job by its id so the application does not build the limit in. Rejected: the single-analysis request for one strategy, or as a way round a running refresh (a second code path with no progress and no stop, whose results have no comparison); "do not save" (an unsaved result has no comparison and no run detail, so the application would need a third way to show a result). |
+| D208 | Not offered on the screen: several tickers at once (that is what a watchlist is for), and "add these to a watchlist" after the analysis. |
+
+### Tests, smoke test and documents
+
+| # | Decision |
+| :--- | :--- |
+| D209 | Tests (adds to D94, D107 and D166): the Playwright engine mock answers the action methods, checks the request body it was sent, and can play a scripted refresh job across polls. Fixtures add a selection form for the made-up strategy, a failure with several `errors`, removal and rename documents with `unreadable` set, and job documents in each state. Vitest covers the schema reader, the supported-construct walk over the vendored schemas (D190), template filling (D195), ticker splitting and the follower's handling of `next_after` and `has_more` with a fake clock. Playwright covers each action by keyboard, each dialog's focus handling, both text directions for the forms, and one test per failure group of D188. |
+| D210 | Smoke test (follows D168 to D170): every sub-slice updates `docs/project/SMOKE_TESTING.md`. Watchlist actions extend check group W; "Analyze a ticker" gets a new group A and refresh progress a new group P. The setup `pnpm smoke` scripts stays as it is, and the new checks make their own watchlist through the application. Each sub-slice has a targeted run, because only a real engine proves that requests the mock accepts are accepted, and only real providers show a refresh advancing: GUI.3a its new W checks; GUI.3b its new W checks; GUI.3c group P; GUI.3d group A. Windows only, as for GUI.2b3. Exact `pnpm smoke --checks` commands are set with each sub-slice's own decisions, when its checks are numbered. |
+| D211 | Documents: this plan lives at `docs/project/milestones/v0.1/gui-3/`. The v0.1 implementation plan's GUI.3 section gains the engine slice in its Decision, the four branches and the link to this plan. The preview mock-ups are not edited. |
+| D212 | Sub-slice decisions: as in GUI.2, each sub-slice's remaining decisions (file-level choices, check numbers, exact messages) are listed with recommendations and approved before its agent prompt is written. Catalog wording in this plan's sketches is a starting point for that review. |
