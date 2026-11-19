@@ -124,6 +124,19 @@ const steps: Step[] = [
   },
 ];
 
+const args = process.argv.slice(2);
+if (args.length > 1 || (args.length === 1 && args[0] !== '--slice')) {
+  process.stderr.write('Usage: pnpm gate | pnpm gate:slice\n');
+  process.exit(2);
+}
+if (!process.env.npm_execpath) {
+  process.stderr.write(
+    'Run the gate with `pnpm gate`; npm_execpath is not set.\n',
+  );
+  process.exit(1);
+}
+const sliceMode = args.length === 1;
+
 const output = createWriteStream('gate-output.txt', { flags: 'w' });
 function log(message: string): void {
   process.stdout.write(message);
@@ -200,20 +213,7 @@ function describeScope(slice: boolean): { runShell: boolean; line: string } {
 }
 
 async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  if (args.length > 1 || (args.length === 1 && args[0] !== '--slice')) {
-    process.stderr.write('Usage: pnpm gate | pnpm gate:slice\n');
-    process.exitCode = 2;
-    return;
-  }
-  if (!process.env.npm_execpath) {
-    process.stderr.write(
-      'Run the gate with `pnpm gate`; npm_execpath is not set.\n',
-    );
-    process.exitCode = 1;
-    return;
-  }
-  const scope = describeScope(args.length === 1);
+  const scope = describeScope(sliceMode);
   log(`${scope.line}\n`);
   const results: Result[] = [];
   const totalStarted = Date.now();
