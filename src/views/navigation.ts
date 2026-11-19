@@ -88,3 +88,20 @@ export function compareCrumbs(refreshesLabel: string): Crumb[] {
 export function watchlistCrumbs(watchlistsLabel: string): Crumb[] {
   return [{ label: watchlistsLabel, to: { name: 'watchlists' } }];
 }
+
+// The Add entries screen's trail: Watchlists, then the watchlist (parent
+// screens only). The watchlist is known once its document has loaded.
+export function addEntriesCrumbs(
+  watchlistsLabel: string,
+  watchlist: { id: string; name: string } | null,
+): Crumb[] {
+  const crumbs: Crumb[] = [
+    { label: watchlistsLabel, to: { name: 'watchlists' } },
+  ];
+  if (watchlist !== null)
+    crumbs.push({
+      label: watchlist.name,
+      to: { name: 'watchlist', params: { watchlistId: watchlist.id } },
+    });
+  return crumbs;
+}

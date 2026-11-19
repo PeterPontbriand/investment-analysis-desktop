@@ -1,4 +1,5 @@
 import { createMemoryHistory, createRouter } from 'vue-router';
+import AddEntriesView from './views/AddEntriesView.vue';
 import AboutView from './views/AboutView.vue';
 import RefreshesView from './views/RefreshesView.vue';
 import RefreshCompareView from './views/RefreshCompareView.vue';
@@ -17,6 +18,11 @@ export function createAppRouter() {
         path: '/watchlists/:watchlistId',
         name: 'watchlist',
         component: WatchlistView,
+      },
+      {
+        path: '/watchlists/:watchlistId/add',
+        name: 'watchlist-add',
+        component: AddEntriesView,
       },
       { path: '/refreshes', name: 'refreshes', component: RefreshesView },
       {

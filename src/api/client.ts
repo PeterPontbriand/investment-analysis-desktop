@@ -71,6 +71,9 @@ type OptionsArgument<M extends Method, P extends keyof paths> =
 
 export type FailureEnvelope = components['schemas']['FailureEnvelope'];
 
+// The entry a watchlist was refused for, which this version cannot read.
+export type UnreadableEntry = components['schemas']['UnreadableEntryDocument'];
+
 export type ApiResult<T> = {
   data: T;
   // The tag of the locale the engine's text is in, from Content-Language.
@@ -87,6 +90,8 @@ export type ApiErrorDetails = {
   contentLanguage?: string | null;
   // The failure envelope's list of rule errors, kept as served.
   errors?: FailureEnvelope['errors'];
+  // The failure envelope's unreadable entry, kept as served.
+  unreadable?: UnreadableEntry | null;
 };
 
 // Why a request failed: the engine process has exited, the engine could not be
@@ -98,6 +103,7 @@ export class ApiError extends Error {
   readonly reason: string | null;
   readonly contentLanguage: string | null;
   readonly errors: FailureEnvelope['errors'];
+  readonly unreadable: UnreadableEntry | null;
 
   constructor(kind: ApiError['kind'], details: ApiErrorDetails = {}) {
     super(`API request failed: ${kind}`);
@@ -108,6 +114,7 @@ export class ApiError extends Error {
     this.reason = details.reason ?? null;
     this.contentLanguage = details.contentLanguage ?? null;
     this.errors = details.errors ?? null;
+    this.unreadable = details.unreadable ?? null;
   }
 }
 
@@ -127,16 +134,29 @@ export type ApiClient = {
   ) => Promise<ApiResult<ResponseOf<M, P>>>;
 };
 
+function isUnreadable(value: unknown): value is UnreadableEntry {
+  if (typeof value !== 'object' || value === null) return false;
+  const entry = value as Record<string, unknown>;
+  return (
+    typeof entry.entry_number === 'number' &&
+    typeof entry.ticker === 'string' &&
+    typeof entry.method_id === 'string' &&
+    typeof entry.reason === 'string'
+  );
+}
+
 async function failureOf(response: Response): Promise<{
   reasonCode: string | null;
   reason: string | null;
   errors: FailureEnvelope['errors'];
+  unreadable: UnreadableEntry | null;
 }> {
   try {
     const body = (await response.json()) as {
       reason_code?: unknown;
       reason?: unknown;
       errors?: unknown;
+      unreadable?: unknown;
     };
     return {
       reasonCode:
@@ -145,9 +165,10 @@ async function failureOf(response: Response): Promise<{
       errors: Array.isArray(body.errors)
         ? (body.errors as FailureEnvelope['errors'])
         : null,
+      unreadable: isUnreadable(body.unreadable) ? body.unreadable : null,
     };
   } catch {
-    return { reasonCode: null, reason: null, errors: null };
+    return { reasonCode: null, reason: null, errors: null, unreadable: null };
   }
 }
 
