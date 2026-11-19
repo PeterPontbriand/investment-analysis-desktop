@@ -59,7 +59,9 @@ watch(
     :to="progressLocation(record.refreshId)"
     >{{ text }}</RouterLink
   >
-  <p class="visually-hidden" aria-live="polite" aria-atomic="true">{{ announcement }}</p>
+  <p class="visually-hidden" aria-live="polite" aria-atomic="true">
+    {{ announcement }}
+  </p>
 </template>
 
 <style scoped>

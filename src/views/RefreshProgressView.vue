@@ -216,7 +216,9 @@ function stop(): void {
       />
     </div>
     <p class="counts-line">{{ countsLine }}</p>
-    <p class="visually-hidden" aria-live="polite" aria-atomic="true">{{ announced }}</p>
+    <p class="visually-hidden" aria-live="polite" aria-atomic="true">
+      {{ announced }}
+    </p>
     <ul v-if="pills !== null" class="pills">
       <li v-for="item in pills.outcomes" :key="item.code">
         <OutcomePill :code="item.code" :count="item.count" />

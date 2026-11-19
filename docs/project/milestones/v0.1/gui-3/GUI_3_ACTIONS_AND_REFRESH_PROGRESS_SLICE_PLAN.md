@@ -13,8 +13,8 @@
 | :--- | :--- | :--- | :--- |
 | GUI.3a | [Action groundwork and watchlist management](#gui3a--action-groundwork-and-watchlist-management) | Complete | 2026-11-16 |
 | GUI.3b | [Selection form and adding entries](#gui3b--selection-form-and-adding-entries) | Complete | 2026-11-18 |
-| GUI.3c | [Refresh with progress and stop](#gui3c--refresh-with-progress-and-stop) | Next | |
-| GUI.3d | [Analyze a ticker](#gui3d--analyze-a-ticker) | Planned | |
+| GUI.3c | [Refresh with progress and stop](#gui3c--refresh-with-progress-and-stop) | Complete | 2026-11-19 |
+| GUI.3d | [Analyze a ticker](#gui3d--analyze-a-ticker) | Next | |
 
 ## Sub-slices
 
