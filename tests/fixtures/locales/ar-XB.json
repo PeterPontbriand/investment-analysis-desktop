@@ -203,7 +203,7 @@
     "requiredNote": "[ar-XB] * Required",
     "add": "[ar-XB] Add",
     "adding": "[ar-XB] Adding…",
-    "partial": "[ar-XB] Added {count} entry for {strategies}. The strategies still chosen were not added. | Added {count} entries for {strategies}. The strategies still chosen were not added.",
+    "partial": "[ar-XB] Added {count} entry for {strategies}. Other selected strategies were not added. | Added {count} entries for {strategies}. Other selected strategies were not added.",
     "errors": {
       "tickersRequired": "[ar-XB] Enter at least one ticker.",
       "strategyRequired": "[ar-XB] Choose at least one strategy."

@@ -444,6 +444,7 @@ function cancel(): void {
           :id="`${base}-as-of`"
           v-model="asOf"
           type="date"
+          max="9999-12-31"
           :data-target="asOfTarget"
           :aria-invalid="describe(asOfTarget) ? 'true' : undefined"
           :aria-describedby="

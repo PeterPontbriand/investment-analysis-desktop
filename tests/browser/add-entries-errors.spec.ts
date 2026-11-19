@@ -264,7 +264,9 @@ test.describe('several strategies', () => {
     await choose(page, 'Momentum');
     await add(page).click();
     await expect(page.getByText(/already listed/)).toBeVisible();
-    await expect(status(page, 'The strategies still chosen')).toHaveCount(0);
+    await expect(
+      status(page, en.addEntries.partial.split('. ')[1]!.split(' | ')[0]!),
+    ).toHaveCount(0);
   });
 });
 

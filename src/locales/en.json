@@ -203,7 +203,7 @@
     "requiredNote": "* Required",
     "add": "Add",
     "adding": "Adding…",
-    "partial": "Added {count} entry for {strategies}. The strategies still chosen were not added. | Added {count} entries for {strategies}. The strategies still chosen were not added.",
+    "partial": "Added {count} entry for {strategies}. Other selected strategies were not added. | Added {count} entries for {strategies}. Other selected strategies were not added.",
     "errors": {
       "tickersRequired": "Enter at least one ticker.",
       "strategyRequired": "Choose at least one strategy."
