@@ -1,15 +1,22 @@
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { once } from 'node:events';
+import { listChangedPaths, shellPathsChanged } from './gate-scope.ts';
 
 type Step = {
   name: string;
   command: string;
   args: string[];
   forbidOutput?: string;
+  shell?: true;
 };
 type Program = { file: string; args: string[] };
-type Result = { name: string; passed: boolean; duration: number };
+type Result = {
+  name: string;
+  passed: boolean;
+  duration: number;
+  skipped?: true;
+};
 
 const packageManager = 'pnpm';
 const node = 'node';
@@ -70,11 +77,13 @@ const steps: Step[] = [
   },
   {
     name: 'Rust formatting check',
+    shell: true,
     command: 'cargo',
     args: ['fmt', '--check', '--manifest-path', 'src-tauri/Cargo.toml'],
   },
   {
     name: 'Rust Clippy with warnings denied',
+    shell: true,
     command: 'cargo',
     args: [
       'clippy',
@@ -90,22 +99,26 @@ const steps: Step[] = [
   },
   {
     name: 'Rust unit tests',
+    shell: true,
     command: 'cargo',
     args: ['test', '--locked', '--manifest-path', 'src-tauri/Cargo.toml'],
   },
   {
     name: 'Cargo release dependency tree excludes WebDriver',
+    shell: true,
     command: 'cargo',
     args: ['tree', '--manifest-path', 'src-tauri/Cargo.toml', '--locked'],
     forbidOutput: 'tauri-plugin-wdio-webdriver',
   },
   {
     name: 'Tauri end-to-end build with WebDriver feature',
+    shell: true,
     command: packageManager,
     args: ['build:shell:e2e'],
   },
   {
     name: 'Tauri shell smoke test',
+    shell: true,
     command: packageManager,
     args: ['test:shell'],
   },
@@ -164,7 +177,35 @@ function run(step: Step): Promise<{ passed: boolean; duration: number }> {
   });
 }
 
+function describeScope(slice: boolean): { runShell: boolean; line: string } {
+  if (!slice) return { runShell: true, line: 'Full gate: every step runs.' };
+  const listed = listChangedPaths();
+  if ('error' in listed)
+    return {
+      runShell: true,
+      line: `Slice check: shell steps run; could not list changed files: ${listed.error}.`,
+    };
+  const matched = shellPathsChanged(listed.paths);
+  if (matched.length === 0)
+    return {
+      runShell: false,
+      line: 'Slice check: shell steps skipped; no change under src-tauri/, src/platform/, tests/shell/, wdio.conf.js, rust-toolchain.toml or pnpm-lock.yaml.',
+    };
+  const shown = matched.slice(0, 5).join(', ');
+  const more = matched.length > 5 ? `, and ${matched.length - 5} more` : '';
+  return {
+    runShell: true,
+    line: `Slice check: shell steps run; changed: ${shown}${more}.`,
+  };
+}
+
 async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  if (args.length > 1 || (args.length === 1 && args[0] !== '--slice')) {
+    process.stderr.write('Usage: pnpm gate | pnpm gate:slice\n');
+    process.exitCode = 2;
+    return;
+  }
   if (!process.env.npm_execpath) {
     process.stderr.write(
       'Run the gate with `pnpm gate`; npm_execpath is not set.\n',
@@ -172,12 +213,26 @@ async function main(): Promise<void> {
     process.exitCode = 1;
     return;
   }
+  const scope = describeScope(args.length === 1);
+  log(`${scope.line}\n`);
   const results: Result[] = [];
   const totalStarted = Date.now();
+  const expectedRuns = steps.filter(
+    (step) => scope.runShell || !step.shell,
+  ).length;
   for (const [index, step] of steps.entries()) {
-    log(
-      `\n[${index + 1}/${steps.length}] ${step.name}\n$ ${step.command} ${step.args.join(' ')}\n`,
-    );
+    const header = `\n[${index + 1}/${steps.length}] ${step.name}\n`;
+    if (step.shell && !scope.runShell) {
+      log(`${header}SKIP: shell paths unchanged\n`);
+      results.push({
+        name: step.name,
+        passed: true,
+        duration: 0,
+        skipped: true,
+      });
+      continue;
+    }
+    log(`${header}$ ${step.command} ${step.args.join(' ')}\n`);
     const result = await run(step);
     results.push({ name: step.name, ...result });
     log(
@@ -190,6 +245,10 @@ async function main(): Promise<void> {
   log('\nGate summary\n');
   log('| Step | Result | Duration |\n| :--- | :--- | ---: |\n');
   for (const result of results) {
+    if (result.skipped) {
+      log(`| ${result.name} | SKIP | - |\n`);
+      continue;
+    }
     log(
       `| ${result.name} | ${result.passed ? 'PASS' : 'FAIL'} | ${(result.duration / 1000).toFixed(1)}s |\n`,
     );
@@ -197,10 +256,8 @@ async function main(): Promise<void> {
   log(`\nTotal duration: ${(totalDuration / 1000).toFixed(1)}s\n`);
   output.end();
   await once(output, 'finish');
-  if (
-    results.some((result) => !result.passed) ||
-    results.length !== steps.length
-  )
+  const ran = results.filter((result) => !result.skipped);
+  if (ran.some((result) => !result.passed) || ran.length !== expectedRuns)
     process.exitCode = 1;
 }
 
