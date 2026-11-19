@@ -115,6 +115,32 @@ export const helpIndex: Schemas['HelpIndexDocument'] = {
       ],
     },
     {
+      id: 'failures',
+      title: 'Failures and provider checks',
+      terms: [
+        {
+          id: 'failure-provider-error',
+          name: 'Provider error',
+          definition: 'A data provider failed.',
+        },
+        {
+          id: 'failure-execution-error',
+          name: 'Execution error',
+          definition: 'The analysis stopped.',
+        },
+        {
+          id: 'verdict-healthy',
+          name: 'Healthy',
+          definition: 'The provider answered.',
+        },
+        {
+          id: 'verdict-unreachable',
+          name: 'Unreachable',
+          definition: 'The provider did not answer.',
+        },
+      ],
+    },
+    {
       id: 'strategies',
       title: 'Strategies',
       terms: [
@@ -156,6 +182,14 @@ export const references: Schemas['HelpReferencesDocument'] = {
     ReasonCode: {
       insufficient_history: 'reason-insufficient-history',
       instrument_kind_not_applicable: 'reason-instrument-kind',
+    },
+    FailureReasonCode: {
+      provider_error: 'failure-provider-error',
+      execution_error: 'failure-execution-error',
+    },
+    ProviderCheckVerdict: {
+      healthy: 'verdict-healthy',
+      unreachable: 'verdict-unreachable',
     },
     HeadlineUnavailable: {
       no_result_stored: 'headline-no-result',

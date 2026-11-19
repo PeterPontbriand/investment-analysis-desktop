@@ -66,6 +66,8 @@ export function respond(url: URL): Reply {
       return ok(data.references);
     case '/v1/watchlists':
       return ok(data.watchlists);
+    case '/v1/refreshes/job':
+      return failure(404, 'refresh_job_not_found', 'No refresh job.');
     case '/v1/refreshes': {
       const id = parameters.get('watchlist_id');
       return ok(
