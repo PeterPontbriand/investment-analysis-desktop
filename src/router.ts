@@ -2,6 +2,7 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 import AddEntriesView from './views/AddEntriesView.vue';
 import AboutView from './views/AboutView.vue';
 import RefreshesView from './views/RefreshesView.vue';
+import RefreshProgressView from './views/RefreshProgressView.vue';
 import RefreshCompareView from './views/RefreshCompareView.vue';
 import RunDetailView from './views/RunDetailView.vue';
 import RunsView from './views/RunsView.vue';
@@ -29,6 +30,11 @@ export function createAppRouter() {
         path: '/refreshes/:refreshId',
         name: 'refresh',
         component: RefreshCompareView,
+      },
+      {
+        path: '/refreshes/:refreshId/progress',
+        name: 'refresh-progress',
+        component: RefreshProgressView,
       },
       { path: '/runs', name: 'runs', component: RunsView },
       { path: '/runs/:runId', name: 'run', component: RunDetailView },

@@ -4,7 +4,7 @@ import { useEngine } from '../api/engine.ts';
 import { pageSize, usePagedList } from '../api/useScreenData.ts';
 import { formatCompletion, formatCount } from '../i18n/format.ts';
 import { useMessages, type MessageKey } from '../i18n/index.ts';
-import { compareLocation } from '../views/navigation.ts';
+import { compareLocation, progressLocation } from '../views/navigation.ts';
 import EmptyMessage from './EmptyMessage.vue';
 import ScreenState from './ScreenState.vue';
 import TableScroll from './TableScroll.vue';
@@ -84,6 +84,12 @@ function countOf(counts: Record<string, number>, code: string): string {
                   refresh.last_completed_at,
                 )
               }}</RouterLink>
+              <RouterLink
+                v-if="engine.follower.runningId.value === refresh.refresh_id"
+                class="running-note"
+                :to="progressLocation(refresh.refresh_id)"
+                >{{ t('refresh.runningTag') }}</RouterLink
+              >
             </th>
             <td>{{ refresh.watchlist_name ?? t('refreshes.adHoc') }}</td>
             <td class="num">{{ formatCount(locale, refresh.run_count) }}</td>
@@ -108,3 +114,10 @@ function countOf(counts: Record<string, number>, code: string): string {
     </button>
   </template>
 </template>
+
+<style scoped>
+.running-note {
+  font-size: var(--font-size-small);
+  margin-inline-start: var(--space-2);
+}
+</style>

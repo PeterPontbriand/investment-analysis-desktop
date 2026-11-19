@@ -20,6 +20,8 @@ describe('useScreenData.replace', () => {
           }),
         engineStatus: () => Promise.resolve('running'),
         setWindowTitle: () => Promise.resolve(),
+        onCloseRequested: () => {},
+        closeWindow: () => Promise.resolve(),
       },
       () => 'en',
     );

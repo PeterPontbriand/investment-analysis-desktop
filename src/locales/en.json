@@ -11,7 +11,11 @@
     "watchlists": "Watchlists",
     "refreshes": "Refreshes",
     "runs": "Saved runs",
-    "about": "About"
+    "about": "About",
+    "refreshRunning": "Refresh running · {finished} of {total}",
+    "refreshFinished": "Refresh finished",
+    "refreshStopped": "Refresh stopped",
+    "refreshFailed": "Refresh failed"
   },
   "breadcrumb": {
     "label": "Breadcrumb"
@@ -172,7 +176,10 @@
     "refreshRunning": "A refresh is already running.",
     "runsKept": "Saved runs are kept.",
     "nameLabel": "Name",
-    "nameRequired": "Enter a name."
+    "nameRequired": "Enter a name.",
+    "starting": "Starting…",
+    "stop": "Stop after running entries",
+    "keepOpen": "Keep open"
   },
   "selection": {
     "strategies": "Strategies",
@@ -208,5 +215,45 @@
       "tickersRequired": "Enter at least one ticker.",
       "strategyRequired": "Choose at least one strategy."
     }
+  },
+  "refresh": {
+    "now": "Refresh now",
+    "running": "A refresh is running.",
+    "showProgress": "Show progress",
+    "stillRunning": "This refresh is still running.",
+    "runningTag": "Running",
+    "secIdentity": "Strategies that read company filings need an SEC identity, and none is set up. Those analyses will fail until it is.",
+    "subject": {
+      "unknownWatchlist": "a watchlist",
+      "adHoc": "ad hoc entries"
+    },
+    "heading": {
+      "running": "Refreshing {subject}",
+      "stopping": "Stopping…",
+      "finished": "Refresh of {subject} finished",
+      "stopped": "Refresh of {subject} stopped",
+      "failed": "Refresh of {subject} failed"
+    },
+    "announce": {
+      "finished": "Refresh of {subject} finished.",
+      "stopped": "Refresh of {subject} stopped.",
+      "failed": "Refresh of {subject} failed."
+    },
+    "counts": "{finished} of {total} entry finished | {finished} of {total} entries finished",
+    "notStartedYet": "{count} entry not started yet | {count} entries not started yet",
+    "notStarted": "{count} entry was not started. | {count} entries were not started.",
+    "unexpected": "Unexpected problem",
+    "columns": {
+      "result": "Result"
+    },
+    "rowRunning": "Running…",
+    "openComparison": "Open comparison",
+    "providersHeading": "Data providers checked after a failure:",
+    "gone": "This refresh's progress is no longer available.",
+    "tableLabel": "Entries of this refresh"
+  },
+  "close": {
+    "title": "A refresh is running. Entries that have not finished will not be saved. Close anyway?",
+    "closeAnyway": "Close anyway"
   }
 }

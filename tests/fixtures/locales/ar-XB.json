@@ -11,7 +11,11 @@
     "watchlists": "[ar-XB] Watchlists",
     "refreshes": "[ar-XB] Refreshes",
     "runs": "[ar-XB] Saved runs",
-    "about": "[ar-XB] About"
+    "about": "[ar-XB] About",
+    "refreshRunning": "[ar-XB] Refresh running · {finished} of {total}",
+    "refreshFinished": "[ar-XB] Refresh finished",
+    "refreshStopped": "[ar-XB] Refresh stopped",
+    "refreshFailed": "[ar-XB] Refresh failed"
   },
   "breadcrumb": {
     "label": "[ar-XB] Breadcrumb"
@@ -172,7 +176,10 @@
     "refreshRunning": "[ar-XB] A refresh is already running.",
     "runsKept": "[ar-XB] Saved runs are kept.",
     "nameLabel": "[ar-XB] Name",
-    "nameRequired": "[ar-XB] Enter a name."
+    "nameRequired": "[ar-XB] Enter a name.",
+    "starting": "[ar-XB] Starting…",
+    "stop": "[ar-XB] Stop after running entries",
+    "keepOpen": "[ar-XB] Keep open"
   },
   "selection": {
     "strategies": "[ar-XB] Strategies",
@@ -208,5 +215,45 @@
       "tickersRequired": "[ar-XB] Enter at least one ticker.",
       "strategyRequired": "[ar-XB] Choose at least one strategy."
     }
+  },
+  "refresh": {
+    "now": "[ar-XB] Refresh now",
+    "running": "[ar-XB] A refresh is running.",
+    "showProgress": "[ar-XB] Show progress",
+    "stillRunning": "[ar-XB] This refresh is still running.",
+    "runningTag": "[ar-XB] Running",
+    "secIdentity": "[ar-XB] Strategies that read company filings need an SEC identity, and none is set up. Those analyses will fail until it is.",
+    "subject": {
+      "unknownWatchlist": "[ar-XB] a watchlist",
+      "adHoc": "[ar-XB] ad hoc entries"
+    },
+    "heading": {
+      "running": "[ar-XB] Refreshing {subject}",
+      "stopping": "[ar-XB] Stopping…",
+      "finished": "[ar-XB] Refresh of {subject} finished",
+      "stopped": "[ar-XB] Refresh of {subject} stopped",
+      "failed": "[ar-XB] Refresh of {subject} failed"
+    },
+    "announce": {
+      "finished": "[ar-XB] Refresh of {subject} finished.",
+      "stopped": "[ar-XB] Refresh of {subject} stopped.",
+      "failed": "[ar-XB] Refresh of {subject} failed."
+    },
+    "counts": "[ar-XB] {finished} of {total} entry finished | {finished} of {total} entries finished",
+    "notStartedYet": "[ar-XB] {count} entry not started yet | {count} entries not started yet",
+    "notStarted": "[ar-XB] {count} entry was not started. | {count} entries were not started.",
+    "unexpected": "[ar-XB] Unexpected problem",
+    "columns": {
+      "result": "[ar-XB] Result"
+    },
+    "rowRunning": "[ar-XB] Running…",
+    "openComparison": "[ar-XB] Open comparison",
+    "providersHeading": "[ar-XB] Data providers checked after a failure:",
+    "gone": "[ar-XB] This refresh's progress is no longer available.",
+    "tableLabel": "[ar-XB] Entries of this refresh"
+  },
+  "close": {
+    "title": "[ar-XB] A refresh is running. Entries that have not finished will not be saved. Close anyway?",
+    "closeAnyway": "[ar-XB] Close anyway"
   }
 }

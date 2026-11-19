@@ -22,5 +22,12 @@ export function createTauriPlatform(): Platform {
     },
     engineStatus: () => invoke<EngineStatus>('engine_status'),
     setWindowTitle: (title) => getCurrentWindow().setTitle(title),
+    onCloseRequested: (handler) => {
+      // The handler decides before it returns, as the window API requires.
+      void getCurrentWindow().onCloseRequested((event) => {
+        if (handler()) event.preventDefault();
+      });
+    },
+    closeWindow: () => getCurrentWindow().destroy(),
   };
 }
