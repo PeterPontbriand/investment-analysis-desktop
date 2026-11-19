@@ -1,6 +1,7 @@
 // Typed refresh job documents and a scripted job, shared by Vitest and
 // Playwright. The types come from the vendored API description.
 import type { components } from '../../../src/api/schema.ts';
+import { coreRefreshId } from './compare.ts';
 import { coreId } from './data.ts';
 import { failure, ok, type Reply } from './server.ts';
 
@@ -10,8 +11,11 @@ export type JobDocument = Schemas['RefreshJobDocument'];
 type Event = Schemas['RefreshEventDocument'];
 type Result = Schemas['RefreshResultDocument'];
 
-export const refreshId = '99999999-9999-4999-8999-999999999999';
-export const savedRunId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+// The Core refresh of the comparison fixtures, so its comparison and its row in
+// the Refreshes table exist.
+export const refreshId = coreRefreshId;
+// A saved run that has a detail fixture.
+export const savedRunId = '00000000-0000-4000-8000-000000000003';
 
 export const totals = (
   total: number,

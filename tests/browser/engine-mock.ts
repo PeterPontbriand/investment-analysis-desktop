@@ -54,6 +54,9 @@ export function bodyProblem(
     return hasOnly(body, 'name', 'string') ? null : 'bad create body';
   if (/^\/v1\/watchlists\/[^/]+$/.test(path) && method === 'PATCH')
     return hasOnly(body, 'name', 'string') ? null : 'bad rename body';
+  // Starting a refresh names only the watchlist (D197).
+  if (path === '/v1/refreshes' && method === 'POST')
+    return hasOnly(body, 'watchlist_id', 'string') ? null : 'bad refresh body';
   if (/\/remove-tickers$/.test(path))
     return hasOnly(body, 'tickers', 'array') ? null : 'bad remove-tickers body';
   if (/\/remove-method$/.test(path))

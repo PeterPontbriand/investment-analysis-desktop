@@ -35,6 +35,14 @@ export const test = base.extend<{
         const status = /server responded with a status of (\d+)/.exec(
           message.text(),
         )?.[1];
+        // The engine answers 404 to "is there a refresh job?" when there is
+        // none (D245); the application asks once at start-up.
+        if (
+          status === '404' &&
+          new URL(message.location().url || 'http://none/').pathname ===
+            '/v1/refreshes/job'
+        )
+          return;
         if (
           status !== undefined &&
           allowedHttpStatuses.includes(Number(status))
