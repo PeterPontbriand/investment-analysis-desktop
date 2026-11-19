@@ -48,7 +48,8 @@
       "ticker": "Ticker",
       "strategy": "Strategy",
       "asOf": "As of",
-      "actions": "Actions"
+      "actions": "Actions",
+      "options": "Options"
     },
     "latestData": "Latest data",
     "noEntries": "This watchlist has no entries.",
@@ -70,7 +71,13 @@
     "removedNone": "No entries were removed. The watchlist had already changed.",
     "deleteTitle": "Delete {name}?",
     "deleteTitleNoName": "Delete this watchlist?",
-    "deleteEntries": "It has {count} entry, which will be deleted with it. | It has {count} entries, which will be deleted with it."
+    "deleteEntries": "It has {count} entry, which will be deleted with it. | It has {count} entries, which will be deleted with it.",
+    "showOptions": "Show options for entry {index}: {ticker}, {strategy}",
+    "hideOptions": "Hide options for entry {index}: {ticker}, {strategy}",
+    "added": "Added {count} entry. | Added {count} entries.",
+    "addEntries": "Add entries",
+    "removeUnreadable": "Remove entry {index} ({ticker})",
+    "removeUnreadableTitle": "Remove entry {index} ({ticker})?"
   },
   "refreshes": {
     "columns": {
@@ -166,5 +173,40 @@
     "runsKept": "Saved runs are kept.",
     "nameLabel": "Name",
     "nameRequired": "Enter a name."
+  },
+  "selection": {
+    "strategies": "Strategies",
+    "show": "Show",
+    "hide": "Hide",
+    "showOptions": "Show options for {strategy}",
+    "hideOptions": "Hide options for {strategy}",
+    "notSet": "Not set",
+    "yes": "Yes",
+    "no": "No",
+    "unsupported": "This option cannot be set in this version of the application.",
+    "errors": {
+      "required": "Enter a value.",
+      "number": "Enter a number.",
+      "whole": "Enter a whole number.",
+      "greater": "Enter a number greater than {limit}.",
+      "least": "Enter a number of at least {limit}.",
+      "less": "Enter a number less than {limit}.",
+      "most": "Enter a number of at most {limit}."
+    }
+  },
+  "addEntries": {
+    "heading": "Add entries to {name}",
+    "tickers": "Tickers",
+    "tickersHint": "Separate tickers with commas or spaces.",
+    "asOf": "As of",
+    "asOfHint": "Leave empty for the latest data.",
+    "requiredNote": "* Required",
+    "add": "Add",
+    "adding": "Adding…",
+    "partial": "Added {count} entry for {strategies}. The strategies still chosen were not added. | Added {count} entries for {strategies}. The strategies still chosen were not added.",
+    "errors": {
+      "tickersRequired": "Enter at least one ticker.",
+      "strategyRequired": "Choose at least one strategy."
+    }
   }
 }

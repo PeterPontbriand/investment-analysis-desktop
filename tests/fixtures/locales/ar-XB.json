@@ -48,7 +48,8 @@
       "ticker": "[ar-XB] Ticker",
       "strategy": "[ar-XB] Strategy",
       "asOf": "[ar-XB] As of",
-      "actions": "[ar-XB] Actions"
+      "actions": "[ar-XB] Actions",
+      "options": "[ar-XB] Options"
     },
     "latestData": "[ar-XB] Latest data",
     "noEntries": "[ar-XB] This watchlist has no entries.",
@@ -70,7 +71,13 @@
     "removedNone": "[ar-XB] No entries were removed. The watchlist had already changed.",
     "deleteTitle": "[ar-XB] Delete {name}?",
     "deleteTitleNoName": "[ar-XB] Delete this watchlist?",
-    "deleteEntries": "[ar-XB] It has {count} entry, which will be deleted with it. | It has {count} entries, which will be deleted with it."
+    "deleteEntries": "[ar-XB] It has {count} entry, which will be deleted with it. | It has {count} entries, which will be deleted with it.",
+    "showOptions": "[ar-XB] Show options for entry {index}: {ticker}, {strategy}",
+    "hideOptions": "[ar-XB] Hide options for entry {index}: {ticker}, {strategy}",
+    "added": "[ar-XB] Added {count} entry. | Added {count} entries.",
+    "addEntries": "[ar-XB] Add entries",
+    "removeUnreadable": "[ar-XB] Remove entry {index} ({ticker})",
+    "removeUnreadableTitle": "[ar-XB] Remove entry {index} ({ticker})?"
   },
   "refreshes": {
     "columns": {
@@ -166,5 +173,40 @@
     "runsKept": "[ar-XB] Saved runs are kept.",
     "nameLabel": "[ar-XB] Name",
     "nameRequired": "[ar-XB] Enter a name."
+  },
+  "selection": {
+    "strategies": "[ar-XB] Strategies",
+    "show": "[ar-XB] Show",
+    "hide": "[ar-XB] Hide",
+    "showOptions": "[ar-XB] Show options for {strategy}",
+    "hideOptions": "[ar-XB] Hide options for {strategy}",
+    "notSet": "[ar-XB] Not set",
+    "yes": "[ar-XB] Yes",
+    "no": "[ar-XB] No",
+    "unsupported": "[ar-XB] This option cannot be set in this version of the application.",
+    "errors": {
+      "required": "[ar-XB] Enter a value.",
+      "number": "[ar-XB] Enter a number.",
+      "whole": "[ar-XB] Enter a whole number.",
+      "greater": "[ar-XB] Enter a number greater than {limit}.",
+      "least": "[ar-XB] Enter a number of at least {limit}.",
+      "less": "[ar-XB] Enter a number less than {limit}.",
+      "most": "[ar-XB] Enter a number of at most {limit}."
+    }
+  },
+  "addEntries": {
+    "heading": "[ar-XB] Add entries to {name}",
+    "tickers": "[ar-XB] Tickers",
+    "tickersHint": "[ar-XB] Separate tickers with commas or spaces.",
+    "asOf": "[ar-XB] As of",
+    "asOfHint": "[ar-XB] Leave empty for the latest data.",
+    "requiredNote": "[ar-XB] * Required",
+    "add": "[ar-XB] Add",
+    "adding": "[ar-XB] Adding…",
+    "partial": "[ar-XB] Added {count} entry for {strategies}. The strategies still chosen were not added. | Added {count} entries for {strategies}. The strategies still chosen were not added.",
+    "errors": {
+      "tickersRequired": "[ar-XB] Enter at least one ticker.",
+      "strategyRequired": "[ar-XB] Choose at least one strategy."
+    }
   }
 }

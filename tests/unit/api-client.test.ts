@@ -239,4 +239,49 @@ describe('API adapter', () => {
       errors,
     });
   });
+
+  it('keeps the unreadable entry of a stored_selection_unreadable failure', async () => {
+    const unreadable = {
+      entry_number: 2,
+      ticker: 'ACME',
+      method_id: 'retired_method',
+      reason: 'Entry 2 was saved by a different version and cannot be read.',
+    };
+    const fetchStub = vi.fn().mockResolvedValue(
+      json(
+        {
+          reason_code: 'stored_selection_unreadable',
+          reason: unreadable.reason,
+          unreadable,
+        },
+        { status: 409 },
+      ),
+    );
+
+    const error = await client(fetchStub)
+      .get('/v1/watchlists/{watchlist_id}', { path: { watchlist_id: 'w' } })
+      .catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).unreadable).toEqual(unreadable);
+  });
+
+  it('has no unreadable entry when the envelope has none, or a malformed one', async () => {
+    for (const unreadable of [null, undefined, { ticker: 'ACME' }, 'x']) {
+      const fetchStub = vi.fn().mockResolvedValue(
+        json(
+          {
+            reason_code: 'stored_selection_unreadable',
+            reason: 'r',
+            unreadable,
+          },
+          { status: 409 },
+        ),
+      );
+      const error = await client(fetchStub)
+        .get('/v1/watchlists/{watchlist_id}', { path: { watchlist_id: 'w' } })
+        .catch((e: unknown) => e);
+      expect((error as ApiError).unreadable).toBeNull();
+    }
+  });
 });

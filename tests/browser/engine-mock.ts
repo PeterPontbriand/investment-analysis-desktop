@@ -15,7 +15,11 @@ const corsHeaders = {
 
 export type RequestDetails = { method: string; body: unknown };
 
-export type Handler = (url: URL, request: RequestDetails) => Reply | undefined;
+// A handler may answer later, so a test can hold a request open.
+export type Handler = (
+  url: URL,
+  request: RequestDetails,
+) => Reply | undefined | Promise<Reply | undefined>;
 
 export type RecordedRequest = {
   url: URL;
@@ -56,6 +60,28 @@ export function bodyProblem(
     return hasOnly(body, 'method_id', 'string')
       ? null
       : 'bad remove-method body';
+  if (/^\/v1\/watchlists\/[^/]+\/entries$/.test(path) && method === 'POST')
+    return addEntriesProblem(body);
+  return null;
+}
+
+// The body of adding entries (D193, D194): a strategy, the tickers as typed
+// and the selection, which holds only what the strategy's form sends.
+function addEntriesProblem(body: unknown): string | null {
+  if (!isObject(body)) return 'bad add-entries body';
+  const allowed = ['method_id', 'tickers', 'selection'];
+  if (Object.keys(body).some((key) => !allowed.includes(key)))
+    return 'bad add-entries body';
+  if (typeof body.method_id !== 'string') return 'bad add-entries method_id';
+  const tickers = body.tickers;
+  if (
+    !Array.isArray(tickers) ||
+    tickers.length === 0 ||
+    !tickers.every((item) => typeof item === 'string' && item !== '')
+  )
+    return 'bad add-entries tickers';
+  if (body.selection !== undefined && !isObject(body.selection))
+    return 'bad add-entries selection';
   return null;
 }
 
@@ -96,7 +122,7 @@ export async function mockEngine(
     const reply =
       problem !== null
         ? failure(400, 'invalid_parameter', problem)
-        : (handler(url, { method, body }) ??
+        : ((await handler(url, { method, body })) ??
           (method === 'GET'
             ? respond(url)
             : failure(404, 'endpoint_not_found', 'No such endpoint.')));

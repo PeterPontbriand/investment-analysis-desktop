@@ -167,6 +167,7 @@ test.describe('watchlists', () => {
         'ACME',
         'Momentum',
         en.watchlist.latestData,
+        en.selection.show,
         en.watchlist.removeAction,
       ]);
     await expect
@@ -176,6 +177,7 @@ test.describe('watchlists', () => {
         'ACME',
         'Graham Number',
         dec31,
+        en.selection.show,
         en.watchlist.removeAction,
       ]);
     // The made-up strategy needs no GUI code.
@@ -186,6 +188,7 @@ test.describe('watchlists', () => {
         'ZED',
         'Quality Screen',
         await instantText(page, '2026-10-30T18:02:00+00:00'),
+        en.selection.show,
         en.watchlist.removeAction,
       ]);
     await expect(entries.nth(2).locator('[data-term-id]')).toHaveAttribute(
