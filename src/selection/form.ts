@@ -134,15 +134,18 @@ export function validateFields(
   return problems;
 }
 
-// A strategy is collapsed unless a required field has no starting value
-// (D194).
-export function needsInput(fields: Field[]): boolean {
-  return flattenFields(fields).some(
-    (field) =>
-      field.required &&
-      (field.kind === 'number' ||
-        field.kind === 'text' ||
-        field.kind === 'choice') &&
-      field.initial === '',
-  );
+// Whether a required option has no value as the strategy's values stand now,
+// not as they started (D238): choosing a strategy opens its options only then.
+export function needsInputNow(fields: Field[], values: Values): boolean {
+  return flattenFields(fields).some((field) => {
+    if (
+      !field.required ||
+      (field.kind !== 'number' &&
+        field.kind !== 'text' &&
+        field.kind !== 'choice')
+    )
+      return false;
+    const value = values[field.key];
+    return typeof value !== 'string' || value.trim() === '';
+  });
 }

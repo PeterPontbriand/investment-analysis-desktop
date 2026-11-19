@@ -14,7 +14,7 @@ import { useMessages } from '../i18n/index.ts';
 import {
   buildSelection,
   initialValues,
-  needsInput,
+  needsInputNow,
   validateFields,
   type FieldProblem,
   type FieldValue,
@@ -107,15 +107,27 @@ watch(
   { immediate: true },
 );
 
-// A strategy's values start from its form once it has loaded, and its options
-// open by themselves when a required field has no starting value (D194).
+// A strategy's values start from its form once it has loaded. A strategy
+// chosen while its form was loading opens its options now, by the rule of
+// D238, if it is still chosen.
+const openWhenReady = new Set<string>();
+
+function openIfRequiredEmpty(method: string): void {
+  const form = forms.value[method];
+  if (form?.kind !== 'ready') return;
+  if (needsInputNow(form.form.fields, values.value[method] ?? {}))
+    expanded.value.add(method);
+}
+
 watch(
   forms,
   (loaded) => {
     for (const [method, form] of Object.entries(loaded)) {
-      if (form.kind !== 'ready' || values.value[method] !== undefined) continue;
-      values.value[method] = initialValues(form.form.fields);
-      if (needsInput(form.form.fields)) expanded.value.add(method);
+      if (form.kind !== 'ready') continue;
+      if (values.value[method] === undefined)
+        values.value[method] = initialValues(form.form.fields);
+      if (openWhenReady.delete(method) && chosen.value.has(method))
+        openIfRequiredEmpty(method);
     }
   },
   { immediate: true },
@@ -135,9 +147,18 @@ const declaresAsOf = (method: string): boolean => {
   return form?.kind === 'ready' && form.form.declaresAsOf;
 };
 
+// Choosing a strategy shows its options when a required option has no value
+// now; unchecking hides them and keeps the values (D238). Focus never moves.
 function choose(method: string, on: boolean): void {
-  if (on) chosen.value.add(method);
-  else chosen.value.delete(method);
+  if (!on) {
+    chosen.value.delete(method);
+    expanded.value.delete(method);
+    openWhenReady.delete(method);
+    return;
+  }
+  chosen.value.add(method);
+  if (forms.value[method]?.kind === 'ready') openIfRequiredEmpty(method);
+  else openWhenReady.add(method);
 }
 
 function toggle(method: string): void {

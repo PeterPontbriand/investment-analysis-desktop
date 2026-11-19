@@ -81,6 +81,16 @@ export const checkbox = (page: Page, name: string) =>
   page.getByRole('checkbox', { name, exact: true });
 export const choose = (page: Page, name: string) =>
   checkbox(page, name).check();
+export const uncheck = (page: Page, name: string) =>
+  checkbox(page, name).uncheck();
+// Whether a strategy's options are open, by its button's aria-expanded.
+export const expanded = (page: Page, name: string) =>
+  page
+    .locator('.strategy')
+    .filter({ hasText: name })
+    .first()
+    .locator('.row button')
+    .getAttribute('aria-expanded');
 export const showOptions = (page: Page, name: string) =>
   page
     .getByRole('button', {

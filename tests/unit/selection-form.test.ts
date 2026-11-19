@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSelection,
   initialValues,
-  needsInput,
+  needsInputNow,
   numberProblem,
   validateFields,
 } from '../../src/selection/form.ts';
@@ -99,10 +99,35 @@ describe('the request a form builds', () => {
     });
   });
 
-  it('opens a strategy by itself only when a required field has no starting value', () => {
-    expect(needsInput(read(selection.grahamGrowthForm).fields)).toBe(true);
-    expect(needsInput(read(selection.momentumForm).fields)).toBe(false);
-    expect(needsInput(read(selection.piotroskiForm).fields)).toBe(false);
+  it('needs input only while a required option has no value now', () => {
+    const { fields } = read(selection.grahamGrowthForm);
+    const values = initialValues(fields);
+    expect(needsInputNow(fields, values)).toBe(true);
+    values.expected_growth = '6.5';
+    expect(needsInputNow(fields, values)).toBe(true);
+    values.aaa_yield_override = ' 4.9 ';
+    expect(needsInputNow(fields, values)).toBe(false);
+    // A value cleared again needs input again.
+    values.expected_growth = '  ';
+    expect(needsInputNow(fields, values)).toBe(true);
+    expect(needsInputNow(fields, {})).toBe(true);
+    expect(
+      needsInputNow(
+        read(selection.momentumForm).fields,
+        initialValues(read(selection.momentumForm).fields),
+      ),
+    ).toBe(false);
+    const piotroski = read(selection.piotroskiForm).fields;
+    expect(needsInputNow(piotroski, initialValues(piotroski))).toBe(false);
+    // A required field with a starting value is not empty; a field the form
+    // cannot fill is not an empty option.
+    const made = read(selection.madeUpForm).fields;
+    const madeValues = initialValues(made);
+    expect(needsInputNow(made, madeValues)).toBe(true);
+    madeValues.weight = '2';
+    expect(needsInputNow(made, madeValues)).toBe(false);
+    const exotic = read(selection.unsupportedForm).fields;
+    expect(needsInputNow(exotic, initialValues(exotic))).toBe(false);
   });
 });
 

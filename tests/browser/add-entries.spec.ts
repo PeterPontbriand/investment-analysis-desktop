@@ -15,6 +15,8 @@ import {
   field,
   heading,
   openAdd,
+  expanded,
+  uncheck,
   posts,
   showOptions,
   status,
@@ -80,7 +82,7 @@ test.describe('the screen', () => {
     await expect(add(page)).toHaveCount(0);
   });
 
-  test("lists the strategies in the engine's order, options closed unless a required field is empty", async ({
+  test("lists the strategies in the engine's order, every strategy's options hidden", async ({
     page,
   }) => {
     await openAdd(page);
@@ -92,24 +94,99 @@ test.describe('the screen', () => {
       'Piotroski F-Score',
       'Quality Screen',
     ]);
-    const expanded = (name: string) =>
-      page
-        .locator('.strategy')
-        .filter({ hasText: name })
-        .first()
-        .locator('.row button')
-        .getAttribute('aria-expanded');
-    expect(await expanded('Momentum')).toBe('false');
-    expect(await expanded('Graham Number')).toBe('false');
-    expect(await expanded('Graham Growth')).toBe('true');
-    expect(await expanded('FCF Growth')).toBe('false');
-    expect(await expanded('Quality Screen')).toBe('true');
+    for (const name of [
+      'Momentum',
+      'Graham Number',
+      'Graham Growth',
+      'FCF Growth',
+      'Piotroski F-Score',
+      'Quality Screen',
+    ])
+      expect(await expanded(page, name), name).toBe('false');
+    await expect(page.locator('.options')).toHaveCount(0);
+  });
+
+  test("opens a strategy's options when it is chosen with a required option empty, and not otherwise", async ({
+    page,
+  }) => {
+    await openAdd(page);
+    await choose(page, 'Momentum');
+    expect(await expanded(page, 'Momentum')).toBe('false');
+    await choose(page, 'Graham Growth');
+    expect(await expanded(page, 'Graham Growth')).toBe('true');
+    // Opening options never moves focus: chosen from the keyboard, the box keeps it.
+    const quality = page.getByRole('checkbox', {
+      name: 'Quality Screen',
+      exact: true,
+    });
+    await quality.focus();
+    await page.keyboard.press('Space');
+    expect(await expanded(page, 'Quality Screen')).toBe('true');
+    await expect(quality).toBeFocused();
+    // The button still works on a strategy that is not chosen.
+    await showOptions(page, 'Piotroski F-Score');
+    expect(await expanded(page, 'Piotroski F-Score')).toBe('true');
+  });
+
+  test('hides the options when a strategy is unchecked, keeping the values', async ({
+    page,
+  }) => {
+    await openAdd(page);
+    await choose(page, 'Graham Growth');
+    const box = strategy(page, 'Graham Growth');
+    await field(box, 'Expected growth rate').fill('6.5');
+    await uncheck(page, 'Graham Growth');
+    expect(await expanded(page, 'Graham Growth')).toBe('false');
+    await expect(page.locator('.options')).toHaveCount(0);
+    // One required option is still empty: choosing again opens them, and
+    // what was typed is back.
+    await choose(page, 'Graham Growth');
+    expect(await expanded(page, 'Graham Growth')).toBe('true');
+    await expect(field(box, 'Expected growth rate')).toHaveValue('6.5');
+    await field(box, 'AAA corporate bond yield').fill('4.9');
+    await uncheck(page, 'Graham Growth');
+    // Every required option has a value now: choosing again leaves them hidden.
+    await choose(page, 'Graham Growth');
+    expect(await expanded(page, 'Graham Growth')).toBe('false');
+    await showOptions(page, 'Graham Growth');
+    await expect(field(box, 'AAA corporate bond yield')).toHaveValue('4.9');
+  });
+
+  test('opens a strategy chosen while its form loads once the form arrives, if still chosen', async ({
+    page,
+  }) => {
+    let release: () => void = () => undefined;
+    const hold = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await openAdd(page, {
+      extra: async (url) => {
+        if (
+          url.pathname === '/v1/strategies/graham_growth_value/selection' ||
+          url.pathname === '/v1/strategies/quality_screen/selection'
+        )
+          await hold;
+        return undefined;
+      },
+    });
+    await choose(page, 'Graham Growth');
+    await choose(page, 'Quality Screen');
+    await uncheck(page, 'Quality Screen');
+    expect(await expanded(page, 'Graham Growth')).toBe('false');
+    release();
+    await expect(
+      strategy(page, 'Graham Growth').getByLabel('Expected growth rate'),
+    ).toBeVisible();
+    expect(await expanded(page, 'Graham Growth')).toBe('true');
+    // Unchecked before the form arrived: it stays hidden.
+    expect(await expanded(page, 'Quality Screen')).toBe('false');
   });
 
   test("builds the Graham Growth options from the engine's form, with no raw codes", async ({
     page,
   }) => {
     await openAdd(page);
+    await choose(page, 'Graham Growth');
     const box = strategy(page, 'Graham Growth');
     await expect(box.locator('.fields label')).toHaveText([
       'EPS basis',
@@ -181,6 +258,7 @@ test.describe('the screen', () => {
     page,
   }) => {
     const engine = await openAdd(page);
+    await choose(page, 'Quality Screen');
     const box = strategy(page, 'Quality Screen');
     await expect(box.locator('.field > label, .group > legend')).toHaveText([
       'Lowest score',

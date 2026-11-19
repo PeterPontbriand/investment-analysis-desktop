@@ -436,6 +436,8 @@ test.describe('keyboard and text direction', () => {
     await expect(
       page.getByText(ar.addEntries.errors.tickersRequired),
     ).toBeVisible();
+    // Options open when the strategy is chosen with a required option empty.
+    await checkbox(page, 'Graham Growth').check();
     const box = strategy(page, 'Graham Growth');
     const options = box.locator('.options');
     expect(
