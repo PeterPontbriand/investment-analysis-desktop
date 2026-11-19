@@ -35,8 +35,9 @@ export function failure(
     provider_check: null,
     provider_failure: null,
     result: null,
-    schema_version: 13,
+    schema_version: 15,
     ticker: null,
+    unreadable: null,
   };
   return { status, body: envelope, language };
 }

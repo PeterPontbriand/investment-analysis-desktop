@@ -12,7 +12,8 @@ export const info: Schemas['InfoDocument'] = {
   api_versions: ['v1'],
   engine_version: '4.5.6',
   locales: [{ tag: 'en', name: 'English' }],
-  schema_version: 2,
+  providers: [],
+  schema_version: 3,
   sec_identity_configured: false,
 };
 

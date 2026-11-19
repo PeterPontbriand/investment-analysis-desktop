@@ -841,21 +841,24 @@ export interface components {
          */
         FCFGrowthSelection: {
             /**
-             * As Of
+             * As of
              * @description Run the analysis as of this date (the end of that day, UTC) or this moment, which needs a timezone offset; leave empty for the latest data.
              * @default null
              */
             as_of: string | null;
             /**
-             * Currency
+             * Reporting currency
              * @description Three-letter ISO 4217 code of the reporting currency the annual facts must use.
              * @default USD
              */
             currency: string;
-            /** @description The growth horizon, classification and forward-evidence rules. */
+            /**
+             * Growth policy
+             * @description The growth horizon, classification and forward-evidence rules.
+             */
             policy?: components["schemas"]["FCFGrowthSelection.FCFPolicySnapshot"];
             /**
-             * Use Cache
+             * Use cached data
              * @description Whether the analysis may read and write the local cache of fetched data.
              * @default true
              */
@@ -878,16 +881,19 @@ export interface components {
          */
         "FCFGrowthSelection.FCFPolicySnapshot": {
             /**
+             * Classification basis
              * @description Whether growth is classified on total free cash flow or on free cash flow per share.
              * @default total_fcf
              */
             classification_basis: components["schemas"]["FCFGrowthSelection.FCFClassificationBasis"];
             /**
+             * Forward policy
              * @description How forward-looking evidence affects the result: shown only, required to confirm, or a hard gate.
              * @default display_only
              */
             forward_policy: components["schemas"]["FCFGrowthSelection.ForwardPolicy"];
             /**
+             * Historical horizon
              * @description How many elapsed years of history to require; the default picks the longest available up to five.
              * @default longest_available
              */
@@ -1016,16 +1022,19 @@ export interface components {
          */
         FCFPolicySnapshot: {
             /**
+             * Classification basis
              * @description Whether growth is classified on total free cash flow or on free cash flow per share.
              * @default total_fcf
              */
             classification_basis: components["schemas"]["FCFClassificationBasis"];
             /**
+             * Forward policy
              * @description How forward-looking evidence affects the result: shown only, required to confirm, or a hard gate.
              * @default display_only
              */
             forward_policy: components["schemas"]["ForwardPolicy"];
             /**
+             * Historical horizon
              * @description How many elapsed years of history to require; the default picks the longest available up to five.
              * @default longest_available
              */
@@ -1195,10 +1204,10 @@ export interface components {
             result: null;
             /**
              * Schema Version
-             * @default 13
+             * @default 15
              * @constant
              */
-            schema_version: 13;
+            schema_version: 15;
             status: components["schemas"]["FailureStatus"];
             /**
              * Ticker
@@ -1206,6 +1215,11 @@ export interface components {
              * @default null
              */
             ticker: string | null;
+            /**
+             * @description Set exactly when reason_code is stored_selection_unreadable and the failure names the entry it concerns: that entry's position, ticker and stored method, and why this version cannot read it; null otherwise.
+             * @default null
+             */
+            unreadable: components["schemas"]["UnreadableEntryDocument"] | null;
         };
         /**
          * FailureReasonCode
@@ -1244,6 +1258,11 @@ export interface components {
              * @description The stable identifier of the rule, such as momentum.window_order.
              */
             rule: string;
+            /**
+             * Template
+             * @description The message with each parameter written as a placeholder spelled as in parameters, such as {--short-window}, and each value as a placeholder named as in arguments, such as {short_window_value}; replacing every placeholder with its text gives message. Parameters and arguments share one placeholder namespace, so a name is never both, and a template never contains a literal brace. A client replaces a parameter's placeholder with its own label for that parameter.
+             */
+            template: string;
         };
         /** @enum {string} */
         FailureStatus: "error" | "input_unavailable";
@@ -1349,40 +1368,41 @@ export interface components {
          */
         GrahamGrowthSelection: {
             /**
-             * Aaa Yield Override
+             * AAA corporate bond yield
              * @description Current AAA corporate-bond yield, in percentage points.
              */
             aaa_yield_override: number;
             /**
-             * As Of
+             * As of
              * @description Run the analysis as of this date (the end of that day, UTC) or this moment, which needs a timezone offset; leave empty for the latest data.
              * @default null
              */
             as_of: string | null;
             /**
+             * EPS basis
              * @description Which earnings figure to use: the three-year average, or one completed fiscal year.
              * @default three_year_average
              */
             eps_basis: components["schemas"]["GrahamGrowthSelection.GrahamGrowthSelectionEPSBasis"];
             /**
-             * Eps Override
+             * Earnings per share override
              * @description Earnings per share to use instead of the reported figure; leave empty to use it.
              * @default null
              */
             eps_override: number | null;
             /**
-             * Expected Growth
+             * Expected growth rate
              * @description Expected annual earnings growth, in percentage points.
              */
             expected_growth: number;
             /**
-             * Quote Override
+             * Share price override
              * @description Share price to use instead of the current quote; leave empty to use the quote.
              * @default null
              */
             quote_override: number | null;
             /**
-             * Use Cache
+             * Use cached data
              * @description Whether the analysis may read and write the local cache of fetched data.
              * @default true
              */
@@ -1473,31 +1493,31 @@ export interface components {
          */
         GrahamNumberSelection: {
             /**
-             * As Of
+             * As of
              * @description Run the analysis as of this date (the end of that day, UTC) or this moment, which needs a timezone offset; leave empty for the latest data.
              * @default null
              */
             as_of: string | null;
             /**
-             * Bvps Override
+             * Book value per share override
              * @description Book value per share to use instead of the reported figure; leave empty to use it.
              * @default null
              */
             bvps_override: number | null;
             /**
-             * Eps Override
+             * Earnings per share override
              * @description Earnings per share to use instead of the reported figure; leave empty to use it.
              * @default null
              */
             eps_override: number | null;
             /**
-             * Quote Override
+             * Share price override
              * @description Share price to use instead of the current quote; leave empty to use the quote.
              * @default null
              */
             quote_override: number | null;
             /**
-             * Use Cache
+             * Use cached data
              * @description Whether the analysis may read and write the local cache of fetched data.
              * @default true
              */
@@ -1756,11 +1776,16 @@ export interface components {
              */
             locales: components["schemas"]["LocaleItem"][];
             /**
+             * Providers
+             * @description The data providers the engine reads from, which are the providers a provider check can name, with the name to show for each.
+             */
+            providers: components["schemas"]["ProviderItem"][];
+            /**
              * Schema Version
-             * @default 2
+             * @default 3
              * @constant
              */
-            schema_version: 2;
+            schema_version: 3;
             /**
              * Sec Identity Configured
              * @description Whether an SEC identity is configured; its value is never shown.
@@ -1974,28 +1999,28 @@ export interface components {
          */
         MomentumSelection: {
             /**
-             * As Of
+             * As of
              * @description Run the analysis as of this date (the end of that day, UTC) or this moment, which needs a timezone offset; leave empty for the latest data.
              * @default null
              */
             as_of: string | null;
             /**
-             * Long Window
+             * Long window
              * @description Number of trading days in the long moving average; it must be larger than the short one.
              */
             long_window?: number;
             /**
-             * Rsi Period
+             * RSI period
              * @description Number of trading days the relative strength index looks back over.
              */
             rsi_period?: number;
             /**
-             * Short Window
+             * Short window
              * @description Number of trading days in the short moving average.
              */
             short_window?: number;
             /**
-             * Use Cache
+             * Use cached data
              * @description Whether the analysis may read and write the local cache of fetched data.
              * @default true
              */
@@ -2128,13 +2153,13 @@ export interface components {
          */
         PiotroskiSelection: {
             /**
-             * As Of
+             * As of
              * @description Run the analysis as of this date (the end of that day, UTC) or this moment, which needs a timezone offset; leave empty for the latest data.
              * @default null
              */
             as_of: string | null;
             /**
-             * Use Cache
+             * Use cached data
              * @description Whether the analysis may read and write the local cache of fetched data.
              * @default true
              */
@@ -2286,6 +2311,22 @@ export interface components {
          */
         ProviderFailureKind: "unreachable" | "rate_limited" | "unexpected_response" | "no_data";
         /**
+         * ProviderItem
+         * @description One data provider the engine reads from.
+         */
+        ProviderItem: {
+            /**
+             * Id
+             * @description The provider's identifier, as a provider failure and a provider check name it.
+             */
+            id: string;
+            /**
+             * Name
+             * @description The provider's name for a person.
+             */
+            name: string;
+        };
+        /**
          * QuoteFreshnessPart
          * @description How recent the quote behind a price comparison was.
          */
@@ -2408,10 +2449,10 @@ export interface components {
             refresh_id: string;
             /**
              * Schema Version
-             * @default 2
+             * @default 3
              * @constant
              */
-            schema_version: 2;
+            schema_version: 3;
             /**
              * State
              * @description running, stopping, completed, stopped or failed; treat any other value as running.
@@ -2621,6 +2662,11 @@ export interface components {
              * @description Jobs not yet started; above zero after a stop.
              */
             remaining: number;
+            /**
+             * Total
+             * @description The number of entries in the refresh: the snapshot's size, always admitted plus remaining.
+             */
+            total: number;
         };
         /**
          * RefreshesListDocument

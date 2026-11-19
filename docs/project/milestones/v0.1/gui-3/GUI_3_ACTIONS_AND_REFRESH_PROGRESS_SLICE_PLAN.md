@@ -380,3 +380,11 @@ Approved by the project owner on 2026-11-16. Each row gives the decision first; 
 | D210 | Smoke test (follows D168 to D170): every sub-slice updates `docs/project/SMOKE_TESTING.md`. Watchlist actions extend check group W; "Analyze a ticker" gets a new group A and refresh progress a new group P. The setup `pnpm smoke` scripts stays as it is, and the new checks make their own watchlist through the application. Each sub-slice has a targeted run, because only a real engine proves that requests the mock accepts are accepted, and only real providers show a refresh advancing: GUI.3a its new W checks; GUI.3b its new W checks; GUI.3c group P; GUI.3d group A. Windows only, as for GUI.2b3. Exact `pnpm smoke --checks` commands are set with each sub-slice's own decisions, when its checks are numbered. |
 | D211 | Documents: this plan lives at `docs/project/milestones/v0.1/gui-3/`. The v0.1 implementation plan's GUI.3 section gains the engine slice in its Decision, the four branches and the link to this plan. The preview mock-ups are not edited. |
 | D212 | Sub-slice decisions: as in GUI.2, each sub-slice's remaining decisions (file-level choices, check numbers, exact messages) are listed with recommendations and approved before its agent prompt is written. Catalog wording in this plan's sketches is a starting point for that review. |
+
+### GUI.3b sub-slice decisions
+
+Approved by the project owner on 2026-11-18. Each row gives the decision first; where a row amends an earlier one it says so, and the amended row is not edited.
+
+| # | Decision |
+| :--- | :--- |
+| D225 | Re-vendor. The branch's first commit runs `pnpm vendor-ian f238779` (the engine's API.14 merge, which also carries API.12 and API.13) and adds this row. Nothing else goes in that commit except the mechanical fixes the regenerated types force, such as the failure envelope's `schema_version` moving from 14 to 15 in fixtures. The engine's later commit 97d0989 changes only its quality gate and serves nothing different. |
