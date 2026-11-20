@@ -8,6 +8,7 @@ import { useScreenData } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import { watchlistCrumbs } from './navigation.ts';
 import ConfirmDialog from '../components/ConfirmDialog.vue';
+import EntryWarningLines from '../components/EntryWarningLines.vue';
 import NameForm from '../components/NameForm.vue';
 import RefreshNowButton from '../components/RefreshNowButton.vue';
 import RefreshNowNote from '../components/RefreshNowNote.vue';
@@ -18,14 +19,17 @@ import EmptyMessage from '../components/EmptyMessage.vue';
 import ScreenState from '../components/ScreenState.vue';
 import SecIdentityNotice from '../components/SecIdentityNotice.vue';
 import StrategyName from '../components/StrategyName.vue';
+import TickerButton from '../components/TickerButton.vue';
 import TableScroll from '../components/TableScroll.vue';
 import { useAction } from '../composables/useAction.ts';
 import { useRefreshStart } from '../composables/useRefreshStart.ts';
+import { takeEntryWarnings } from '../composables/useEntryWarnings.ts';
 import {
   leaveNotice,
   takeNotice,
   type Notice,
 } from '../composables/useNotice.ts';
+import { currentProfileSource } from '../api/identitySource.ts';
 import { formatDateOrInstant, formatInstant } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 import EntryOptions from '../selection/EntryOptions.vue';
@@ -56,6 +60,8 @@ const heading = ref<HTMLElement | null>(null);
 // What the last action did, from this screen or the one that sent the user
 // here (D220, D231).
 const status = ref<Notice | null>(takeNotice());
+// The tickers the engine could not confirm when entries were added (D282).
+const warnings = ref(takeEntryWarnings());
 
 function focusHeading(): void {
   void nextTick(() => heading.value?.focus());
@@ -314,13 +320,16 @@ const deleteTitle = computed(() =>
 
 <template>
   <AppBreadcrumb :crumbs="crumbs" />
-  <p v-if="status !== null" role="status">
-    {{
-      status.count === undefined
-        ? t(status.key, status.parameters)
-        : plural(status.key, status.count, status.parameters)
-    }}
-  </p>
+  <div v-if="status !== null || warnings.length > 0" role="status">
+    <p v-if="status !== null">
+      {{
+        status.count === undefined
+          ? t(status.key, status.parameters)
+          : plural(status.key, status.count, status.parameters)
+      }}
+    </p>
+    <EntryWarningLines :warnings="warnings" />
+  </div>
   <template v-if="state.kind !== 'ready'">
     <ScreenState :state="state" @retry="reload()" />
     <p v-if="unreadable" class="actions">
@@ -428,7 +437,9 @@ const deleteTitle = computed(() =>
           <template v-for="entry in state.data.entries" :key="entry.index">
             <tr>
               <th scope="row">{{ entry.index }}</th>
-              <td>{{ entry.ticker }}</td>
+              <td>
+                <TickerButton :source="currentProfileSource(entry.ticker)" />
+              </td>
               <td><StrategyName :method-id="entry.selection.method_id" /></td>
               <td>
                 {{

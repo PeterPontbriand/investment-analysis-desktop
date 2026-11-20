@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useEngine } from '../api/engine.ts';
+import {
+  comparisonRowSource,
+  type IdentitySource,
+} from '../api/identitySource.ts';
 import { useScreenData } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import CompareRunCells from '../components/CompareRunCells.vue';
@@ -9,13 +13,19 @@ import RefreshNowNote from '../components/RefreshNowNote.vue';
 import SecIdentityNotice from '../components/SecIdentityNotice.vue';
 import ScreenState from '../components/ScreenState.vue';
 import StrategyName from '../components/StrategyName.vue';
+import TickerButton from '../components/TickerButton.vue';
 import TableScroll from '../components/TableScroll.vue';
 import OutcomePill from '../components/OutcomePill.vue';
 import { useRefreshStart } from '../composables/useRefreshStart.ts';
 import { useRouteParam } from '../composables/useRouteParam.ts';
 import { formatCompletion, formatCount } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
-import { groupsOf, outcomeCountsOf } from './compareModel.ts';
+import {
+  groupsOf,
+  outcomeCountsOf,
+  type CompareDocument,
+  type CompareRow,
+} from './compareModel.ts';
 import { compareCrumbs, progressLocation } from './navigation.ts';
 import { sharedTicker } from './refreshModel.ts';
 
@@ -36,7 +46,15 @@ const { state, reload } = useScreenData(
       }),
       engine.terms.codeSetValues('RunOutcome'),
     ]);
-    return { document: result.data, lang: result.contentLanguage, outcomes };
+    const only = oneTickerRow(result.data);
+    return {
+      document: result.data,
+      lang: result.contentLanguage,
+      outcomes,
+      // The name the ticker's first saved run kept (D299); the ticker alone
+      // when no run kept one or the run cannot be read.
+      name: only === null ? null : await nameOfRow(only),
+    };
   },
   ['references', 'help', 'strategies'],
   [refreshId],
@@ -46,13 +64,40 @@ const loaded = computed(() =>
   state.value.kind === 'ready' ? state.value.data : null,
 );
 
+// The comparison's one row, when it is of entries that belong to no watchlist
+// and share one ticker: the ticker names the comparison (D274, D299).
+function oneTickerRow(document: CompareDocument): CompareRow | null {
+  if (document.watchlist_name !== null) return null;
+  const ticker = sharedTicker(document.rows.map((row) => row.ticker));
+  return ticker === null
+    ? null
+    : (document.rows.find((row) => row.ticker === ticker) ?? null);
+}
+
+async function nameOfRow(row: CompareRow): Promise<string | null> {
+  const source = comparisonRowSource(row);
+  if (source.kind !== 'runIdentity') return null;
+  return engine.identities
+    .runIdentity(source.runId)
+    .then((identity) => identity.instrument_name)
+    .catch(() => null);
+}
+
+// The ticker that names the comparison, with where its details come from.
+const named = computed<{ source: IdentitySource; name: string | null } | null>(
+  () => {
+    if (loaded.value === null) return null;
+    const row = oneTickerRow(loaded.value.document);
+    return row === null
+      ? null
+      : { source: comparisonRowSource(row), name: loaded.value.name };
+  },
+);
+
 const watchlistName = computed(() =>
   loaded.value === null
     ? ''
-    : (loaded.value.document.watchlist_name ??
-      // Entries of no watchlist that share one ticker are named by it (D274).
-      sharedTicker(loaded.value.document.rows.map((row) => row.ticker)) ??
-      t('refreshes.adHoc')),
+    : (loaded.value.document.watchlist_name ?? t('refreshes.adHoc')),
 );
 
 const time = computed(() =>
@@ -65,9 +110,6 @@ const time = computed(() =>
       ),
 );
 
-const heading = computed(() =>
-  t('compare.heading', { watchlist: watchlistName.value, time: time.value }),
-);
 const crumbs = compareCrumbs(t('nav.refreshes'));
 
 const groups = computed(() =>
@@ -86,7 +128,28 @@ const counts = computed(() =>
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <template v-else>
     <div class="heading-row">
-      <h1>{{ heading }}</h1>
+      <h1>
+        <i18n-t keypath="compare.heading" scope="global" tag="span">
+          <template #watchlist>
+            <template v-if="named !== null">
+              <i18n-t
+                v-if="named.name !== null"
+                keypath="tickerDetails.nameAndTicker"
+                scope="global"
+                tag="span"
+              >
+                <template #name>{{ named.name }}</template>
+                <template #ticker
+                  ><TickerButton :source="named.source"
+                /></template>
+              </i18n-t>
+              <TickerButton v-else :source="named.source" />
+            </template>
+            <template v-else>{{ watchlistName }}</template>
+          </template>
+          <template #time>{{ time }}</template>
+        </i18n-t>
+      </h1>
       <RefreshNowButton
         v-if="state.data.document.watchlist_id !== null"
         :refresh="refreshStart"
@@ -156,7 +219,9 @@ const counts = computed(() =>
         </thead>
         <tbody>
           <tr v-for="row in state.data.document.rows" :key="row.ticker">
-            <th class="ticker" scope="row">{{ row.ticker }}</th>
+            <th class="ticker" scope="row">
+              <TickerButton :source="comparisonRowSource(row)" />
+            </th>
             <template v-for="group in groups" :key="group.index">
               <CompareRunCells
                 :run="row.entries[group.index]?.run ?? null"

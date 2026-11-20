@@ -92,6 +92,13 @@ export function formatInstant(locale: string, instant: string): string {
   );
 }
 
+// The calendar date of an instant, in the user's time zone.
+export function formatInstantDate(locale: string, instant: string): string {
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(
+    new Date(instant),
+  );
+}
+
 const dateOnly = /^\d{4}-\d{2}-\d{2}$/;
 
 // A date with no time of day (a period end, an as-of date), formatted in UTC so

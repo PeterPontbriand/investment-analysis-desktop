@@ -169,6 +169,8 @@ export function recordAfter(
 export function createFollower(
   client: () => Promise<ApiClient>,
   lookupName: (watchlistId: string) => Promise<string | null>,
+  // Called once when the refresh being followed is seen to end.
+  onRefreshEnded: () => void = () => {},
 ): Follower {
   const current = shallowRef<RefreshRecord | null>(null);
   const visited = shallowRef<{
@@ -199,7 +201,16 @@ export function createFollower(
   }
 
   function setCurrent(record: RefreshRecord | null): void {
+    const previous = current.value;
     current.value = record;
+    if (
+      previous !== null &&
+      record !== null &&
+      previous.refreshId === record.refreshId &&
+      !isEnded(previous.state) &&
+      isEnded(record.state)
+    )
+      onRefreshEnded();
   }
 
   function resolveName(record: RefreshRecord): void {

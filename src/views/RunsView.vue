@@ -2,12 +2,14 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useEngine } from '../api/engine.ts';
+import { runIdentitySource } from '../api/identitySource.ts';
 import type { ResolvedName } from '../api/terms.ts';
 import { pageSize, usePagedList } from '../api/useScreenData.ts';
 import EmptyMessage from '../components/EmptyMessage.vue';
 import OutcomePill from '../components/OutcomePill.vue';
 import ScreenState from '../components/ScreenState.vue';
 import StrategyName from '../components/StrategyName.vue';
+import TickerButton from '../components/TickerButton.vue';
 import TableScroll from '../components/TableScroll.vue';
 import { formatInstant } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
@@ -186,7 +188,11 @@ const list = usePagedList(
                 >{{ formatInstant(locale, run.completed_at) }}</RouterLink
               >
             </th>
-            <td>{{ run.ticker }}</td>
+            <td>
+              <TickerButton
+                :source="runIdentitySource(run.ticker, run.analysis_run_id)"
+              />
+            </td>
             <td><StrategyName :method-id="run.method_id" /></td>
             <td><OutcomePill :code="run.outcome" /></td>
             <td>

@@ -28,6 +28,7 @@
     "test:shell": "wdio run wdio.conf.js"
   },
   "dependencies": {
+    "@floating-ui/dom": "1.8.0",
     "@tauri-apps/api": "2.12.4",
     "vue": "3.5.44",
     "vue-i18n": "11.4.18",

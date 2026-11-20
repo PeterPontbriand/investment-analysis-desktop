@@ -22,15 +22,16 @@ export const plain = (text: string): string =>
 export async function instantText(
   page: Page,
   instant: string,
+  locale = 'en',
 ): Promise<string> {
   return plain(
     await page.evaluate(
-      (value) =>
-        new Intl.DateTimeFormat('en', {
+      ([value, tag]) =>
+        new Intl.DateTimeFormat(tag, {
           dateStyle: 'medium',
           timeStyle: 'short',
-        }).format(new Date(value)),
-      instant,
+        }).format(new Date(value!)),
+      [instant, locale],
     ),
   );
 }
@@ -63,6 +64,23 @@ export async function rangeText(
           timeStyle: 'short',
         }).formatRange(new Date(start!), new Date(end!)),
       [first, last],
+    ),
+  );
+}
+
+// An instant's calendar date in the pinned time zone, as a medium date.
+export async function instantDateText(
+  page: Page,
+  instant: string,
+  locale = 'en',
+): Promise<string> {
+  return plain(
+    await page.evaluate(
+      ([value, tag]) =>
+        new Intl.DateTimeFormat(tag, { dateStyle: 'medium' }).format(
+          new Date(value!),
+        ),
+      [instant, locale],
     ),
   );
 }

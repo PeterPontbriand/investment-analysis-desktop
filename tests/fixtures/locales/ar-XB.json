@@ -81,6 +81,7 @@
     "hideOptions": "[ar-XB] Hide options for entry {index}: {ticker}, {strategy}",
     "added": "[ar-XB] Added {count} entry. | Added {count} entries.",
     "addEntries": "[ar-XB] Add entries",
+    "entryWarning": "[ar-XB] {ticker}: {warning}",
     "removeUnreadable": "[ar-XB] Remove entry {index} ({ticker})",
     "removeUnreadableTitle": "[ar-XB] Remove entry {index} ({ticker})?"
   },
@@ -168,6 +169,23 @@
       "diagnostics": "[ar-XB] Diagnostics",
       "json": "[ar-XB] JSON"
     }
+  },
+  "tickerDetails": {
+    "panelTitle": "[ar-XB] Details for {ticker}",
+    "noneStored": "[ar-XB] No details stored for {ticker} yet.",
+    "noneDescribed": "[ar-XB] No description of {ticker} is stored.",
+    "noneKept": "[ar-XB] No details of {ticker} were kept for this run.",
+    "checked": "[ar-XB] Checked {date} with {provider}",
+    "identified": "[ar-XB] Identified for this run {date} with {provider}",
+    "identifiedNoProvider": "[ar-XB] Identified for this run {date}",
+    "lookUp": "[ar-XB] Look up",
+    "lookingUp": "[ar-XB] Looking up…",
+    "lookUpAgain": "[ar-XB] Look up again",
+    "nameAndTicker": "[ar-XB] {name} ({ticker})"
+  },
+  "detailsPanel": {
+    "close": "[ar-XB] Close details",
+    "closeMark": "[ar-XB] ×"
   },
   "actions": {
     "cancel": "[ar-XB] Cancel",

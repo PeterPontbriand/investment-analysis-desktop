@@ -14,6 +14,40 @@ export const unreadableEntry: Schemas['UnreadableEntryDocument'] = {
 
 const core = watchlistDocuments[coreId]!;
 
+// The answer to adding entries: the watchlist and a warning for each ticker the
+// engine could not confirm (API.16, D282).
+export const entriesAdded = (
+  watchlist: Schemas['WatchlistDocument'],
+  warnings: Schemas['EntryWarningDocument'][] = [],
+): Schemas['EntriesAddedDocument'] => ({
+  schema_version: 1,
+  watchlist,
+  warnings,
+});
+
+export const notRecognized = (
+  ticker: string,
+): Schemas['EntryWarningDocument'] => ({
+  ticker,
+  code: 'ticker_not_recognized',
+  reason_code: null,
+  template: 'No data provider recognizes {ticker}. Check the ticker.',
+  arguments: { ticker },
+  message: `No data provider recognizes ${ticker}. Check the ticker.`,
+});
+
+export const notChecked = (
+  ticker: string,
+  reason: Schemas['FailureReasonCode'] = 'provider_unreachable',
+): Schemas['EntryWarningDocument'] => ({
+  ticker,
+  code: 'ticker_not_checked',
+  reason_code: reason,
+  template: '{ticker} could not be checked.',
+  arguments: { ticker },
+  message: `${ticker} could not be checked.`,
+});
+
 export const newWatchlistId = '44444444-4444-4444-8444-444444444444';
 
 export const createdWatchlist: Schemas['WatchlistDocument'] = {

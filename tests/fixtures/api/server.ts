@@ -3,6 +3,7 @@
 import type { components } from '../../../src/api/schema.ts';
 import * as compare from './compare.ts';
 import * as data from './data.ts';
+import { lookedUp, profiles } from './profiles.ts';
 
 export type Reply = {
   status: number;
@@ -35,7 +36,7 @@ export function failure(
     provider_check: null,
     provider_failure: null,
     result: null,
-    schema_version: 15,
+    schema_version: 16,
     ticker: null,
     unreadable: null,
   };
@@ -52,9 +53,31 @@ function page<T>(items: T[], parameters: URLSearchParams) {
   };
 }
 
-export function respond(url: URL): Reply {
+// A GET, and the one POST the fixtures answer: a profile lookup (D291).
+export function respond(url: URL, method = 'GET'): Reply {
   const parameters = url.searchParams;
   const path = url.pathname;
+  const profile = /^\/v1\/instrument-profiles\/([^/]+)(\/lookup)?$/.exec(path);
+  if (profile) {
+    const ticker = decodeURIComponent(profile[1] ?? '');
+    const stored = profiles[ticker];
+    if (profile[2] === undefined)
+      return method !== 'GET'
+        ? failure(405, 'endpoint_not_found', 'No such endpoint.')
+        : stored
+          ? ok(stored)
+          : failure(
+              404,
+              'instrument_profile_not_found',
+              'No profile is stored.',
+            );
+    // A lookup resolves the stored profile, or one it has not stored yet.
+    return method !== 'POST'
+      ? failure(405, 'endpoint_not_found', 'No such endpoint.')
+      : ok(stored ?? lookedUp(ticker));
+  }
+  if (method !== 'GET')
+    return failure(404, 'endpoint_not_found', 'No such endpoint.');
   switch (path) {
     case '/v1/info':
       return ok(data.info);
