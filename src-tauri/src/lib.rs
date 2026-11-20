@@ -1,5 +1,4 @@
 mod engine;
-mod menu;
 
 use std::thread;
 use std::time::Duration;
@@ -28,12 +27,6 @@ pub fn run() {
 
     #[cfg(feature = "e2e")]
     let builder = builder.plugin(tauri_plugin_wdio_webdriver::init());
-
-    // On macOS the built-in Quit item bypasses the window's close request, so it is replaced (D256).
-    #[cfg(target_os = "macos")]
-    let builder = builder
-        .menu(menu::app_menu)
-        .on_menu_event(menu::on_menu_event);
 
     let application = builder
         .manage(engine::Engine::default())

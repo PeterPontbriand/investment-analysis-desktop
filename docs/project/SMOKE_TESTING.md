@@ -243,8 +243,6 @@ Check P5. The ended state. When a refresh runs to the end, the heading reads `Re
 
 Check P6. Closing the window. Start a refresh and, while it runs, close the application's window with the window's close button. A question appears in the application: "A refresh is running. Entries that have not finished will not be saved. Close anyway?" with `Keep open` and `Close anyway`. Choose `Keep open`: the window stays and the refresh goes on. Close the window again and choose `Close anyway`: the window closes and the engine process ends within a few seconds (check that no `ian` process is left running).
 
-Check P7. Quit while a refresh runs, on macOS only. This check is not part of the targeted run of the slice that added group P. Run it the first time a Mac is available, at the latest with the installer work of GUI.6, and file an issue for any failure. Start a refresh, then press Cmd+Q: the same question as in Check P6 appears, and `Keep open` keeps the application running. Choose Quit from the application menu with the refresh still running: the same question appears. Then see what happens with Quit from the Dock and with logging out of the Mac: these do not go through the menu, so note whether the application asks, quits at once or is stopped, and whether the engine process ends.
-
 ## R. Refreshes
 
 Check R1. Refreshes lists the refresh from Step 7. It shows its completion time (a range when its first and last runs completed a minute or more apart), the watchlist name `Smoke Test`, a run count of 5, and a count for each outcome. The counts agree with `ian runs refreshes`.
