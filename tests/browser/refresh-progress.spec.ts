@@ -280,6 +280,26 @@ test.describe('progress', () => {
     await expect(marker(page)).toHaveCount(0);
   });
 
+  test('the marker does not announce the end while the progress screen of that refresh is open (D263)', async ({
+    page,
+  }) => {
+    const script = scriptedJob(frames);
+    await openApp(page, script);
+    await startFromCore(page);
+    await advance(page, script, 4);
+    await expect(heading(page)).toHaveText(
+      fill(en.refresh.heading.finished, { subject: 'Core' }),
+    );
+    await expect(page.locator('main [aria-live="polite"]')).toContainText(
+      fill(en.refresh.heading.finished, { subject: 'Core' }),
+    );
+    await expect(
+      page
+        .getByRole('navigation', { name: en.nav.label })
+        .locator('[aria-live="polite"]'),
+    ).toHaveText('');
+  });
+
   test('announces the counts line politely from a region of its own', async ({
     page,
   }) => {
