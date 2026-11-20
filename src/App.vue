@@ -19,6 +19,16 @@ engine.platform.onCloseRequested(() => {
   closeAsked.value = true;
   return true;
 });
+// A refresh that ends while the question is open takes away its reason, so
+// the window closes as if "Close anyway" had been chosen (D264).
+watch(
+  () => engine.follower.running.value,
+  (running) => {
+    if (running || !closeAsked.value) return;
+    closeAsked.value = false;
+    void engine.platform.closeWindow();
+  },
+);
 
 // A screen that fails to render is replaced by one message, and the navigation
 // keeps working (D171). Going to another screen clears the message.
