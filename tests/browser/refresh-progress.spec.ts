@@ -264,7 +264,7 @@ test.describe('progress', () => {
     const script = scriptedJob(frames);
     await openApp(page, script);
     await startFromCore(page);
-    await navLink(page, en.nav.runs).click();
+    await navLink(page, en.nav.watchlists).click();
     await advance(page, script, 4);
     await expect(marker(page)).toHaveText(en.nav.refreshFinished);
     await expect(
@@ -276,7 +276,7 @@ test.describe('progress', () => {
     await expect(heading(page)).toHaveText(
       fill(en.refresh.heading.finished, { subject: 'Core' }),
     );
-    await navLink(page, en.nav.runs).click();
+    await navLink(page, en.nav.watchlists).click();
     await expect(marker(page)).toHaveCount(0);
   });
 
@@ -395,8 +395,13 @@ test.describe('progress', () => {
     await startFromCore(page);
     await advance(page, script);
     // The next poll is answered with "no such refresh job".
-    await page.clock.runFor(1000);
-    await expect(page.getByText(en.refresh.gone)).toBeVisible();
+    const gone = page.getByText(en.refresh.gone);
+    await expect
+      .poll(async () => {
+        if (!(await gone.isVisible())) await page.clock.runFor(1000);
+        return gone.isVisible();
+      })
+      .toBe(true);
     await expect(
       page.getByRole('link', { name: en.refresh.openComparison }),
     ).toHaveAttribute('href', `/refreshes/${refreshId}`);

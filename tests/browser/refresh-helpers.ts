@@ -94,7 +94,10 @@ export async function openApp(
   extra?: Handler,
   discovered?: Reply,
 ) {
-  await page.clock.install();
+  // The clock is paused as soon as the page exists, so a poll comes only when
+  // a test moves it; a running clock let a slow machine fire polls by itself.
+  await page.clock.install({ time: new Date('2026-11-19T12:00:00Z') });
+  await page.clock.pauseAt(new Date('2026-11-19T12:00:01Z'));
   const engine = await mockEngine(
     page,
     discovered === undefined
@@ -108,13 +111,19 @@ export async function openApp(
   return engine;
 }
 
-// Moves the clock one second and waits for the engine to have answered one more
+// Moves the clock one second and waits for the engine to have been asked one more
 // poll or stop, so the next step sees what that answer showed.
 export async function advance(page: Page, script: JobScript, polls = 1) {
   for (let i = 0; i < polls; i += 1) {
     const before = script.afters.length;
-    await page.clock.runFor(1000);
-    await expect.poll(() => script.afters.length).toBeGreaterThan(before);
+    // The next poll is timed only once the last answer has been taken in, so a
+    // second of the clock is run again until the engine has been asked.
+    await expect
+      .poll(async () => {
+        if (script.afters.length <= before) await page.clock.runFor(1000);
+        return script.afters.length;
+      })
+      .toBeGreaterThan(before);
   }
 }
 
