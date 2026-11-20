@@ -45,5 +45,8 @@ export function createBrowserPlatform(host: Host = window): Platform {
       host.document.title = title;
       return Promise.resolve();
     },
+    // A browser tab is closed by the browser, not by the application.
+    onCloseRequested: () => {},
+    closeWindow: () => Promise.resolve(),
   };
 }

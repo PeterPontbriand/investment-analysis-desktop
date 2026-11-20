@@ -15,7 +15,7 @@ if (regenerated === null) {
   regenerated !== readFileSync(checkedIn, 'utf8').replace(/\r\n/g, '\n')
 ) {
   process.stderr.write(
-    `${checkedIn} differs from the types generated from ${vendored}. Regenerate it with: pnpm exec openapi-typescript ${vendored} -o ${checkedIn}\n`,
+    `${checkedIn} differs from the types generated from ${vendored}. Regenerate it with the generator of tools/openapi-types.ts, as pnpm vendor-ian does; running openapi-typescript on the file directly gives different types\n`,
   );
   process.exitCode = 1;
 } else {

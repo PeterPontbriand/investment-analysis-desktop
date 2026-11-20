@@ -17,6 +17,8 @@ function platform(
     engineConnection: () => connection,
     engineStatus: () => Promise.resolve(status),
     setWindowTitle: () => Promise.resolve(),
+    onCloseRequested: () => {},
+    closeWindow: () => Promise.resolve(),
   };
 }
 

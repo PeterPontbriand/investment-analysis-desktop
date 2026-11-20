@@ -1,7 +1,12 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default window capability: the window title only.",
+  "description": "Default window capability: the window title, and the close request the application answers.",
   "windows": ["main"],
-  "permissions": ["core:window:allow-set-title"]
+  "permissions": [
+    "core:window:allow-set-title",
+    "core:window:allow-destroy",
+    "core:event:allow-listen",
+    "core:event:allow-unlisten"
+  ]
 }

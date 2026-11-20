@@ -4,19 +4,28 @@ import { useEngine } from '../api/engine.ts';
 import { useScreenData } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import CompareRunCells from '../components/CompareRunCells.vue';
+import RefreshNowButton from '../components/RefreshNowButton.vue';
+import RefreshNowNote from '../components/RefreshNowNote.vue';
+import SecIdentityNotice from '../components/SecIdentityNotice.vue';
 import ScreenState from '../components/ScreenState.vue';
 import StrategyName from '../components/StrategyName.vue';
 import TableScroll from '../components/TableScroll.vue';
 import OutcomePill from '../components/OutcomePill.vue';
+import { useRefreshStart } from '../composables/useRefreshStart.ts';
 import { useRouteParam } from '../composables/useRouteParam.ts';
 import { formatCompletion, formatCount } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 import { groupsOf, outcomeCountsOf } from './compareModel.ts';
-import { compareCrumbs } from './navigation.ts';
+import { compareCrumbs, progressLocation } from './navigation.ts';
 
 const { t, plural, locale } = useMessages();
 const engine = useEngine();
 const refreshId = useRouteParam('refresh', 'refreshId');
+const refreshStart = useRefreshStart();
+// The follower knows this refresh is still running (D252).
+const stillRunning = computed(
+  () => engine.follower.runningId.value === refreshId.value,
+);
 
 const { state, reload } = useScreenData(
   async (client) => {
@@ -72,7 +81,25 @@ const counts = computed(() =>
   <AppBreadcrumb :crumbs="crumbs" />
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <template v-else>
-    <h1>{{ heading }}</h1>
+    <div class="heading-row">
+      <h1>{{ heading }}</h1>
+      <RefreshNowButton
+        v-if="state.data.document.watchlist_id !== null"
+        :refresh="refreshStart"
+        :watchlist-id="state.data.document.watchlist_id"
+      />
+    </div>
+    <RefreshNowNote
+      v-if="state.data.document.watchlist_id !== null"
+      :refresh="refreshStart"
+    />
+    <SecIdentityNotice v-if="state.data.document.watchlist_id !== null" />
+    <p v-if="stillRunning" role="status">
+      {{ t('refresh.stillRunning') }}
+      <RouterLink :to="progressLocation(refreshId)">{{
+        t('refresh.showProgress')
+      }}</RouterLink>
+    </p>
     <ul class="counts">
       <li>
         {{
@@ -141,6 +168,14 @@ const counts = computed(() =>
 </template>
 
 <style scoped>
+.heading-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: space-between;
+}
+
 .counts {
   color: var(--color-text-secondary);
   display: flex;

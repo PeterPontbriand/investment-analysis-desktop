@@ -48,6 +48,11 @@ export function compareLocation(refreshId: string): RouteLocationRaw {
   return { name: 'refresh', params: { refreshId } };
 }
 
+// The progress screen of a refresh (D199).
+export function progressLocation(refreshId: string): RouteLocationRaw {
+  return { name: 'refresh-progress', params: { refreshId } };
+}
+
 export type RunCrumbLabels = {
   runs: string;
   refreshes: string;

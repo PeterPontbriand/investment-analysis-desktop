@@ -6,14 +6,17 @@ import { toneOf } from './outcomeTone.ts';
 
 // A run outcome as its term name (D43), coloured by tone; with a count, the
 // count follows the name inside the pill (D176).
-defineProps<{ code: string; count?: number }>();
+// With a label, the label is shown in place of the term name (a count the
+// engine keeps outside the outcomes, D248).
+defineProps<{ code: string; count?: number; label?: string }>();
 
 const { locale } = useMessages();
 </script>
 
 <template>
   <span class="pill" :class="`tone-${toneOf(code)}`">
-    <TermName code-set="RunOutcome" :code="code" />
+    <template v-if="label !== undefined">{{ label }}</template>
+    <TermName v-else code-set="RunOutcome" :code="code" />
     <template v-if="count !== undefined"
       >{{ ' ' }}{{ formatCount(locale, count) }}</template
     >

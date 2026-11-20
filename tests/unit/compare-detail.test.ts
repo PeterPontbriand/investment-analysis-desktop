@@ -27,6 +27,8 @@ const host: Platform = {
     }),
   engineStatus: () => Promise.resolve('running'),
   setWindowTitle: () => Promise.resolve(),
+  onCloseRequested: () => {},
+  closeWindow: () => Promise.resolve(),
 };
 
 async function mountAt(path: string) {

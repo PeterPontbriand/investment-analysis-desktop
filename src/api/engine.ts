@@ -3,6 +3,12 @@ import type { MessageKey } from '../i18n/index.ts';
 import type { Platform } from '../platform/index.ts';
 import { ApiError, createApiClient, type ApiClient } from './client.ts';
 import { connectionMessage } from './engineState.ts';
+import { createInfoCache, type InfoCache } from './info.ts';
+import {
+  createFollower,
+  lookUpWatchlistName,
+  type Follower,
+} from './refreshes.ts';
 import { createTerms, type Terms } from './terms.ts';
 
 export type EngineState =
@@ -16,6 +22,11 @@ export type Engine = {
   // The shared client, once the connection is ready; rejects when it is not.
   client(): Promise<ApiClient>;
   terms: Terms;
+  platform: Platform;
+  // The engine information, loaded once per connection beside the follower (D242).
+  info: InfoCache;
+  // The one follower of a refresh job (D198).
+  follower: Follower;
 };
 
 export const engineKey: InjectionKey<Engine> = Symbol('engine');
@@ -40,7 +51,26 @@ export function createEngine(platform: Platform, locale: () => string): Engine {
   // Callers handle a rejection; this keeps an unused connection quiet.
   connected.catch(() => {});
   const client = () => connected;
-  return { state, client, terms: createTerms(client, locale) };
+  const info = createInfoCache(client);
+  const follower = createFollower(client, (watchlistId) =>
+    lookUpWatchlistName(client, watchlistId),
+  );
+  // When the engine is ready: its information, and a refresh already running (D245).
+  void connected.then(
+    () => {
+      void info.load().catch(() => {});
+      void follower.discover();
+    },
+    () => {},
+  );
+  return {
+    state,
+    client,
+    terms: createTerms(client, locale),
+    platform,
+    info,
+    follower,
+  };
 }
 
 export function useEngine(): Engine {

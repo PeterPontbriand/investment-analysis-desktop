@@ -2,7 +2,13 @@
 import { useEngine } from '../api/engine.ts';
 import { useResolvedName } from '../composables/useResolvedName.ts';
 
-const props = defineProps<{ codeSet: string; code: string }>();
+// `termOnly` shows nothing for a code the engine gives no term, instead of the
+// code as served (D262).
+const props = defineProps<{
+  codeSet: string;
+  code: string;
+  termOnly?: boolean;
+}>();
 
 const engine = useEngine();
 const name = useResolvedName(
@@ -13,7 +19,7 @@ const name = useResolvedName(
 
 <template>
   <span
-    v-if="name"
+    v-if="name && !(termOnly && name.termId === null)"
     :data-term-id="name.termId ?? undefined"
     :lang="name.lang ?? undefined"
     >{{ name.text }}</span

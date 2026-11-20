@@ -9,14 +9,18 @@ import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import { watchlistCrumbs } from './navigation.ts';
 import ConfirmDialog from '../components/ConfirmDialog.vue';
 import NameForm from '../components/NameForm.vue';
+import RefreshNowButton from '../components/RefreshNowButton.vue';
+import RefreshNowNote from '../components/RefreshNowNote.vue';
 import RefreshesTable from '../components/RefreshesTable.vue';
 import RemoveEntryButton from '../components/RemoveEntryButton.vue';
 import RemoveEntryDialog from '../components/RemoveEntryDialog.vue';
 import EmptyMessage from '../components/EmptyMessage.vue';
 import ScreenState from '../components/ScreenState.vue';
+import SecIdentityNotice from '../components/SecIdentityNotice.vue';
 import StrategyName from '../components/StrategyName.vue';
 import TableScroll from '../components/TableScroll.vue';
 import { useAction } from '../composables/useAction.ts';
+import { useRefreshStart } from '../composables/useRefreshStart.ts';
 import {
   leaveNotice,
   takeNotice,
@@ -47,6 +51,7 @@ const { state, reload, replace } = useScreenData(
 );
 
 const crumbs = watchlistCrumbs(t('nav.watchlists'));
+const refreshStart = useRefreshStart();
 const heading = ref<HTMLElement | null>(null);
 // What the last action did, from this screen or the one that sent the user
 // here (D220, D231).
@@ -371,6 +376,11 @@ const deleteTitle = computed(() =>
         >
           {{ t('watchlist.addEntries') }}
         </button>
+        <RefreshNowButton
+          v-if="state.data.entries.length > 0"
+          :refresh="refreshStart"
+          :watchlist-id="state.data.watchlist_id"
+        />
         <button ref="renameButton" type="button" @click="openRename()">
           {{ t('watchlist.rename') }}
         </button>
@@ -383,6 +393,11 @@ const deleteTitle = computed(() =>
         </button>
       </div>
     </div>
+    <RefreshNowNote
+      v-if="state.data.entries.length > 0"
+      :refresh="refreshStart"
+    />
+    <SecIdentityNotice />
     <p>
       {{
         plural('watchlist.summary', state.data.entries.length, {

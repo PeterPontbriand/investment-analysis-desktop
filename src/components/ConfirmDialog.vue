@@ -17,6 +17,8 @@ const props = defineProps<{
   error: unknown;
   // The control that opened the dialog.
   opener: HTMLElement | null;
+  // The cancel button's text when it is not "Cancel".
+  cancelLabel?: string;
 }>();
 const emit = defineEmits<{ confirm: []; cancel: []; retry: [] }>();
 
@@ -44,7 +46,9 @@ function confirm(): void {
       <ActionFailure :error="error" @retry="$emit('retry')" />
     </div>
     <div class="actions">
-      <button type="button" @click="cancel()">{{ t('actions.cancel') }}</button>
+      <button type="button" @click="cancel()">
+        {{ cancelLabel ?? t('actions.cancel') }}
+      </button>
       <button
         type="button"
         class="danger"

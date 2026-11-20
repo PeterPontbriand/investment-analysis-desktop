@@ -15,4 +15,9 @@ export interface Platform {
   engineConnection(): Promise<EngineConnection>;
   engineStatus(): Promise<EngineStatus>;
   setWindowTitle(title: string): Promise<void>;
+  // Calls the handler when the user asks to close the window; it returns true
+  // to keep the window open, and the application closes it later with
+  // closeWindow (D255). A browser has no such request.
+  onCloseRequested(handler: () => boolean): void;
+  closeWindow(): Promise<void>;
 }

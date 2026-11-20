@@ -231,7 +231,10 @@ test.describe('comparison', () => {
       headers.nth(0).locator('[data-term-id]').nth(2),
     ).toHaveAttribute('data-term-id', 'strategy-quality-screen');
     await expect(page.getByText('Download')).toHaveCount(0);
-    await expect(page.getByText('Refresh now')).toHaveCount(0);
+    // Refresh now is offered, because the refresh has a watchlist (D251).
+    await expect(
+      page.getByRole('button', { name: en.refresh.now }),
+    ).toHaveCount(1);
   });
 
   test('shows values, a dash with its status, and "Not run"', async ({
