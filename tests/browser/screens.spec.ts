@@ -29,6 +29,7 @@ test.describe('shell and navigation', () => {
     await open(page);
     const nav = page.getByRole('navigation', { name: en.nav.label });
     await expect(nav.getByRole('link')).toHaveText([
+      en.nav.analyze,
       en.nav.watchlists,
       en.nav.refreshes,
       en.nav.runs,
@@ -51,7 +52,12 @@ test.describe('shell and navigation', () => {
   test('moves between screens, none with a breadcrumb', async ({ page }) => {
     await open(page);
     const nav = page.getByRole('navigation', { name: en.nav.label });
-    for (const label of [en.nav.refreshes, en.nav.runs, en.nav.about]) {
+    for (const label of [
+      en.nav.analyze,
+      en.nav.refreshes,
+      en.nav.runs,
+      en.nav.about,
+    ]) {
       await nav.getByRole('link', { name: label }).click();
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(label);
       await expect(nav.getByRole('link', { name: label })).toHaveAttribute(
@@ -99,7 +105,12 @@ test.describe('shell and navigation', () => {
     await page.goto('/');
     await expect(page.getByRole('status')).toHaveText(en.engine.noEngine);
     const nav = page.getByRole('navigation', { name: en.nav.label });
-    for (const label of [en.nav.refreshes, en.nav.runs, en.nav.about]) {
+    for (const label of [
+      en.nav.analyze,
+      en.nav.refreshes,
+      en.nav.runs,
+      en.nav.about,
+    ]) {
       await nav.getByRole('link', { name: label }).click();
       await expect(page.getByRole('status')).toHaveText(en.engine.noEngine);
     }
