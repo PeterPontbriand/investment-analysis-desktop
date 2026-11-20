@@ -1,5 +1,6 @@
 import { createMemoryHistory, createRouter } from 'vue-router';
 import AddEntriesView from './views/AddEntriesView.vue';
+import AnalyzeView from './views/AnalyzeView.vue';
 import AboutView from './views/AboutView.vue';
 import RefreshesView from './views/RefreshesView.vue';
 import RefreshProgressView from './views/RefreshProgressView.vue';
@@ -14,6 +15,7 @@ export function createAppRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', redirect: { name: 'watchlists' } },
+      { path: '/analyze', name: 'analyze', component: AnalyzeView },
       { path: '/watchlists', name: 'watchlists', component: WatchlistsView },
       {
         path: '/watchlists/:watchlistId',

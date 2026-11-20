@@ -63,6 +63,9 @@ export type RefreshRecord = {
   hasMore: boolean;
   // True once the progress screen has shown the ended refresh (D201).
   seen: boolean;
+  // The tickers of the entries this application asked to refresh, as sent;
+  // null for a refresh it did not start (D274).
+  startedTickers: string[] | null;
 };
 
 export type RefreshView =
@@ -83,8 +86,9 @@ export type Follower = {
   stopError: ShallowRef<unknown>;
   // Asks the engine for its latest job once; a running one is followed (D245).
   discover(): Promise<void>;
-  // Follows the job a start request answered with.
-  start(document: JobDocument): void;
+  // Follows the job a start request answered with. `tickers` are those of the
+  // entries the request named, when it named entries (D274).
+  start(document: JobDocument, tickers?: string[]): void;
   // Makes the refresh available to a screen: followed when it is the one held,
   // otherwise fetched from the first event (D246).
   open(refreshId: string): void;
@@ -140,6 +144,7 @@ function rowsAfter(
 export function recordAfter(
   previous: RefreshRecord | null,
   document: JobDocument,
+  startedTickers: string[] | null = null,
 ): RefreshRecord {
   const after = previous?.after ?? 0;
   return {
@@ -154,6 +159,7 @@ export function recordAfter(
     after: document.next_after,
     hasMore: document.has_more,
     seen: previous?.seen ?? false,
+    startedTickers: previous?.startedTickers ?? startedTickers,
   };
 }
 
@@ -209,12 +215,12 @@ export function createFollower(
   }
 
   // Follows a job from the record its first document makes.
-  function begin(document: JobDocument): void {
+  function begin(document: JobDocument, tickers: string[] | null = null): void {
     cancelTimer();
     generation += 1;
     failures = 0;
     error.value = null;
-    const record = recordAfter(null, document);
+    const record = recordAfter(null, document, tickers);
     setCurrent(record);
     resolveName(record);
     scheduleNext(record);
@@ -291,9 +297,9 @@ export function createFollower(
     });
   }
 
-  function start(document: JobDocument): void {
+  function start(document: JobDocument, tickers?: string[]): void {
     visited.value = null;
-    begin(document);
+    begin(document, tickers ?? null);
   }
 
   function open(refreshId: string): void {

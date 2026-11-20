@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useMessages } from '../i18n/index.ts';
-import type { RefreshStart } from '../composables/useRefreshStart.ts';
+import type { RefreshNote } from '../composables/useRefreshStart.ts';
 import { progressLocation } from '../views/navigation.ts';
 import ActionFailure from './ActionFailure.vue';
 
 // What goes beside "Refresh now": that a refresh is running with the link to
 // its progress, or why a start failed (D251, D216).
-const props = defineProps<{ refresh: RefreshStart }>();
+const props = defineProps<{ refresh: RefreshNote }>();
 const { t } = useMessages();
 
 const showing = computed(() => props.refresh.failure.value !== null);

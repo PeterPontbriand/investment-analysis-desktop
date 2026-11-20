@@ -8,6 +8,7 @@
   },
   "nav": {
     "label": "Main",
+    "analyze": "Analyze a ticker",
     "watchlists": "Watchlists",
     "refreshes": "Refreshes",
     "runs": "Saved runs",
@@ -213,6 +214,19 @@
     "partial": "Added {count} entry for {strategies}. Other selected strategies were not added. | Added {count} entries for {strategies}. Other selected strategies were not added.",
     "errors": {
       "tickersRequired": "Enter at least one ticker.",
+      "strategyRequired": "Choose at least one strategy."
+    }
+  },
+  "analyze": {
+    "heading": "Analyze a ticker",
+    "ticker": "Ticker",
+    "asOf": "As of",
+    "asOfHint": "Leave empty for the latest data.",
+    "requiredNote": "* Required",
+    "analyze": "Analyze",
+    "errors": {
+      "tickerRequired": "Enter a ticker.",
+      "oneTicker": "Enter one ticker. To analyze several, use a watchlist.",
       "strategyRequired": "Choose at least one strategy."
     }
   },
