@@ -6,9 +6,9 @@ The Investment Analysis Desktop application neither holds data nor performs anal
 
 At present, every step in this guide needs developer tooling, so this is a contributor document, not a user document. An agent or script may rehearse these steps, but for a run to constitute a formal smoke test the checks must be made manually.
 
-The test checks that the application starts the engine, that each screen shows what the engine holds, and that the application reports an engine that stops or is missing. It does not try to cover every control. This repository's automated browser tests cover what a real engine cannot easily produce: paging through many results, a stored [selection](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#selection) the engine cannot read, a busy database, and a [refresh](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#refresh) of [entries](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#entry) that belong to no [watchlist](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#watchlist).
+The test checks that the application starts the engine, that each screen shows what the engine holds, and that the application reports an engine that stops or is missing. It does not try to cover every control. This repository's automated browser tests cover what a real engine cannot easily produce: paging through many results, a stored [selection](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#selection) the engine cannot read, a busy database, and a [refresh](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#refresh) that is still running when something else is tried, which a real refresh finishes too fast to catch.
 
-[Provider data](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#data-provider), the market and filing data the engine fetches live from Yahoo Finance and [SEC](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#sec) [EDGAR](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#edgar), changes over time, so exact values are not prescribed. For each step, judge whether the screen shows what the engine's own commands show, in readable words, with no raw code, traceback or `NaN` where a name or value belongs. Every step has a number (Step 1, Step 2, ... for setup, then Check N1, Check W1, ... for the checks, with a letter for each group of screens: N, W, P, R, C, H, D, L and E) so that [the record](#recording-the-result), the written account of a run, can refer to it.
+[Provider data](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#data-provider), the market and filing data the engine fetches live from Yahoo Finance and [SEC](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#sec) [EDGAR](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/GLOSSARY.md#edgar), changes over time, so exact values are not prescribed. For each step, judge whether the screen shows what the engine's own commands show, in readable words, with no raw code, traceback or `NaN` where a name or value belongs. Every step has a number (Step 1, Step 2, ... for setup, then Check N1, Check W1, ... for the checks, with a letter for each group of screens: N, A, W, P, R, C, H, D, L and E) so that [the record](#recording-the-result), the written account of a run, can refer to it.
 
 ## How the test runs
 
@@ -176,9 +176,9 @@ If the start fails with "Access is denied" when removing the application's execu
 
 ## N. Navigation and About
 
-Check N1. The window opens on the Watchlists screen. The product name and the pre-release notice show beside a navigation with Watchlists, Refreshes, Saved runs and About; the navigation sits at the start side of the window, and the current item is marked.
+Check N1. The window opens on the Watchlists screen. The product name and the pre-release notice show beside a navigation with Analyze a ticker, Watchlists, Refreshes, Saved runs and About; the navigation sits at the start side of the window, and the current item is marked.
 
-Check N2. Each navigation link opens its screen, with its name as the heading, and the current navigation item follows. None of these four screens shows a breadcrumb trail above its heading, because no screen sits above any of them.
+Check N2. Each navigation link opens its screen, with its name as the heading, and the current navigation item follows. None of these five screens shows a breadcrumb trail above its heading, because no screen sits above any of them.
 
 Check N3. About shows the engine's details. They are its version, API versions, schema version, SEC identity and languages; compare them with the engine:
 
@@ -186,6 +186,16 @@ Check N3. About shows the engine's details. They are its version, API versions, 
 - SEC identity shows configured when the engine's configuration holds an SEC EDGAR identification, and not configured otherwise.
 
 Check N4. The shell follows the look of the preview mock-ups. The navigation at the start side has a thin rule on its inner edge; the current item has a raised background with rounded corners; the product name and the pre-release notice sit above the navigation; the content area fills the rest of the window with the breadcrumb trail, on a screen that has one, as a small line above the heading.
+
+## A. Analyze a ticker
+
+These checks start a real refresh of one ticker with real providers, and need a machine with network access. They create no watchlist. They add one refresh and its saved runs to the throwaway database, so in a full run do them after the checks of the other groups, whose counts they would change.
+
+Check A1. Analyze one ticker. Choose `Analyze a ticker` in the navigation. It is the first item. The heading is `Analyze a ticker`, no trail shows above it, and the form has a `Ticker` field, an `As of` field, every strategy with none chosen, and an `Analyze` button. Type `KO`, leave `As of` empty, choose Momentum and Graham Number and choose `Analyze`: the progress screen opens and its heading is `Refreshing KO`, with one row for each strategy. When the refresh ends, the heading reads `Refresh of KO finished` and the counts line reads "2 of 2 entries finished". Choose `Open comparison`: the heading names KO, not "Ad hoc entries", and the table has one row, KO, with a group for Momentum and a group for Graham Number.
+
+Check A2. An engine message at its field. On `Analyze a ticker`, type `KO`, choose Momentum, show its options, enter 200 for `Short window` and 50 for `Long window`, and choose `Analyze`. The engine's message "Invalid momentum windows: Short window (200) must be smaller than Long window (50)." shows once, at `Short window`. The options stay open, the heading is still `Analyze a ticker`, and the navigation shows no running refresh.
+
+Check A3. Where the analysis is kept. Refreshes lists the analysis from check A1 with `Ad hoc entries` in its watchlist column and a run count of 2, and its completion time is a link to the comparison. Saved runs lists its two runs, KO under Momentum and KO under Graham Number, each saved by a refresh.
 
 ## W. Watchlists
 
@@ -229,7 +239,7 @@ Check W17. Stored options. On `Smoke Test Add`, choose `Show` on a Graham Growth
 
 ## P. Refresh progress
 
-These checks start real refreshes with real providers. They create their own watchlist, so `Smoke Test` and the counts the other groups expect are untouched; run them after the W checks, because they add a fourth watchlist, `Smoke Test Progress`. They need a machine with network access. A refresh of eight entries takes a minute or more, which is what the checks need.
+These checks start real refreshes with real providers. They create their own watchlist, so `Smoke Test` is untouched; run them after the W checks, because they add a fourth watchlist, `Smoke Test Progress`. They also add refreshes and saved runs, so in a full run do them after the checks of the groups whose counts they would change. They need a machine with network access. A refresh of eight entries takes a minute or more, which is what the checks need.
 
 Check P1. Start a refresh. On Watchlists, create `Smoke Test Progress`, open it and choose `Add entries`. Type the tickers `KO, MSFT, AAPL, SPY, JNJ, PG, XOM, WMT`, choose Momentum only and choose `Add`: the watchlist has eight entries. Choose `Refresh now`. The progress screen opens with the heading `Refreshing Smoke Test Progress`, the trail above it is the single link `Refreshes`, and a line reads "0 of 8 entries finished". Within a few seconds rows appear with `Running…`, then each finished row shows its outcome as a pill, and the counts line and the line of entries not yet started change as the engine reports. A finished row's pill is a link that opens the saved run.
 
@@ -405,6 +415,8 @@ Do not treat a changed market value, an outcome that depends on live data or a s
 
 ## What smoke testing does not cover
 
-A smoke test shows that the application works against a real engine on one day. It proves nothing about boundaries that a real engine cannot easily force, such as paging beyond one page, a stored selection the engine cannot read, a refresh of entries that belong to no watchlist, or a busy database. Browser tests cover those.
+A smoke test shows that the application works against a real engine on one day. It proves nothing about boundaries that a real engine cannot easily force, such as paging beyond one page, a stored selection the engine cannot read, a busy database, or an action tried while a refresh is running. Browser tests cover those.
 
-No run of this setup can check three things, so this document has no check for them and browser tests cover them: a busy database (the engine's documents give no safe way to cause one), paging of refreshes (it needs more than 50 refreshes) and paging of runs (it needs more than 50 runs). The setup creates one refresh and six runs. The check for such a refresh is added to this document when the application can start refreshes itself, because the command line cannot start one.
+No run of this setup can check three things, so this document has no check for them and browser tests cover them: a busy database (the engine's documents give no safe way to cause one), paging of refreshes (it needs more than 50 refreshes) and paging of runs (it needs more than 50 runs). The setup creates one refresh and six runs. Group A starts a refresh of entries that belong to no watchlist, as the application can start refreshes itself.
+
+No check tries "Analyze" while a refresh is running, to see it blocked with its link to the progress screen: a real refresh finishes too fast to catch ([issue 25](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/25)), so only the browser tests cover it.
