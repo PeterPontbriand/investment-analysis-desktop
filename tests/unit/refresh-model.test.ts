@@ -1,8 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createAnnouncer } from '../../src/composables/announcer.ts';
-import { endOf, pillsOf, subjectOf } from '../../src/views/refreshModel.ts';
+import {
+  endOf,
+  pillsOf,
+  sharedTicker,
+  subjectOf,
+  subjectText,
+} from '../../src/views/refreshModel.ts';
 import { recordAfter } from '../../src/api/refreshes.ts';
-import { job, summary, totals } from '../fixtures/api/refresh.ts';
+import { job, started, summary, totals } from '../fixtures/api/refresh.ts';
 import { outcomeTones } from '../../src/components/outcomeTone.ts';
 import { references } from '../fixtures/api/data.ts';
 import openapi from '../../vendor/ian/openapi.json' with { type: 'json' };
@@ -142,5 +148,123 @@ describe('announcing progress (D253)', () => {
     expect(said).toEqual(['1 of 2', 'Finished']);
     await vi.advanceTimersByTimeAsync(30_000);
     expect(said).toEqual(['1 of 2', 'Finished']);
+  });
+});
+
+describe('the ticker of an ad hoc refresh (D274)', () => {
+  const adHoc = (fields: Parameters<typeof job>[0] = {}) =>
+    job({ watchlist_id: null, ...fields });
+  const rowsOf = (tickers: string[]) =>
+    tickers.map((ticker, index) =>
+      started(index + 1, index, ticker, 'sma_crossover'),
+    );
+
+  it('is the ticker the application sent, when it started the refresh', () => {
+    const record = recordAfter(null, adHoc({ totals: totals(2, 0, 0) }), [
+      'ACME',
+    ]);
+    expect(subjectOf(record)).toEqual({ kind: 'ticker', ticker: 'ACME' });
+    // It stays known as the polls bring rows in, and across a later document.
+    const next = recordAfter(
+      record,
+      adHoc({
+        totals: totals(2, 1, 0),
+        events: rowsOf(['ACME']),
+        next_after: 1,
+      }),
+    );
+    expect(subjectOf(next)).toEqual({ kind: 'ticker', ticker: 'ACME' });
+  });
+
+  it('is spelled as the engine spells it once a row has it', () => {
+    const record = recordAfter(
+      null,
+      adHoc({
+        totals: totals(2, 1, 0),
+        events: rowsOf(['ACME']),
+        next_after: 1,
+      }),
+      ['acme'],
+    );
+    expect(subjectOf(record)).toEqual({ kind: 'ticker', ticker: 'ACME' });
+    expect(
+      subjectOf(
+        recordAfter(null, adHoc({ totals: totals(2, 0, 0) }), ['acme']),
+      ),
+    ).toEqual({ kind: 'ticker', ticker: 'acme' });
+  });
+
+  it('is the ticker of the rows once every entry has a row', () => {
+    const record = recordAfter(
+      null,
+      adHoc({
+        totals: totals(2, 2, 0),
+        events: rowsOf(['ACME', 'ACME']),
+        next_after: 2,
+      }),
+    );
+    expect(subjectOf(record)).toEqual({ kind: 'ticker', ticker: 'ACME' });
+  });
+
+  it('stays "ad hoc entries" for a refresh attached to part-way', () => {
+    const record = recordAfter(
+      null,
+      adHoc({
+        totals: totals(2, 1, 0),
+        events: rowsOf(['ACME']),
+        next_after: 1,
+      }),
+    );
+    expect(subjectOf(record)).toEqual({ kind: 'adHoc' });
+    // And before any row, or with nothing to refresh.
+    expect(
+      subjectOf(recordAfter(null, adHoc({ totals: totals(2, 0, 0) }))),
+    ).toEqual({ kind: 'adHoc' });
+    expect(
+      subjectOf(recordAfter(null, adHoc({ totals: totals(0, 0, 0) }))),
+    ).toEqual({ kind: 'adHoc' });
+  });
+
+  it('stays "ad hoc entries" for more than one ticker', () => {
+    const mixed = recordAfter(
+      null,
+      adHoc({
+        totals: totals(2, 2, 0),
+        events: rowsOf(['ACME', 'BOLT']),
+        next_after: 2,
+      }),
+    );
+    expect(subjectOf(mixed)).toEqual({ kind: 'adHoc' });
+    expect(
+      subjectOf(
+        recordAfter(null, adHoc({ totals: totals(2, 0, 0) }), ['ACME', 'BOLT']),
+      ),
+    ).toEqual({ kind: 'adHoc' });
+  });
+
+  it('never names a ticker for a watchlist refresh', () => {
+    expect(
+      subjectOf({
+        ...recordAfter(
+          null,
+          job({ totals: totals(1, 1, 0), events: rowsOf(['ACME']) }),
+        ),
+        lookedUpName: 'Core',
+      }),
+    ).toEqual({ kind: 'name', name: 'Core' });
+  });
+
+  it('words the subject as a heading or an announcement does', () => {
+    const t = (key: string) => key;
+    expect(subjectText({ kind: 'ticker', ticker: 'ACME' }, t)).toBe('ACME');
+    expect(subjectText({ kind: 'name', name: 'Core' }, t)).toBe('Core');
+    expect(subjectText({ kind: 'adHoc' }, t)).toBe('refresh.subject.adHoc');
+  });
+
+  it('finds the one ticker the rows of a comparison share', () => {
+    expect(sharedTicker(['ACME'])).toBe('ACME');
+    expect(sharedTicker(['ACME', 'ACME'])).toBe('ACME');
+    expect(sharedTicker(['ACME', 'BOLT'])).toBeNull();
+    expect(sharedTicker([])).toBeNull();
   });
 });

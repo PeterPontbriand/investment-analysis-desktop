@@ -12,7 +12,7 @@ import {
 import { useMessages } from '../i18n/index.ts';
 import { asOfTarget, tickersTarget } from '../selection/problems.ts';
 import StrategyChooser from '../selection/StrategyChooser.vue';
-import { splitTickers } from '../selection/tickers.ts';
+import { singleTickerProblem, splitTickers } from '../selection/tickers.ts';
 import {
   isFieldFailure,
   useStrategySelection,
@@ -72,10 +72,11 @@ async function submit(): Promise<void> {
   refreshStart.clear();
   const chosenList = form.chosenStrategies();
   const tickers = splitTickers(tickerText.value);
+  const wrong = singleTickerProblem(tickerText.value);
   const own =
-    tickers.length === 0
+    wrong === 'none'
       ? [form.problem(t('analyze.errors.tickerRequired'), tickersTarget)]
-      : tickers.length > 1
+      : wrong === 'several'
         ? [form.problem(t('analyze.errors.oneTicker'), tickersTarget)]
         : [];
   if (await form.stopIfInvalid(chosenList, own)) return;

@@ -54,9 +54,13 @@ export function bodyProblem(
     return hasOnly(body, 'name', 'string') ? null : 'bad create body';
   if (/^\/v1\/watchlists\/[^/]+$/.test(path) && method === 'PATCH')
     return hasOnly(body, 'name', 'string') ? null : 'bad rename body';
-  // Starting a refresh names only the watchlist (D197).
+  // Starting a refresh names only a watchlist (D197) or only entries (D272).
   if (path === '/v1/refreshes' && method === 'POST')
-    return hasOnly(body, 'watchlist_id', 'string') ? null : 'bad refresh body';
+    return isObject(body) && 'entries' in body
+      ? refreshEntriesProblem(body)
+      : hasOnly(body, 'watchlist_id', 'string')
+        ? null
+        : 'bad refresh body';
   if (/\/remove-tickers$/.test(path))
     return hasOnly(body, 'tickers', 'array') ? null : 'bad remove-tickers body';
   if (/\/remove-method$/.test(path))
@@ -67,6 +71,28 @@ export function bodyProblem(
     return addEntriesProblem(body);
   return null;
 }
+
+// The body of a refresh of entries (D272): only `entries`, each with a ticker,
+// a method id and a selection.
+function refreshEntriesProblem(body: Record<string, unknown>): string | null {
+  if (Object.keys(body).length !== 1) return 'bad refresh-entries body';
+  const entries = body.entries;
+  if (!Array.isArray(entries) || entries.length === 0)
+    return 'bad refresh-entries entries';
+  for (const entry of entries as unknown[]) {
+    if (!isObject(entry)) return 'bad refresh entry';
+    if (Object.keys(entry).some((key) => !refreshEntryKeys.includes(key)))
+      return 'bad refresh entry keys';
+    if (typeof entry.ticker !== 'string' || entry.ticker === '')
+      return 'bad refresh entry ticker';
+    if (typeof entry.method_id !== 'string') return 'bad refresh entry method';
+    if (entry.selection !== undefined && !isObject(entry.selection))
+      return 'bad refresh entry selection';
+  }
+  return null;
+}
+
+const refreshEntryKeys = ['ticker', 'method_id', 'selection'];
 
 // The body of adding entries (D193, D194): a strategy, the tickers as typed
 // and the selection, which holds only what the strategy's form sends.

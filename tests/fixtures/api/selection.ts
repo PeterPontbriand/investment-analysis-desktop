@@ -639,6 +639,32 @@ export const failures = {
       { long_window_value: 50, short_window_value: 200 },
     ),
   ]),
+  // The refresh of entries names its errors by entry: the ticker of the first
+  // entry, and a field of the second entry's strategy (GUI.3d).
+  entryErrors: invalid([
+    ruleError(
+      'refresh.blank_ticker',
+      ['entries[0].ticker'],
+      '{entries[0].ticker} must not be empty.',
+      'entries[0].ticker must not be empty.',
+    ),
+    ruleError(
+      'pydantic.greater_than',
+      ['entries[1].selection.weight'],
+      'Invalid {entries[1].selection.weight}: {pydantic_message}',
+      'Invalid entries[1].selection.weight: Input should be greater than 0',
+      { pydantic_message: 'Input should be greater than 0' },
+    ),
+  ]),
+  // An error that names the list of entries itself.
+  entriesList: invalid([
+    ruleError(
+      'refresh.entries',
+      ['entries'],
+      '{entries} must not be empty.',
+      'entries must not be empty.',
+    ),
+  ]),
   // A request failure with no list of errors.
   shape: failure(400, 'invalid_parameter', 'The body is not valid JSON.'),
 };

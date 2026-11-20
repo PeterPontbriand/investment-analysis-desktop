@@ -22,6 +22,8 @@ export type RunDocument =
 export const coreRefreshId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 export const adHocRefreshId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 export const retiredRefreshId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+// The refresh of one ticker analyzed under two strategies (GUI.3d).
+export const analyzeRefreshId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 
 export const strategyDocuments = {
   momentum: {
@@ -282,7 +284,37 @@ export const adHocComparison: Schemas['RunsCompareDocument'] = {
   ],
 };
 
+// An analysis of one ticker under two strategies: entries of no watchlist whose
+// rows all name the same ticker (D274).
+export const oneTickerComparison: Schemas['RunsCompareDocument'] = {
+  schema_version: 7,
+  refresh_id: analyzeRefreshId,
+  watchlist_id: null,
+  watchlist_name: null,
+  first_completed_at: '2026-11-19T13:15:00+00:00',
+  last_completed_at: '2026-11-19T13:15:30+00:00',
+  run_count: 2,
+  outcome_counts: counts(2, 0, 0, 0),
+  strategies: [strategyDocuments.momentum, strategyDocuments.graham],
+  rows: [
+    {
+      ticker: 'ACME',
+      entries: [
+        {
+          method_id: 'sma_crossover',
+          run: compareRun(31, 'completed', momentumCells()),
+        },
+        {
+          method_id: 'graham_number',
+          run: compareRun(32, 'completed', grahamCells()),
+        },
+      ],
+    },
+  ],
+};
+
 export const comparisons: Record<string, Schemas['RunsCompareDocument']> = {
+  [analyzeRefreshId]: oneTickerComparison,
   [coreRefreshId]: coreComparison,
   [retiredRefreshId]: retiredComparison,
   [adHocRefreshId]: adHocComparison,
