@@ -6,13 +6,10 @@ import {
   type ShallowRef,
 } from 'vue';
 import { useRouter } from 'vue-router';
-import type { components } from '../api/schema.ts';
 import { ApiError } from '../api/client.ts';
 import { useEngine } from '../api/engine.ts';
 import { progressLocation } from '../views/navigation.ts';
 import { useAction } from './useAction.ts';
-
-type RefreshRequest = components['schemas']['RefreshRequest'];
 
 export type RefreshStart = {
   pending: Ref<boolean>;
@@ -39,8 +36,7 @@ export function useRefreshStart(): RefreshStart {
     const result = await action.run((client) =>
       client.post('/v1/refreshes', {
         // Only the watchlist: the engine's defaults apply to the rest (D197).
-        // The generated type lists the defaulted fields as required.
-        body: { watchlist_id: watchlistId } as RefreshRequest,
+        body: { watchlist_id: watchlistId },
       }),
     );
     if (result === null) return;

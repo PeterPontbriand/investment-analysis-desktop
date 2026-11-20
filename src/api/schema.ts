@@ -474,15 +474,13 @@ export interface components {
             /**
              * Provider Check
              * @description Whether to send one test request to a provider after it fails. When absent or null, the choice made when the server was launched (IAN_PROVIDER_CHECK) applies, as it does on the command line.
-             * @default null
              */
-            provider_check: boolean | null;
+            provider_check?: boolean | null;
             /**
              * Save
              * @description Whether to keep the result as an Analysis Run.
-             * @default false
              */
-            save: boolean;
+            save?: boolean;
             /**
              * Selection
              * @description The selection's fields, as GET /v1/strategies/{method_id}/selection describes them. A field left out takes its configured value; as_of is a date or a timestamp with a timezone offset, as text.
@@ -2501,33 +2499,28 @@ export interface components {
             /**
              * Entries
              * @description The entries to refresh, which belong to no watchlist. Give this or watchlist_id, not both. The same ticker with an equal selection may not appear twice.
-             * @default null
              */
-            entries: components["schemas"]["RefreshEntryRequest"][] | null;
+            entries?: components["schemas"]["RefreshEntryRequest"][] | null;
             /**
              * Provider Check
              * @description Whether to send one test request to a provider a failed job implicates after the batch. When absent or null, the choice made when the server was launched (IAN_PROVIDER_CHECK) applies, as it does on the command line.
-             * @default null
              */
-            provider_check: boolean | null;
+            provider_check?: boolean | null;
             /**
              * Save
              * @description Whether to keep each result as an Analysis Run; true when absent.
-             * @default true
              */
-            save: boolean;
+            save?: boolean;
             /**
              * Watchlist Id
              * @description The watchlist to refresh, by ID. Give this or entries, not both.
-             * @default null
              */
-            watchlist_id: string | null;
+            watchlist_id?: string | null;
             /**
              * Workers
              * @description How many jobs run at once, 1 to 4; 2 when absent.
-             * @default 2
              */
-            workers: number;
+            workers?: number;
         };
         /**
          * RefreshResultDocument
