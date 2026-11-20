@@ -277,7 +277,11 @@ function stop(): void {
                 <OutcomePill v-else :code="row.outcome" />
               </template>
               <span v-else-if="row.reasonCode !== null" class="problem">
-                <TermName code-set="FailureReasonCode" :code="row.reasonCode" />
+                <TermName
+                  code-set="FailureReasonCode"
+                  :code="row.reasonCode"
+                  term-only
+                />
               </span>
               <span v-else class="problem">{{ t('refresh.unexpected') }}</span>
             </td>
