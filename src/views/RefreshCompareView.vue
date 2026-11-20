@@ -17,6 +17,7 @@ import { formatCompletion, formatCount } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 import { groupsOf, outcomeCountsOf } from './compareModel.ts';
 import { compareCrumbs, progressLocation } from './navigation.ts';
+import { sharedTicker } from './refreshModel.ts';
 
 const { t, plural, locale } = useMessages();
 const engine = useEngine();
@@ -48,7 +49,10 @@ const loaded = computed(() =>
 const watchlistName = computed(() =>
   loaded.value === null
     ? ''
-    : (loaded.value.document.watchlist_name ?? t('refreshes.adHoc')),
+    : (loaded.value.document.watchlist_name ??
+      // Entries of no watchlist that share one ticker are named by it (D274).
+      sharedTicker(loaded.value.document.rows.map((row) => row.ticker)) ??
+      t('refreshes.adHoc')),
 );
 
 const time = computed(() =>

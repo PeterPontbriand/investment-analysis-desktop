@@ -6,7 +6,7 @@ import { isEnded } from '../api/refreshes.ts';
 import { useMessages } from '../i18n/index.ts';
 import { formatCount } from '../i18n/format.ts';
 import { progressLocation } from '../views/navigation.ts';
-import { endOf, subjectKey, subjectOf } from '../views/refreshModel.ts';
+import { endOf, subjectOf, subjectText } from '../views/refreshModel.ts';
 
 // The navigation marker (D201): while a refresh runs, its progress; after it
 // ends, how it ended until the progress screen has shown it. The end is also
@@ -47,11 +47,8 @@ watch(
       return;
     const end = endOf(held);
     if (end === null) return;
-    const subject = subjectOf(held);
-    const key = subjectKey(subject);
     announcement.value = t(`refresh.announce.${end}`, {
-      subject:
-        key === null ? (subject.kind === 'name' ? subject.name : '') : t(key),
+      subject: subjectText(subjectOf(held), t),
     });
   },
 );

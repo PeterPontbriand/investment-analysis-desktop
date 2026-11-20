@@ -97,6 +97,28 @@ describe('refresh follower', () => {
     expect(follower.current.value?.rows).toHaveLength(2);
   });
 
+  it('keeps the tickers of a refresh it started, and has none for one it did not (D274)', async () => {
+    const fake = fakeClient(() =>
+      job({
+        watchlist_id: null,
+        totals: totals(2, 1, 0),
+        events: [started(1, 0, 'ACME', 'm')],
+        next_after: 1,
+      }),
+    );
+    const follower = createFollower(fake.client, lookup);
+    follower.start(job({ watchlist_id: null, totals: totals(2, 0, 0) }), [
+      'ACME',
+    ]);
+    expect(follower.current.value?.startedTickers).toEqual(['ACME']);
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(follower.current.value?.rows).toHaveLength(1);
+    expect(follower.current.value?.startedTickers).toEqual(['ACME']);
+    // A refresh started without tickers, as one of a watchlist is, has none.
+    follower.start(job({ totals: totals(2, 0, 0) }));
+    expect(follower.current.value?.startedTickers).toBeNull();
+  });
+
   it('has one request in flight and takes the stop answer as a poll', async () => {
     let release: (document: JobDocument) => void = () => {};
     const slow = new Promise<JobDocument>((resolve) => (release = resolve));

@@ -29,6 +29,7 @@ test.describe('shell and navigation', () => {
     await open(page);
     const nav = page.getByRole('navigation', { name: en.nav.label });
     await expect(nav.getByRole('link')).toHaveText([
+      en.nav.analyze,
       en.nav.watchlists,
       en.nav.refreshes,
       en.nav.runs,

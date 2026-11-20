@@ -8,6 +8,7 @@
   },
   "nav": {
     "label": "[ar-XB] Main",
+    "analyze": "[ar-XB] Analyze a ticker",
     "watchlists": "[ar-XB] Watchlists",
     "refreshes": "[ar-XB] Refreshes",
     "runs": "[ar-XB] Saved runs",
@@ -213,6 +214,19 @@
     "partial": "[ar-XB] Added {count} entry for {strategies}. Other selected strategies were not added. | Added {count} entries for {strategies}. Other selected strategies were not added.",
     "errors": {
       "tickersRequired": "[ar-XB] Enter at least one ticker.",
+      "strategyRequired": "[ar-XB] Choose at least one strategy."
+    }
+  },
+  "analyze": {
+    "heading": "[ar-XB] Analyze a ticker",
+    "ticker": "[ar-XB] Ticker",
+    "asOf": "[ar-XB] As of",
+    "asOfHint": "[ar-XB] Leave empty for the latest data.",
+    "requiredNote": "[ar-XB] * Required",
+    "analyze": "[ar-XB] Analyze",
+    "errors": {
+      "tickerRequired": "[ar-XB] Enter a ticker.",
+      "oneTicker": "[ar-XB] Enter one ticker. To analyze several, use a watchlist.",
       "strategyRequired": "[ar-XB] Choose at least one strategy."
     }
   },

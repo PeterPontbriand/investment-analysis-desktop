@@ -132,7 +132,11 @@ export type JobScript = {
 // answer holds the events after the sequence the client named, as the engine's.
 export function scriptedJob(
   frames: Frame[],
-  options: { stopFrame?: number; watchlistId?: string | null } = {},
+  options: {
+    stopFrame?: number;
+    watchlistId?: string | null;
+    refreshId?: string;
+  } = {},
 ): JobScript {
   let next = 0;
   const afters: number[] = [];
@@ -150,6 +154,9 @@ export function scriptedJob(
       .filter((event) => event.sequence > after);
     return ok(
       job({
+        ...(options.refreshId === undefined
+          ? {}
+          : { refresh_id: options.refreshId }),
         watchlist_id:
           options.watchlistId === undefined ? coreId : options.watchlistId,
         state: frame.state ?? 'running',

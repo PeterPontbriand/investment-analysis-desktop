@@ -15,7 +15,7 @@ import { useRouteParam } from '../composables/useRouteParam.ts';
 import { formatCount } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 import { compareLocation, compareCrumbs, runLocation } from './navigation.ts';
-import { endOf, pillsOf, subjectKey, subjectOf } from './refreshModel.ts';
+import { endOf, pillsOf, subjectOf, subjectText } from './refreshModel.ts';
 
 const { t, plural, locale } = useMessages();
 const engine = useEngine();
@@ -86,12 +86,9 @@ function retry(): void {
 const subject = computed(() =>
   record.value === null ? null : subjectOf(record.value),
 );
-const subjectText = computed(() => {
-  const held = subject.value;
-  if (held === null) return '';
-  const key = subjectKey(held);
-  return key !== null ? t(key) : held.kind === 'name' ? held.name : '';
-});
+const subjectLabel = computed(() =>
+  subject.value === null ? '' : subjectText(subject.value, t),
+);
 
 const end = computed(() =>
   record.value === null ? null : endOf(record.value),
@@ -102,9 +99,9 @@ const live = computed(() => record.value !== null && end.value === null);
 const heading = computed(() => {
   if (record.value === null) return '';
   if (end.value !== null)
-    return t(`refresh.heading.${end.value}`, { subject: subjectText.value });
+    return t(`refresh.heading.${end.value}`, { subject: subjectLabel.value });
   if (stopping.value) return t('refresh.heading.stopping');
-  return t('refresh.heading.running', { subject: subjectText.value });
+  return t('refresh.heading.running', { subject: subjectLabel.value });
 });
 
 const countsLine = computed(() => {

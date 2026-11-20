@@ -72,6 +72,7 @@ describe('app shell', () => {
     expect(wrapper.get('.product').text()).toBe(en.app.name);
     expect(wrapper.get('.notice').text()).toBe(en.app.preReleaseNotice);
     expect(wrapper.findAll('nav a').map((link) => link.text())).toEqual([
+      en.nav.analyze,
       en.nav.watchlists,
       en.nav.refreshes,
       en.nav.runs,
