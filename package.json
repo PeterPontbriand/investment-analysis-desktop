@@ -18,6 +18,7 @@
     "typecheck": "vue-tsc --noEmit",
     "test": "vitest run",
     "test:browser": "playwright test",
+    "test:engine": "playwright test --config playwright.engine.config.ts",
     "docs:check": "node tools/docs/check-doc-links.ts && node tools/docs/check-sequence-tables.ts",
     "gate": "node tools/gate.ts",
     "gate:slice": "node tools/gate.ts --slice",

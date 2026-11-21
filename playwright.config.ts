@@ -5,6 +5,8 @@ const timezoneId = 'America/Toronto';
 
 export default defineConfig({
   testDir: './tests/browser',
+  // The real-engine suite has its own config (playwright.engine.config.ts).
+  testIgnore: ['**/engine/**'],
   reporter: [['list'], ['html', { open: 'never' }]],
   projects: [
     {
