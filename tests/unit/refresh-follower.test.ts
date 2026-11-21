@@ -211,6 +211,47 @@ describe('refresh follower', () => {
     expect(follower.current.value?.summary?.counts).toEqual({ completed: 1 });
   });
 
+  // D294: the profile cache is cleared when a refresh is seen to end.
+  describe('when a refresh ends', () => {
+    const ending = job({
+      state: 'completed',
+      totals: totals(1, 1, 1),
+      events: [finished(1, 0, 'T0', 'm')],
+      next_after: 1,
+      summary: summary({ completed: 1 }),
+    });
+
+    it('tells its caller once, when the job it follows ends', async () => {
+      const fake = fakeClient(() => ending);
+      const ended = vi.fn();
+      const follower = createFollower(fake.client, lookup, ended);
+      follower.start(job({ totals: totals(1, 0, 0) }));
+      expect(ended).not.toHaveBeenCalled();
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(ended).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not tell it for a refresh that was already over when first seen', async () => {
+      const fake = fakeClient(() => ending);
+      const ended = vi.fn();
+      const follower = createFollower(fake.client, lookup, ended);
+      follower.start(ending);
+      await vi.advanceTimersByTimeAsync(5000);
+      expect(ended).not.toHaveBeenCalled();
+    });
+
+    it('tells it when a stop request answers with the ended job', async () => {
+      const fake = fakeClient((call) =>
+        call.method === 'post' ? job({ ...ending, state: 'stopped' }) : job(),
+      );
+      const ended = vi.fn();
+      const follower = createFollower(fake.client, lookup, ended);
+      follower.start(job({ totals: totals(1, 0, 0) }));
+      await follower.stop();
+      expect(ended).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('treats a state it does not know as running', async () => {
     const fake = fakeClient(() => job());
     const follower = createFollower(fake.client, lookup);

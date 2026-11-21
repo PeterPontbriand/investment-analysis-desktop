@@ -167,6 +167,17 @@ describe('comparison counts line', () => {
   });
 });
 
+describe('run detail heading with no name', () => {
+  it('drops the name when the run kept none', async () => {
+    const wrapper = await mountAt('/runs/00000000-0000-4000-8000-000000000002');
+    expect(wrapper.get('h1').text()).toBe(
+      en.runDetail.titleNoName
+        .replace('{ticker}', 'MSFT')
+        .replace('{strategy}', 'Momentum'),
+    );
+  });
+});
+
 describe('run detail meta line', () => {
   const instant = (value: string) =>
     new Intl.DateTimeFormat('en', {
@@ -209,10 +220,12 @@ describe('run detail meta line', () => {
     expect(parts(meta.text())).not.toContain('fiscal year-end');
   });
 
-  it('drops the company name and the as-of when the document is unavailable', async () => {
+  // D293: the name comes from the overview, so it shows without the document.
+  it('keeps the company name and drops the as-of when the document is unavailable', async () => {
     const wrapper = await mountAt('/runs/00000000-0000-4000-8000-000000000004');
     expect(wrapper.get('h1').text()).toBe(
-      en.runDetail.titleNoName
+      en.runDetail.title
+        .replace('{name}', 'Old Industries')
         .replace('{ticker}', 'OLD')
         .replace('{strategy}', 'retired_method'),
     );

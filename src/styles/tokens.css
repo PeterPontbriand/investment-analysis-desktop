@@ -19,6 +19,7 @@
   --color-caution-bg: #faeeda;
   --color-negative: #a32d2d;
   --color-negative-bg: #fcebeb;
+  --color-shadow: #00000033;
 
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -61,5 +62,6 @@
     --color-caution-bg: #633806;
     --color-negative: #f7c1c1;
     --color-negative-bg: #791f1f;
+    --color-shadow: #000000a0;
   }
 }

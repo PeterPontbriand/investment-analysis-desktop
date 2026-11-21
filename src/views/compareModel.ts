@@ -3,6 +3,7 @@ import type { components } from '../api/schema.ts';
 type Schemas = components['schemas'];
 export type CompareDocument = Schemas['RunsCompareDocument'];
 export type CompareRun = Schemas['CompareRunDocument'];
+export type CompareRow = CompareDocument['rows'][number];
 export type CompareCell = Schemas['CompareCellDocument'];
 
 // A column the cells of a strategy group share.

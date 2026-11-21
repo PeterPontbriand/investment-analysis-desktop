@@ -1,8 +1,7 @@
-// The smoke test's scripted setup steps (Steps 1 to 9 of docs/project/SMOKE_TESTING.md).
-// Each step stops with a plain message instead of guessing.
+// The sandbox's setup: finds the engine, makes a throwaway database with sample
+// data, and stops with a plain message instead of guessing.
 import { join, relative } from 'node:path';
 import {
-  describeStart,
   hasCommit,
   readStartPoint,
   restoreCommand,
@@ -11,24 +10,19 @@ import {
   type StartPoint,
 } from './checkout.ts';
 import { readCommands, setupCommands, throwawayFile } from './commands.ts';
+import { SandboxStop } from './stop.ts';
 import {
   EngineProblem,
   engineMessages,
   locateEngine,
   readAbout,
-} from './engine.ts';
-import { scrub, type ScriptedStep } from './record.ts';
+} from '../engine/engine.ts';
+import { readVendoredCommit, type IanSource } from '../engine/source.ts';
 import {
-  ianSourceNames,
-  readVendoredCommit,
-  type IanSource,
-} from './source.ts';
-import {
-  SmokeStop,
   type FileSystem,
   type RunResult,
   type Runner,
-} from './types.ts';
+} from '../engine/types.ts';
 
 export type Environment = Record<string, string | undefined>;
 
@@ -50,16 +44,11 @@ export type Dependencies = {
 // What the setup learned and did so far, kept even when a step stops it, so the
 // record can show everything up to that point.
 export type Session = {
-  scripted: Map<string, ScriptedStep>;
   log: { command: string; output: string }[];
   engineCommit: string | null;
   ianPath: string | null;
   // Where `ian` was found.
   ianSource: IanSource | null;
-  engineVersion: string | null;
-  // What `ian about` said about the engine checkout before any switch: null
-  // when the engine's own changes could not be read.
-  engineUncommitted: boolean | null;
   // The engine checkout's folder, kept for the restore and never recorded.
   engineFolder: string | null;
   // Set once the checkout needs a switch (and after it is done).
@@ -76,13 +65,10 @@ export type Session = {
 
 export function newSession(): Session {
   return {
-    scripted: new Map(),
     log: [],
     engineCommit: null,
     ianPath: null,
     ianSource: null,
-    engineVersion: null,
-    engineUncommitted: null,
     engineFolder: null,
     engineSwitch: null,
     throwawayFolder: null,
@@ -91,10 +77,10 @@ export function newSession(): Session {
   };
 }
 
-// The label of a stop after the switch, which happens between Step 3 and Step 4.
+// The label of a stop after the switch, which happens after the throwaway folder is made.
 export const switchStep = 'Engine switch';
 
-// The stop messages, which docs/project/SMOKE_TESTING.md lists with what to do.
+// The stop messages.
 export const stopMessages = {
   ...engineMessages,
   uncommittedChanges: (found: string, wanted: string, known: boolean) =>
@@ -105,37 +91,27 @@ export const stopMessages = {
     `Switching the engine checkout to the vendored commit failed (${detail}). The checkout was not changed.`,
   switchedToWrongCommit: (found: string, wanted: string) =>
     `After the switch, \`ian about\` reports commit ${found}, not the vendored commit ${wanted}, so the \`ian\` command does not run the checkout that was switched. The tool restores the checkout and stops.`,
-  engineArgument: () =>
-    '`--engine` is no longer needed: `pnpm smoke` finds the engine through `ian`. Run `pnpm smoke` without it.',
-  noArguments: () =>
-    '`pnpm smoke` takes only the `--checks` option, given once.',
-  databaseUnreadable: () =>
-    "The state of your real database could not be read from `ian db status --json`. Run `ian db status` yourself and use the engine's Local Database Operations guide.",
-  databaseNotReady: (state: string) =>
-    state === 'upgrade_required'
-      ? 'Your real database needs an upgrade. Follow "First use and explicit upgrades" in the engine\'s Local Database Operations guide before going on.'
-      : `Your real database is in the state ${state}. Stop and use the engine's Local Database Operations guide.`,
   commandFailed: (step: string, command: string, detail: string) =>
-    `${step} failed: \`ian ${command}\` ${detail}. Its output is in the record.`,
+    `${step} failed: \`ian ${command}\` ${detail}.`,
   noCompletedRun: () =>
     "The refresh completed no run, so the screens would have nothing to show. Check the providers with `ian health` and the engine's troubleshooting guide, then try again.",
   wrongCounts: (found: string) =>
-    `The setup should leave 6 runs, 1 refresh of 5 runs and 3 watchlists with 11 entries in all, but found ${found}. Use a new throwaway database: run pnpm smoke again.`,
+    `The setup should leave 6 runs, 1 refresh of 5 runs and 3 watchlists with 11 entries in all, but found ${found}. Use a new throwaway database: run pnpm sandbox again.`,
 } as const;
 
-// One line when each of Steps 4 to 9 starts. Steps that call the data providers say so.
+// One line when each stage of the sample data starts. Stages that call the data providers say so.
 const progressLines: Record<string, string> = {
-  'Step 4': "Step 4: creating the throwaway database's schema…",
-  'Step 5':
-    'Step 5: creating the Smoke Test, Smoke Test Empty and Smoke Test Scratch watchlists…',
-  'Step 6':
-    'Step 6: adding five entries to the Smoke Test watchlist and six to Smoke Test Scratch…',
-  'Step 7':
-    'Step 7: refreshing the Smoke Test watchlist (this calls the data providers and can take a few minutes)…',
-  'Step 8':
-    'Step 8: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
-  'Step 9':
-    'Step 9: reading back the saved runs, refreshes and watchlists to check their counts…',
+  Database: "Database: creating the throwaway database's schema…",
+  Watchlists:
+    'Watchlists: creating the Sandbox, Sandbox Empty and Sandbox Scratch watchlists…',
+  Entries:
+    'Entries: adding five entries to the Sandbox watchlist and six to Sandbox Scratch…',
+  Refresh:
+    'Refresh: refreshing the Sandbox watchlist (this calls the data providers and can take a few minutes)…',
+  Analysis:
+    'Analysis: saving one direct analysis of MSFT (this calls the data providers and can take a minute)…',
+  Counts:
+    'Counts: reading back the saved runs, refreshes and watchlists to check their counts…',
 };
 
 function describe(result: RunResult): string {
@@ -161,7 +137,7 @@ export function folderStamp(now: Date): string {
   return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
 }
 
-// The URL as SMOKE_TESTING.md's Step 3 builds it.
+// The database URL of a throwaway folder.
 export function databaseUrlFor(folder: string): string {
   return `sqlite:///${folder.split('\\').join('/')}/${throwawayFile}`;
 }
@@ -174,39 +150,35 @@ export async function runSetup(
   const logRun = (command: string, result: RunResult) =>
     session.log.push({
       command,
-      output: scrub(`${result.stdout}${result.stderr}`, repositoryRoot),
+      output: `${result.stdout}${result.stderr}`,
     });
 
-  // Step 1: find the engine through `ian about`, and decide whether its
-  // checkout must be switched to the vendored commit. Nothing is switched
-  // before Step 3: Step 2 reads the real database with the contributor's own
-  // engine.
-  progress('Step 1: finding the engine through `ian` and checking its commit…');
+  // Find the engine through `ian about`, and decide whether its checkout must
+  // be switched to the vendored commit.
+  progress('Engine: finding the engine through `ian` and checking its commit…');
   const wanted = readVendoredCommit(
     fs.readText(join(repositoryRoot, 'vendor', 'ian', 'SOURCE.md')),
   );
   const logAbout = (command: string, output: string) =>
-    session.log.push({ command, output: scrub(output, repositoryRoot) });
+    session.log.push({ command, output });
   const logEngine = (command: string, output: string) =>
     session.log.push({
       command,
-      output: scrub(output, repositoryRoot, session.engineFolder),
+      output,
     });
   const engineStopAt =
     (step: string) =>
     (error: unknown): never => {
       if (error instanceof EngineProblem)
-        throw new SmokeStop(step, error.message);
+        throw new SandboxStop(step, error.message);
       throw error;
     };
-  const engineStop = engineStopAt('Step 1');
+  const engineStop = engineStopAt('Engine');
   const located = await locateEngine(deps, logAbout).catch(engineStop);
   const ian = located.ian.path;
   const engineFolder = located.about.installationFolder;
   session.ianPath = ian;
   session.ianSource = located.ian.source;
-  session.engineVersion = located.about.engineVersion;
-  session.engineUncommitted = located.about.uncommittedChanges;
   session.engineFolder = engineFolder;
   const short = wanted.slice(0, 7);
   let plannedStart: StartPoint | null = null;
@@ -214,8 +186,8 @@ export async function runSetup(
     // A switch is needed: refuse a checkout with changes (or whose changes Git
     // could not report), then make sure the commit is there before any switch.
     if (located.about.uncommittedChanges !== false)
-      throw new SmokeStop(
-        'Step 1',
+      throw new SandboxStop(
+        'Engine',
         stopMessages.uncommittedChanges(
           located.about.commit.slice(0, 7),
           wanted.slice(0, 7),
@@ -223,7 +195,7 @@ export async function runSetup(
         ),
       );
     if (!(await hasCommit(run, engineFolder, wanted, logEngine)))
-      throw new SmokeStop('Step 1', stopMessages.commitMissing(wanted));
+      throw new SandboxStop('Engine', stopMessages.commitMissing(wanted));
     plannedStart = await readStartPoint(
       run,
       engineFolder,
@@ -232,41 +204,13 @@ export async function runSetup(
     );
   }
   if (plannedStart === null) session.engineCommit = short;
-  session.scripted.set('Step 1', {
-    fact:
-      plannedStart === null
-        ? `engine at ${short}; \`ian\` from ${ianSourceNames[located.ian.source]}; \`ian about\` works`
-        : `engine at ${located.about.commit.slice(0, 7)}, to be switched to ${short} after Step 3 and restored at the end; \`ian\` from ${ianSourceNames[located.ian.source]}`,
-  });
-
-  // Step 2: the real database, read only and with the inherited environment.
-  progress('Step 2: reading the state of your real database (read only)…');
-  const status = await run(ian, [...readCommands.databaseStatus], {
-    env: deps.env,
-  });
-  const report = parseJson(status.stdout) as { state?: unknown } | null;
-  const state = typeof report?.state === 'string' ? report.state : null;
-  session.log.push({
-    command: 'ian db status --json',
-    output:
-      state === null
-        ? '(no state in the output)'
-        : `state: ${state} (the real database's path is not recorded)`,
-  });
-  if (state === null)
-    throw new SmokeStop('Step 2', stopMessages.databaseUnreadable());
-  const expectedExit = state === 'ready' ? 0 : state === 'missing' ? 1 : null;
-  if (expectedExit === null || status.code !== expectedExit)
-    throw new SmokeStop('Step 2', stopMessages.databaseNotReady(state));
-  session.scripted.set('Step 2', { fact: `real database: ${state}` });
-
-  // Step 3: the throwaway database, for every later command.
-  const folder = join(repositoryRoot, '.tmp', 'smoke', folderStamp(deps.now));
+  // The throwaway database, for every later command.
+  const folder = join(repositoryRoot, '.tmp', 'sandbox', folderStamp(deps.now));
   session.throwawayFolder = relative(repositoryRoot, folder)
     .split('\\')
     .join('/');
   progress(
-    `Step 3: creating the throwaway database folder ${session.throwawayFolder}…`,
+    `Folder: creating the throwaway database folder ${session.throwawayFolder}…`,
   );
   fs.makeFolder(folder);
   session.databaseUrl = databaseUrlFor(folder);
@@ -274,7 +218,6 @@ export async function runSetup(
     ...deps.env,
     IAN_DATABASE_URL: session.databaseUrl,
   };
-  session.scripted.set('Step 3', { fact: session.throwawayFolder });
 
   // The switch, now that the real database has been read and the throwaway
   // database is set for every later command.
@@ -297,7 +240,7 @@ export async function runSetup(
     );
     if (failure !== null) {
       session.engineSwitch = null;
-      throw new SmokeStop(switchStep, stopMessages.switchFailed(failure));
+      throw new SandboxStop(switchStep, stopMessages.switchFailed(failure));
     }
     progress(
       "The engine's environment may take a minute to sync after the switch…",
@@ -306,7 +249,7 @@ export async function runSetup(
       engineStopAt(switchStep),
     );
     if (after.commit !== wanted)
-      throw new SmokeStop(
+      throw new SandboxStop(
         switchStep,
         stopMessages.switchedToWrongCommit(
           after.commit.slice(0, 7),
@@ -314,13 +257,10 @@ export async function runSetup(
         ),
       );
     session.engineCommit = short;
-    session.scripted.set('Step 1', {
-      fact: `engine switched from ${describeStart(plannedStart)} to ${short} and restored at the end; \`ian\` from ${ianSourceNames[located.ian.source]}; \`ian about\` works`,
-    });
   }
 
-  // Steps 4 to 9: the document's commands, in order.
-  const allowsFailureExit = new Set(['Step 7', 'Step 8']);
+  // The sample data's commands, in order.
+  const allowsFailureExit = new Set(['Refresh', 'Analysis']);
   let announced = '';
   for (const command of setupCommands) {
     if (command.step !== announced) {
@@ -334,7 +274,7 @@ export async function runSetup(
       result.code === 0 ||
       (result.code === 1 && allowsFailureExit.has(command.step));
     if (!accepted)
-      throw new SmokeStop(
+      throw new SandboxStop(
         command.step,
         stopMessages.commandFailed(
           command.step,
@@ -345,16 +285,15 @@ export async function runSetup(
     if (command.args[0] === 'db' && command.args[1] === 'status') {
       const text = `${result.stdout}${result.stderr}`;
       if (!/state:\s*ready/i.test(text) || !text.includes(throwawayFile))
-        throw new SmokeStop(
-          'Step 4',
+        throw new SandboxStop(
+          'Database',
           stopMessages.commandFailed(
-            'Step 4',
+            'Database',
             'db status',
             'did not name the throwaway file and report State: ready',
           ),
         );
     }
-    const step = command.step;
     if (command.args[0] === 'refresh') {
       const counts = await run(ian, [...readCommands.refreshes], {
         env: childEnv,
@@ -366,19 +305,11 @@ export async function runSetup(
         } | null
       )?.items;
       if (!items?.some((item) => (item.outcome_counts?.completed ?? 0) > 0))
-        throw new SmokeStop('Step 7', stopMessages.noCompletedRun());
+        throw new SandboxStop('Refresh', stopMessages.noCompletedRun());
     }
-    const next = setupCommands[setupCommands.indexOf(command) + 1];
-    if (next === undefined || next.step !== step)
-      session.scripted.set(step, {
-        fact:
-          step === 'Step 7' && result.code === 1
-            ? 'refresh exited 1: some entries did not complete'
-            : undefined,
-      });
   }
 
-  // Step 9: the counts, from the JSON forms and never from text.
+  // The counts, from the JSON forms and never from text.
   const readJson = async (args: readonly string[]) => {
     const result = await run(ian, [...args], { env: childEnv });
     logRun(`ian ${args.join(' ')}`, result);
@@ -407,17 +338,17 @@ export async function runSetup(
     watchlistCount !== 3 ||
     entryCount !== 11
   )
-    throw new SmokeStop('Step 9', stopMessages.wrongCounts(summary));
+    throw new SandboxStop('Counts', stopMessages.wrongCounts(summary));
   session.data = {
     watchlists: watchlistCount,
     entries: entryCount,
     runs: runCount,
     refreshes: refreshCount,
   };
-  session.scripted.set('Step 9', { fact: summary });
+  progress(`Sample data: ${summary}.`);
 }
 
-// The environment of the application started in Step 10: the throwaway
+// The environment of the application started: the throwaway
 // database, and IAD_IAN_PATH only when `ian` came from uv's command folder, so
 // the application finds the same file. The tool's own environment is unchanged.
 export function applicationEnvironment(

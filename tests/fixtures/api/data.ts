@@ -12,7 +12,10 @@ export const info: Schemas['InfoDocument'] = {
   api_versions: ['v1'],
   engine_version: '4.5.6',
   locales: [{ tag: 'en', name: 'English' }],
-  providers: [],
+  providers: [
+    { id: 'yahoo', name: 'Yahoo Finance' },
+    { id: 'sec_edgar', name: 'SEC EDGAR' },
+  ],
   schema_version: 3,
   sec_identity_configured: false,
 };
@@ -219,6 +222,24 @@ export const helpIndex: Schemas['HelpIndexDocument'] = {
           definition: 'Made-up definition of failure-port-unavailable.',
         },
         {
+          id: 'failure-instrument-profile-not-found',
+          name: 'Instrument Profile Not Found',
+          definition:
+            'No instrument profile is stored for the ticker, so there are no details to show.',
+        },
+        {
+          id: 'entry-warning-ticker-not-recognized',
+          name: 'Ticker Not Recognized',
+          definition:
+            'When an entry was added, the data providers answered and none of them identified the ticker. The entry was still added.',
+        },
+        {
+          id: 'entry-warning-ticker-not-checked',
+          name: 'Ticker Not Checked',
+          definition:
+            "When an entry was added, the ticker could not be checked, because a data provider or the engine's database was not available. The entry was still added.",
+        },
+        {
           id: 'verdict-healthy',
           name: 'Healthy',
           definition: 'The provider answered.',
@@ -227,6 +248,28 @@ export const helpIndex: Schemas['HelpIndexDocument'] = {
           id: 'verdict-unreachable',
           name: 'Unreachable',
           definition: 'The provider did not answer.',
+        },
+      ],
+    },
+    {
+      id: 'instruments',
+      title: 'Instruments',
+      terms: [
+        {
+          id: 'instrument-kind-equity',
+          name: 'Equity',
+          definition:
+            'A share of ownership in a company, such as a common stock.',
+        },
+        {
+          id: 'instrument-kind-etf',
+          name: 'ETF',
+          definition: 'A fund that trades on an exchange.',
+        },
+        {
+          id: 'instrument-kind-cryptocurrency',
+          name: 'Cryptocurrency',
+          definition: 'A digital currency.',
         },
       ],
     },
@@ -314,6 +357,18 @@ export const references: Schemas['HelpReferencesDocument'] = {
       port_unavailable: 'failure-port-unavailable',
       help_term_not_found: 'failure-not-found',
       help_document_not_found: 'failure-not-found',
+      instrument_profile_not_found: 'failure-instrument-profile-not-found',
+    },
+    // The engine's ENTRY_WARNING_CODE_TERMS and INSTRUMENT_KIND_TERMS at the
+    // vendored engine commit (D262, D282).
+    EntryWarningCode: {
+      ticker_not_recognized: 'entry-warning-ticker-not-recognized',
+      ticker_not_checked: 'entry-warning-ticker-not-checked',
+    },
+    InstrumentKind: {
+      equity: 'instrument-kind-equity',
+      etf: 'instrument-kind-etf',
+      cryptocurrency: 'instrument-kind-cryptocurrency',
     },
     ProviderCheckVerdict: {
       healthy: 'verdict-healthy',

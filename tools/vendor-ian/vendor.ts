@@ -2,9 +2,9 @@
 // description with the one at an engine commit, regenerates the API types, and
 // says what changed.
 import { join } from 'node:path';
-import { locateEngine, type EngineEnvironment } from '../smoke/engine.ts';
-import { readVendoredCommit } from '../smoke/source.ts';
-import type { FileSystem, Runner } from '../smoke/types.ts';
+import { locateEngine, type EngineEnvironment } from '../engine/engine.ts';
+import { readVendoredCommit } from '../engine/source.ts';
+import type { FileSystem, Runner } from '../engine/types.ts';
 import { formatSummary, summarize } from './summary.ts';
 
 export class VendorStop extends Error {

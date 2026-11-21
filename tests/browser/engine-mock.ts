@@ -32,6 +32,9 @@ export type RecordedRequest = {
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 
+const isLookup = (method: string, path: string) =>
+  method === 'POST' && /^\/v1\/instrument-profiles\/[^/]+\/lookup$/.test(path);
+
 const hasOnly = (body: unknown, key: string, type: 'string' | 'array') =>
   isObject(body) &&
   Object.keys(body).length === 1 &&
@@ -50,6 +53,9 @@ export function bodyProblem(
   if (method === 'GET') return null;
   if (method === 'DELETE')
     return body === undefined ? null : 'DELETE must have no body';
+  // A lookup has no body (D291).
+  if (isLookup(method, path))
+    return body === undefined ? null : 'a lookup must have no body';
   if (path === '/v1/watchlists' && method === 'POST')
     return hasOnly(body, 'name', 'string') ? null : 'bad create body';
   if (/^\/v1\/watchlists\/[^/]+$/.test(path) && method === 'PATCH')
@@ -152,8 +158,8 @@ export async function mockEngine(
       problem !== null
         ? failure(400, 'invalid_parameter', problem)
         : ((await handler(url, { method, body })) ??
-          (method === 'GET'
-            ? respond(url)
+          (method === 'GET' || isLookup(method, url.pathname)
+            ? respond(url, method)
             : failure(404, 'endpoint_not_found', 'No such endpoint.')));
     await route.fulfill({
       status: reply.status,

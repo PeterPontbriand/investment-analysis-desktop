@@ -1,14 +1,14 @@
-// Fakes for the smoke-test tool: no test runs IAN or Tauri.
+// Fakes for the sandbox tool: no test runs IAN or Tauri.
 import { join, resolve } from 'node:path';
-import { readCommands, setupCommands } from '../../tools/smoke/commands.ts';
-import { ianFileName } from '../../tools/smoke/source.ts';
-import type { Dependencies } from '../../tools/smoke/setup.ts';
+import { readCommands, setupCommands } from '../../tools/sandbox/commands.ts';
+import { ianFileName } from '../../tools/engine/source.ts';
+import type { Dependencies } from '../../tools/sandbox/setup.ts';
 import type {
   FileSystem,
   RunOptions,
   RunResult,
   Runner,
-} from '../../tools/smoke/types.ts';
+} from '../../tools/engine/types.ts';
 
 export const vendoredCommit = 'beb58a23bf9b72b763ce2b260c1dcaaa6d0a884b';
 export const repositoryRoot = resolve('fake-repository');
@@ -63,11 +63,9 @@ export function healthy(overrides: Script = () => undefined): Script {
     // uv's command folder holds no ian unless a test says so.
     if (call.file === 'uv') return ok('', 1);
     if (line === 'about --json') return aboutJson();
-    if (line === readCommands.databaseStatus.join(' '))
-      return json({ state: 'ready', database_path: 'C:/private/real.sqlite3' });
     if (line === 'db status')
       return ok(
-        'State: ready\nDatabase: .../smoke-test.sqlite3\nRevision: 0006\n',
+        'State: ready\nDatabase: .../sandbox.sqlite3\nRevision: 0006\n',
       );
     if (line === readCommands.refreshes.join(' '))
       return json({
@@ -82,9 +80,9 @@ export function healthy(overrides: Script = () => undefined): Script {
     if (line === readCommands.watchlists.join(' '))
       return json({
         items: [
-          { display_name: 'Smoke Test', entry_count: 5 },
-          { display_name: 'Smoke Test Empty', entry_count: 0 },
-          { display_name: 'Smoke Test Scratch', entry_count: 6 },
+          { display_name: 'Sandbox', entry_count: 5 },
+          { display_name: 'Sandbox Empty', entry_count: 0 },
+          { display_name: 'Sandbox Scratch', entry_count: 6 },
         ],
       });
     return ok(`ran: ian ${line}\n`);

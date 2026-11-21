@@ -690,6 +690,97 @@
         "title": "DiagnosticPart",
         "type": "object"
       },
+      "EntriesAddedDocument": {
+        "additionalProperties": false,
+        "description": "The outcome of ``watchlist add-selection --json`` and of adding entries through the API.\n\nEvery entry is added whatever the warnings; a warning only says that a ticker could not be confirmed.",
+        "properties": {
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "warnings": {
+            "description": "One warning for each ticker that could not be confirmed; empty when every ticker was.",
+            "items": {
+              "$ref": "#/components/schemas/EntryWarningDocument"
+            },
+            "title": "Warnings",
+            "type": "array"
+          },
+          "watchlist": {
+            "$ref": "#/components/schemas/WatchlistDocument"
+          }
+        },
+        "required": [
+          "watchlist",
+          "warnings"
+        ],
+        "title": "EntriesAddedDocument",
+        "type": "object"
+      },
+      "EntryWarningCode": {
+        "description": "Why a ticker added to a watchlist could not be confirmed; a value is never renamed or removed.",
+        "enum": [
+          "ticker_not_recognized",
+          "ticker_not_checked"
+        ],
+        "title": "EntryWarningCode",
+        "type": "string"
+      },
+      "EntryWarningDocument": {
+        "additionalProperties": false,
+        "description": "One warning about a ticker that was added but could not be confirmed.\n\nIt has the shape of a rule error: filling every placeholder of ``template`` with its ``arguments`` gives\n``message``.",
+        "properties": {
+          "arguments": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "description": "The values the message shows, by name.",
+            "title": "Arguments",
+            "type": "object"
+          },
+          "code": {
+            "$ref": "#/components/schemas/EntryWarningCode",
+            "description": "Why the ticker could not be confirmed."
+          },
+          "message": {
+            "description": "The warning for a person; it carries no guarantee.",
+            "title": "Message",
+            "type": "string"
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FailureReasonCode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The failure reason code that kept the ticker from being checked: a provider failure code or a database failure code. Null when the ticker was not recognized."
+          },
+          "template": {
+            "description": "The message with each value written as a placeholder named as in arguments, such as {ticker}; replacing every placeholder with its text gives message. A template never contains a literal brace.",
+            "title": "Template",
+            "type": "string"
+          },
+          "ticker": {
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "code",
+          "reason_code",
+          "arguments",
+          "message",
+          "template"
+        ],
+        "title": "EntryWarningDocument",
+        "type": "object"
+      },
       "FCFClassificationBasis": {
         "description": "Free-cash-flow measure controlling classification.",
         "enum": [
@@ -2054,8 +2145,8 @@
             "type": "null"
           },
           "schema_version": {
-            "const": 15,
-            "default": 15,
+            "const": 16,
+            "default": 16,
             "title": "Schema Version",
             "type": "integer"
           },
@@ -2136,7 +2227,8 @@
           "refresh_job_running",
           "port_unavailable",
           "help_term_not_found",
-          "help_document_not_found"
+          "help_document_not_found",
+          "instrument_profile_not_found"
         ],
         "title": "FailureReasonCode",
         "type": "string"
@@ -3425,6 +3517,118 @@
           "resolved_at"
         ],
         "title": "InstrumentKindPart",
+        "type": "object"
+      },
+      "InstrumentProfileDocument": {
+        "additionalProperties": false,
+        "description": "One ticker's instrument profile: its identity, its kind and the currency its price is quoted in.\n\n``schema_version`` is this document's own lineage and is independent of every other document's.",
+        "properties": {
+          "instrument_identifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The data provider's own identifier of the instrument; null when it gave none.",
+            "title": "Instrument Identifier"
+          },
+          "instrument_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The instrument's name; null when no provider gave one.",
+            "title": "Instrument Name"
+          },
+          "issuer_identifier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The identifier of the issuer, such as an SEC central index key; null when unknown.",
+            "title": "Issuer Identifier"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InstrumentKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The kind of instrument, from the reviewed list; null when the provider's value is not on it."
+          },
+          "listing_venue": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The exchange or venue the instrument is listed on; null when unknown.",
+            "title": "Listing Venue"
+          },
+          "provider_id": {
+            "description": "The data provider that gave the identity; /v1/info lists the providers with their names.",
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "quote_currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The currency the listing's price is quoted in, as the provider reports it, such as USD; null when the provider reported none.",
+            "title": "Quote Currency"
+          },
+          "refreshed_at": {
+            "description": "When the profile was last checked with a data provider, as an ISO 8601 instant with its offset. A profile that has not been checked within the configured freshness window is still served.",
+            "format": "date-time",
+            "title": "Refreshed At",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "ticker": {
+            "description": "The ticker the profile describes, trimmed and upper-cased.",
+            "title": "Ticker",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticker",
+          "refreshed_at",
+          "instrument_name",
+          "listing_venue",
+          "issuer_identifier",
+          "instrument_identifier",
+          "kind",
+          "quote_currency",
+          "provider_id"
+        ],
+        "title": "InstrumentProfileDocument",
         "type": "object"
       },
       "JsonValue": {},
@@ -5266,7 +5470,7 @@
               }
             ],
             "default": null,
-            "description": "The entries to refresh, which belong to no watchlist. Give this or watchlist_id, not both. The same ticker with an equal selection may not appear twice.",
+            "description": "The entries to refresh, which belong to no watchlist. Give this or watchlist_id, not both. The same ticker under the same strategy with the same as-of date and options may not appear twice.",
             "title": "Entries"
           },
           "provider_check": {
@@ -5981,10 +6185,14 @@
             "title": "Requested As Of"
           },
           "schema_version": {
-            "const": 2,
-            "default": 2,
+            "const": 3,
+            "default": 3,
             "title": "Schema Version",
             "type": "integer"
+          },
+          "security_identity": {
+            "$ref": "#/components/schemas/SecurityIdentityPart",
+            "description": "The identity snapshot the run retained when it ran. Show a ticker tied to this run with it, never with the ticker's current profile, which can describe a different company after a ticker reuse. Every descriptive field is null when no provider gave one."
           },
           "strategy": {
             "$ref": "#/components/schemas/CompareStrategyDocument",
@@ -5998,6 +6206,7 @@
         "required": [
           "analysis_run_id",
           "ticker",
+          "security_identity",
           "outcome",
           "completed_at",
           "refresh_id",
@@ -6649,7 +6858,7 @@
       },
       "WatchlistDocument": {
         "additionalProperties": false,
-        "description": "The complete watchlist, as every command that writes one with ``--json`` prints it.\n\nThese are ``watchlist show``, ``create`` and ``add-selection``; the API serves it for a watchlist, for a created\nwatchlist and for an added entry, and the result documents below nest it.",
+        "description": "The complete watchlist, as every command that writes one with ``--json`` prints it.\n\nThese are ``watchlist show`` and ``create``; the API serves it for a watchlist and for a created watchlist, and the\nresult documents below nest it, the one of an add included.",
         "properties": {
           "created_at": {
             "description": "An ISO 8601 instant with its UTC offset, e.g. +00:00.",
@@ -7435,7 +7644,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -7805,7 +8014,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -8054,6 +8263,536 @@
           }
         },
         "summary": "Describe the engine this server runs."
+      }
+    },
+    "/v1/instrument-profiles/{ticker}": {
+      "get": {
+        "operationId": "get_instrument_profile",
+        "parameters": [
+          {
+            "description": "The ticker, which is trimmed and upper-cased.",
+            "in": "path",
+            "name": "ticker",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstrumentProfileDocument"
+                }
+              }
+            },
+            "description": "The document.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "A rejected parameter, or a Host or Origin the server does not allow.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "No valid bearer token.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "WWW-Authenticate": {
+                "description": "The challenge: Bearer.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "The endpoint does not accept this method.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "An unexpected failure.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "The database is busy.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Show the stored instrument profile of a ticker, however old, without contacting a data provider."
+      }
+    },
+    "/v1/instrument-profiles/{ticker}/lookup": {
+      "post": {
+        "operationId": "look_up_instrument_profile",
+        "parameters": [
+          {
+            "description": "The ticker, which is trimmed and upper-cased.",
+            "in": "path",
+            "name": "ticker",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstrumentProfileDocument"
+                }
+              }
+            },
+            "description": "The document.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "A rejected parameter, or a Host or Origin the server does not allow.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "No valid bearer token.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "WWW-Authenticate": {
+                "description": "The challenge: Bearer.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "The endpoint does not accept this method.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "A data provider asked the engine to wait before asking again.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "An unexpected failure.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "502": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "No data provider gave a usable answer: none could be reached, or one answered in a form the engine does not read.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureEnvelope"
+                }
+              }
+            },
+            "description": "The database is busy.",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Content-Language": {
+                "description": "The tag of the locale the engine's text is in.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "description": "Names Accept-Language, and also Origin for a request from an allowed origin.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Look up the instrument profile of a ticker as an analysis does: the stored one while it is fresh, else a live lookup."
       }
     },
     "/v1/refreshes": {
@@ -8405,7 +9144,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -8465,7 +9204,7 @@
                 }
               }
             },
-            "description": "The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running.",
+            "description": "The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -8671,7 +9410,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -8877,7 +9616,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -9123,7 +9862,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -9339,7 +10078,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -9814,7 +10553,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -10050,7 +10789,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -10300,7 +11039,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -11105,7 +11844,7 @@
                 }
               }
             },
-            "description": "The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running.",
+            "description": "The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -11311,7 +12050,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -11545,7 +12284,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -11605,7 +12344,7 @@
                 }
               }
             },
-            "description": "The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running.",
+            "description": "The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -11819,7 +12558,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -11879,7 +12618,7 @@
                 }
               }
             },
-            "description": "The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running.",
+            "description": "The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -11995,7 +12734,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WatchlistDocument"
+                  "$ref": "#/components/schemas/EntriesAddedDocument"
                 }
               }
             },
@@ -12095,7 +12834,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -12155,7 +12894,7 @@
                 }
               }
             },
-            "description": "The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running.",
+            "description": "The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -12238,7 +12977,7 @@
             }
           }
         },
-        "summary": "Add one entry per ticker for one strategy's selection."
+        "summary": "Add one entry per ticker for one strategy's selection, and warn of each ticker no data provider confirms."
       }
     },
     "/v1/watchlists/{watchlist_id}/entries/{entry_number}": {
@@ -12371,7 +13110,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -12617,7 +13356,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -12863,7 +13602,7 @@
                 }
               }
             },
-            "description": "No such resource.",
+            "description": "No such resource, or, for a request that asks a data provider, no data provider has data for it.",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",

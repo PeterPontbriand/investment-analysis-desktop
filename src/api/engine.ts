@@ -10,6 +10,10 @@ import {
   type Follower,
 } from './refreshes.ts';
 import { createTerms, type Terms } from './terms.ts';
+import {
+  createTickerIdentities,
+  type TickerIdentities,
+} from './tickerIdentities.ts';
 
 export type EngineState =
   | { kind: 'pending' }
@@ -27,6 +31,8 @@ export type Engine = {
   info: InfoCache;
   // The one follower of a refresh job (D198).
   follower: Follower;
+  // The profile and run-identity caches behind ticker details (D294).
+  identities: TickerIdentities;
 };
 
 export const engineKey: InjectionKey<Engine> = Symbol('engine');
@@ -52,8 +58,12 @@ export function createEngine(platform: Platform, locale: () => string): Engine {
   connected.catch(() => {});
   const client = () => connected;
   const info = createInfoCache(client);
-  const follower = createFollower(client, (watchlistId) =>
-    lookUpWatchlistName(client, watchlistId),
+  const identities = createTickerIdentities(client);
+  const follower = createFollower(
+    client,
+    (watchlistId) => lookUpWatchlistName(client, watchlistId),
+    // A refresh can store or change profiles (D294).
+    () => identities.clearProfiles(),
   );
   // When the engine is ready: its information, and a refresh already running (D245).
   void connected.then(
@@ -70,6 +80,7 @@ export function createEngine(platform: Platform, locale: () => string): Engine {
     platform,
     info,
     follower,
+    identities,
   };
 }
 

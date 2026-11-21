@@ -5,8 +5,14 @@ import { useEngine } from '../api/engine.ts';
 import { useScreenData } from '../api/useScreenData.ts';
 import ActionFailure from '../components/ActionFailure.vue';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
+import EntryWarningLines from '../components/EntryWarningLines.vue';
 import ScreenState from '../components/ScreenState.vue';
 import { useAction } from '../composables/useAction.ts';
+import {
+  leaveEntryWarnings,
+  withWarnings,
+  type EntryWarningLine,
+} from '../composables/useEntryWarnings.ts';
 import { leaveNotice } from '../composables/useNotice.ts';
 import { useMessages } from '../i18n/index.ts';
 import { formatConjunction } from '../selection/format.ts';
@@ -72,6 +78,9 @@ const { base, formElement, asOf, chosen, expanded, values, problems, forms } =
 
 const tickersText = ref('');
 const partial = ref<{ count: number; names: string[] } | null>(null);
+// The tickers the engine added but could not confirm, over every strategy added
+// so far (D282).
+const warnings = ref<EntryWarningLine[]>([]);
 
 // The entry count when the form loaded and in the engine's latest answer.
 let loadedCount = 0;
@@ -97,6 +106,7 @@ async function submit(): Promise<void> {
   if (adding.value || state.value.kind !== 'ready') return;
   form.clearProblems();
   partial.value = null;
+  warnings.value = [];
   action.clear();
   const chosenList = form.chosenStrategies();
   const own =
@@ -127,13 +137,18 @@ async function submit(): Promise<void> {
         await form.placeFailure(result.error, [strategy], 'watchlistEntries');
         return;
       }
-      const count = result.value.data.entries.length;
+      // The entries are in the watchlist whatever the warnings say; the
+      // profiles the engine stored while checking are new (D294).
+      engine.identities.clearProfiles();
+      warnings.value = withWarnings(warnings.value, result.value.data.warnings);
+      const count = result.value.data.watchlist.entries.length;
       added += count - lastCount;
       lastCount = count;
       addedNames.push(strategy.name);
       chosen.value.delete(strategy.method);
     }
     leaveNotice({ key: 'watchlist.added', count: lastCount - loadedCount });
+    leaveEntryWarnings(warnings.value);
     await router.push({
       name: 'watchlist',
       params: { watchlistId: watchlistId.value },
@@ -179,6 +194,7 @@ function cancel(): void {
           })
         }}
       </p>
+      <EntryWarningLines :warnings="warnings" />
     </div>
     <form
       ref="formElement"

@@ -14,6 +14,9 @@ const selectViolation = 'style-src-attr: inline (select)';
 const selectConsoleError =
   "Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline' appears in neither the style-src directive nor the default-src directive of the Content Security Policy.";
 
+const maxViolationWaitMs = 500;
+const violationPollMs = 25;
+
 // Every browser test fails on a CSP violation or a console error.
 export const test = base.extend<{
   failOnViolations: void;
@@ -68,9 +71,28 @@ export const test = base.extend<{
         });
       });
       await use();
-      const reported = await page
-        .evaluate(() => window.__cspViolations ?? [])
-        .catch(() => []);
+      // WebKit logs the console message 5 to 16 ms before it dispatches the
+      // securitypolicyviolation event (the native select exception above), so
+      // a test that ends in between reads too few violations. Wait, for at
+      // most 500 ms, until as many violations are recorded as the browser's
+      // own CSP console errors seen so far. What is accepted does not change:
+      // an error with no matching violation still fails below.
+      const cspErrorsSeen = consoleErrors.filter(
+        (text) => text === selectConsoleError,
+      ).length;
+      const readViolations = () =>
+        page.evaluate(() => window.__cspViolations ?? []).catch(() => []);
+      let reported = await readViolations();
+      for (
+        let waited = 0;
+        browserName === 'webkit' &&
+        reported.length < cspErrorsSeen &&
+        waited < maxViolationWaitMs;
+        waited += violationPollMs
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, violationPollMs));
+        reported = await readViolations();
+      }
       // WebKit reports a style-src-attr violation for the native select
       // control's own internal styling. It is accepted only when the page had
       // a select and set no style attribute itself at that moment.

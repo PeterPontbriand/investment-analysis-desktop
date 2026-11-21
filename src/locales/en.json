@@ -81,6 +81,7 @@
     "hideOptions": "Hide options for entry {index}: {ticker}, {strategy}",
     "added": "Added {count} entry. | Added {count} entries.",
     "addEntries": "Add entries",
+    "entryWarning": "{ticker}: {warning}",
     "removeUnreadable": "Remove entry {index} ({ticker})",
     "removeUnreadableTitle": "Remove entry {index} ({ticker})?"
   },
@@ -168,6 +169,22 @@
       "diagnostics": "Diagnostics",
       "json": "JSON"
     }
+  },
+  "tickerDetails": {
+    "panelTitle": "Details for {ticker}",
+    "noneStored": "No details stored for {ticker} yet.",
+    "noneDescribed": "No description of {ticker} is stored.",
+    "noneKept": "No details of {ticker} were kept for this run.",
+    "checked": "Checked {date} with {provider}",
+    "identified": "Identified for this run {date} with {provider}",
+    "identifiedNoProvider": "Identified for this run {date}",
+    "lookUp": "Look up",
+    "lookingUp": "Looking up…",
+    "nameAndTicker": "{name} ({ticker})"
+  },
+  "detailsPanel": {
+    "close": "Close details",
+    "closeMark": "×"
   },
   "actions": {
     "cancel": "Cancel",

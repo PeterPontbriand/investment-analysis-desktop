@@ -106,6 +106,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/instrument-profiles/{ticker}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Show the stored instrument profile of a ticker, however old, without contacting a data provider. */
+        get: operations["get_instrument_profile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/instrument-profiles/{ticker}/lookup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Look up the instrument profile of a ticker as an analysis does: the stored one while it is fresh, else a live lookup. */
+        post: operations["look_up_instrument_profile"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/refreshes": {
         parameters: {
             query?: never;
@@ -340,7 +374,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Add one entry per ticker for one strategy's selection. */
+        /** Add one entry per ticker for one strategy's selection, and warn of each ticker no data provider confirms. */
         post: operations["add_watchlist_entries"];
         delete?: never;
         options?: never;
@@ -740,6 +774,64 @@ export interface components {
             outcome: string;
             /** Stage */
             stage: string;
+        };
+        /**
+         * EntriesAddedDocument
+         * @description The outcome of ``watchlist add-selection --json`` and of adding entries through the API.
+         *
+         *     Every entry is added whatever the warnings; a warning only says that a ticker could not be confirmed.
+         */
+        EntriesAddedDocument: {
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /**
+             * Warnings
+             * @description One warning for each ticker that could not be confirmed; empty when every ticker was.
+             */
+            warnings: components["schemas"]["EntryWarningDocument"][];
+            watchlist: components["schemas"]["WatchlistDocument"];
+        };
+        /**
+         * EntryWarningCode
+         * @description Why a ticker added to a watchlist could not be confirmed; a value is never renamed or removed.
+         * @enum {string}
+         */
+        EntryWarningCode: "ticker_not_recognized" | "ticker_not_checked";
+        /**
+         * EntryWarningDocument
+         * @description One warning about a ticker that was added but could not be confirmed.
+         *
+         *     It has the shape of a rule error: filling every placeholder of ``template`` with its ``arguments`` gives
+         *     ``message``.
+         */
+        EntryWarningDocument: {
+            /**
+             * Arguments
+             * @description The values the message shows, by name.
+             */
+            arguments: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** @description Why the ticker could not be confirmed. */
+            code: components["schemas"]["EntryWarningCode"];
+            /**
+             * Message
+             * @description The warning for a person; it carries no guarantee.
+             */
+            message: string;
+            /** @description The failure reason code that kept the ticker from being checked: a provider failure code or a database failure code. Null when the ticker was not recognized. */
+            reason_code: components["schemas"]["FailureReasonCode"] | null;
+            /**
+             * Template
+             * @description The message with each value written as a placeholder named as in arguments, such as {ticker}; replacing every placeholder with its text gives message. A template never contains a literal brace.
+             */
+            template: string;
+            /** Ticker */
+            ticker: string;
         };
         /**
          * FCFClassificationBasis
@@ -1202,10 +1294,10 @@ export interface components {
             result: null;
             /**
              * Schema Version
-             * @default 15
+             * @default 16
              * @constant
              */
-            schema_version: 15;
+            schema_version: 16;
             status: components["schemas"]["FailureStatus"];
             /**
              * Ticker
@@ -1228,7 +1320,7 @@ export interface components {
          *     category.
          * @enum {string}
          */
-        FailureReasonCode: "execution_error" | "historical_quality" | "provider_error" | "provider_unreachable" | "provider_rate_limited" | "provider_unexpected_response" | "provider_no_data" | "configuration_error" | "no_eligible_observations" | "invalid_input" | "invalid_parameter" | "database_upgrade_required" | "database_incompatible_schema" | "database_busy" | "database_permission_denied" | "database_invalid_file" | "database_io_error" | "database_resources_unavailable" | "database_initialization_failed" | "database_migration_failed" | "invalid_stored_run" | "unsupported_run_version" | "watchlist_not_found" | "watchlist_entry_not_found" | "watchlist_empty" | "watchlist_name_conflict" | "analysis_run_not_found" | "stored_selection_unreadable" | "unsupported_projection" | "not_authenticated" | "host_not_allowed" | "origin_not_allowed" | "endpoint_not_found" | "refresh_job_not_found" | "refresh_job_running" | "port_unavailable" | "help_term_not_found" | "help_document_not_found";
+        FailureReasonCode: "execution_error" | "historical_quality" | "provider_error" | "provider_unreachable" | "provider_rate_limited" | "provider_unexpected_response" | "provider_no_data" | "configuration_error" | "no_eligible_observations" | "invalid_input" | "invalid_parameter" | "database_upgrade_required" | "database_incompatible_schema" | "database_busy" | "database_permission_denied" | "database_invalid_file" | "database_io_error" | "database_resources_unavailable" | "database_initialization_failed" | "database_migration_failed" | "invalid_stored_run" | "unsupported_run_version" | "watchlist_not_found" | "watchlist_entry_not_found" | "watchlist_empty" | "watchlist_name_conflict" | "analysis_run_not_found" | "stored_selection_unreadable" | "unsupported_projection" | "not_authenticated" | "host_not_allowed" | "origin_not_allowed" | "endpoint_not_found" | "refresh_job_not_found" | "refresh_job_running" | "port_unavailable" | "help_term_not_found" | "help_document_not_found" | "instrument_profile_not_found";
         /**
          * FailureRuleError
          * @description One rejected argument: the rule that rejected it, the parameters it names, the values and the message.
@@ -1812,6 +1904,63 @@ export interface components {
              * @description An ISO 8601 instant with its UTC offset, e.g. +00:00.
              */
             resolved_at: string;
+        };
+        /**
+         * InstrumentProfileDocument
+         * @description One ticker's instrument profile: its identity, its kind and the currency its price is quoted in.
+         *
+         *     ``schema_version`` is this document's own lineage and is independent of every other document's.
+         */
+        InstrumentProfileDocument: {
+            /**
+             * Instrument Identifier
+             * @description The data provider's own identifier of the instrument; null when it gave none.
+             */
+            instrument_identifier: string | null;
+            /**
+             * Instrument Name
+             * @description The instrument's name; null when no provider gave one.
+             */
+            instrument_name: string | null;
+            /**
+             * Issuer Identifier
+             * @description The identifier of the issuer, such as an SEC central index key; null when unknown.
+             */
+            issuer_identifier: string | null;
+            /** @description The kind of instrument, from the reviewed list; null when the provider's value is not on it. */
+            kind: components["schemas"]["InstrumentKind"] | null;
+            /**
+             * Listing Venue
+             * @description The exchange or venue the instrument is listed on; null when unknown.
+             */
+            listing_venue: string | null;
+            /**
+             * Provider Id
+             * @description The data provider that gave the identity; /v1/info lists the providers with their names.
+             */
+            provider_id: string;
+            /**
+             * Quote Currency
+             * @description The currency the listing's price is quoted in, as the provider reports it, such as USD; null when the provider reported none.
+             */
+            quote_currency: string | null;
+            /**
+             * Refreshed At
+             * Format: date-time
+             * @description When the profile was last checked with a data provider, as an ISO 8601 instant with its offset. A profile that has not been checked within the configured freshness window is still served.
+             */
+            refreshed_at: string;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /**
+             * Ticker
+             * @description The ticker the profile describes, trimmed and upper-cased.
+             */
+            ticker: string;
         };
         JsonValue: unknown;
         /**
@@ -2498,7 +2647,7 @@ export interface components {
         RefreshRequest: {
             /**
              * Entries
-             * @description The entries to refresh, which belong to no watchlist. Give this or watchlist_id, not both. The same ticker with an equal selection may not appear twice.
+             * @description The entries to refresh, which belong to no watchlist. Give this or watchlist_id, not both. The same ticker under the same strategy with the same as-of date and options may not appear twice.
              */
             entries?: components["schemas"]["RefreshEntryRequest"][] | null;
             /**
@@ -2814,10 +2963,12 @@ export interface components {
             requested_as_of: (string) | null;
             /**
              * Schema Version
-             * @default 2
+             * @default 3
              * @constant
              */
-            schema_version: 2;
+            schema_version: 3;
+            /** @description The identity snapshot the run retained when it ran. Show a ticker tied to this run with it, never with the ticker's current profile, which can describe a different company after a ticker reuse. Every descriptive field is null when no provider gave one. */
+            security_identity: components["schemas"]["SecurityIdentityPart"];
             /** @description The strategy that produced the run. */
             strategy: components["schemas"]["CompareStrategyDocument"];
             /** Ticker */
@@ -3150,8 +3301,8 @@ export interface components {
          * WatchlistDocument
          * @description The complete watchlist, as every command that writes one with ``--json`` prints it.
          *
-         *     These are ``watchlist show``, ``create`` and ``add-selection``; the API serves it for a watchlist, for a created
-         *     watchlist and for an added entry, and the result documents below nest it.
+         *     These are ``watchlist show`` and ``create``; the API serves it for a watchlist and for a created watchlist, and the
+         *     result documents below nest it, the one of an add included.
          */
         WatchlistDocument: {
             /**
@@ -3550,7 +3701,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -3744,7 +3895,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -3864,6 +4015,278 @@ export interface operations {
             };
             /** @description An unexpected failure. */
             500: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+        };
+    };
+    get_instrument_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ticker, which is trimmed and upper-cased. */
+                ticker: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The document. */
+            200: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentProfileDocument"];
+                };
+            };
+            /** @description A rejected parameter, or a Host or Origin the server does not allow. */
+            400: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description No valid bearer token. */
+            401: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    /** @description The challenge: Bearer. */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
+            404: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description The endpoint does not accept this method. */
+            405: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description An unexpected failure. */
+            500: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description The database is busy. */
+            503: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+        };
+    };
+    look_up_instrument_profile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ticker, which is trimmed and upper-cased. */
+                ticker: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The document. */
+            200: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstrumentProfileDocument"];
+                };
+            };
+            /** @description A rejected parameter, or a Host or Origin the server does not allow. */
+            400: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description No valid bearer token. */
+            401: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    /** @description The challenge: Bearer. */
+                    "WWW-Authenticate"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
+            404: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description The endpoint does not accept this method. */
+            405: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description A data provider asked the engine to wait before asking again. */
+            429: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description An unexpected failure. */
+            500: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description No data provider gave a usable answer: none could be reached, or one answered in a form the engine does not read. */
+            502: {
+                headers: {
+                    /** @description no-store */
+                    "Cache-Control"?: string;
+                    /** @description The tag of the locale the engine's text is in. */
+                    "Content-Language"?: string;
+                    /** @description Names Accept-Language, and also Origin for a request from an allowed origin. */
+                    Vary?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FailureEnvelope"];
+                };
+            };
+            /** @description The database is busy. */
+            503: {
                 headers: {
                     /** @description no-store */
                     "Cache-Control"?: string;
@@ -4051,7 +4474,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -4081,7 +4504,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running. */
+            /** @description The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing. */
             409: {
                 headers: {
                     /** @description no-store */
@@ -4187,7 +4610,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -4293,7 +4716,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -4417,7 +4840,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -4526,7 +4949,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -4748,7 +5171,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -4869,7 +5292,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -4993,7 +5416,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -5412,7 +5835,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running. */
+            /** @description The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing. */
             409: {
                 headers: {
                     /** @description no-store */
@@ -5518,7 +5941,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -5548,7 +5971,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running. */
+            /** @description The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing. */
             409: {
                 headers: {
                     /** @description no-store */
@@ -5654,7 +6077,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -5779,7 +6202,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -5809,7 +6232,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running. */
+            /** @description The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing. */
             409: {
                 headers: {
                     /** @description no-store */
@@ -5884,7 +6307,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WatchlistDocument"];
+                    "application/json": components["schemas"]["EntriesAddedDocument"];
                 };
             };
             /** @description A rejected parameter, or a Host or Origin the server does not allow. */
@@ -5919,7 +6342,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -5949,7 +6372,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description The stored data refuses the change: a name already in use, an entry this version cannot read, an empty watchlist to refresh, or a refresh job already running. */
+            /** @description The stored data or the setup refuses the request: a name already in use, an entry this version cannot read, an empty watchlist to refresh, a refresh job already running, or a setup the request needs that is missing. */
             409: {
                 headers: {
                     /** @description no-store */
@@ -6057,7 +6480,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -6182,7 +6605,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */
@@ -6307,7 +6730,7 @@ export interface operations {
                     "application/json": components["schemas"]["FailureEnvelope"];
                 };
             };
-            /** @description No such resource. */
+            /** @description No such resource, or, for a request that asks a data provider, no data provider has data for it. */
             404: {
                 headers: {
                     /** @description no-store */

@@ -2,8 +2,8 @@
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { generateTypes } from '../openapi-types.ts';
-import { EngineProblem } from '../smoke/engine.ts';
-import { fileSystem, run } from '../smoke/process.ts';
+import { EngineProblem } from '../engine/engine.ts';
+import { fileSystem, run } from '../engine/process.ts';
 import { VendorStop, vendorIan, vendorMessages } from './vendor.ts';
 
 const repositoryRoot = resolve(
