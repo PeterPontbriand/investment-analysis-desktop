@@ -1,4 +1,4 @@
-// What the smoke-test tool needs from the machine, so tests can fake it.
+// What the tools that run `ian` need from the machine, so tests can fake it.
 
 export type RunResult = {
   // null when the process could not be started.
@@ -25,21 +25,4 @@ export type FileSystem = {
   readText(path: string): string;
   makeFolder(path: string): void;
   writeText(path: string, text: string): void;
-};
-
-// The tool stops with a plain message instead of guessing. `step` names the
-// step of docs/project/SMOKE_TESTING.md it stopped at.
-export class SmokeStop extends Error {
-  readonly step: string;
-
-  constructor(step: string, message: string) {
-    super(message);
-    this.name = 'SmokeStop';
-    this.step = step;
-  }
-}
-
-export type StepOutcome = {
-  // A short fact worth showing beside the step in the record.
-  fact?: string;
 };

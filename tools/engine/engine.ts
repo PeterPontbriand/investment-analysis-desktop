@@ -1,5 +1,5 @@
-// Finding the engine checkout through `ian about`. `pnpm smoke` and
-// `pnpm vendor-ian` share this, so neither can check one engine while running
+// Finding the engine checkout through `ian about`. `pnpm sandbox`, `pnpm vendor-ian`
+// and `pnpm test:engine` share this, so none can check one engine while running
 // another.
 import { resolveIan, resolveIanInUv, type IanLocation } from './source.ts';
 import type { FileSystem, Runner } from './types.ts';
@@ -31,13 +31,13 @@ export class EngineProblem extends Error {
 
 export const engineMessages = {
   ianNotExecutable: () =>
-    'IAD_IAN_PATH names a .cmd or .bat file. The application and this tool start the engine without a shell, so IAD_IAN_PATH must name an executable (.exe), not a .cmd or .bat file.',
+    'IAD_IAN_PATH names a .cmd or .bat file. The application and these tools start the engine without a shell, so IAD_IAN_PATH must name an executable (.exe), not a .cmd or .bat file.',
   noIan: () =>
-    'The `ian` command was not found on PATH or in uv\'s command folder. Do the engine\'s "Make the `ian` command available" step (Step 1 of docs/project/SMOKE_TESTING.md), then open a new terminal and try again.',
+    'The `ian` command was not found on PATH or in uv\'s command folder. Follow the engine\'s installation guide, "Make the `ian` command available" step, then open a new terminal and try again.',
   aboutUnknown: () =>
     'This engine does not know `ian about`, so it is older than the vendored commit. Update it by pulling main in your engine checkout, then try again.',
   aboutFailed: (detail: string) =>
-    `\`ian about --json\` did not succeed (${detail}). Make the \`ian\` command available as the engine's installation guide describes (Step 1 of docs/project/SMOKE_TESTING.md).`,
+    `\`ian about --json\` did not succeed (${detail}). Make the \`ian\` command available as the engine's installation guide describes.`,
   installedAsPackage: () =>
     'The engine is installed as a package, so there is no source checkout to use. This tool needs an engine installed from a source checkout of the investment-analysis-engine repository: follow the engine\'s installation guide, "Make the `ian` command available" step, from a checkout.',
   notCheckout: () =>

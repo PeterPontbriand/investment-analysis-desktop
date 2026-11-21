@@ -15,7 +15,7 @@ import {
   vendoredCommit,
   type Call,
   type Script,
-} from './smoke-fixtures.ts';
+} from './sandbox-fixtures.ts';
 
 const newCommit = 'c'.repeat(40);
 const oldApi = {

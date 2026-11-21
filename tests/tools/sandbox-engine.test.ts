@@ -3,33 +3,28 @@ import {
   EngineProblem,
   engineMessages,
   parseAbout,
-} from '../../tools/smoke/engine.ts';
-import { failureExitMessage } from '../../tools/smoke/finish.ts';
-import { renderRecord } from '../../tools/smoke/record.ts';
-import { parseSteps } from '../../tools/smoke/document.ts';
+} from '../../tools/engine/engine.ts';
 import {
-  checkArguments,
-  runSmoke,
+  runSandbox,
   type RunDependencies,
   type StopSignal,
-} from '../../tools/smoke/run.ts';
+} from '../../tools/sandbox/run.ts';
 import {
   newSession,
   runSetup,
   stopMessages,
   type Session,
-} from '../../tools/smoke/setup.ts';
-import { SmokeStop } from '../../tools/smoke/types.ts';
+} from '../../tools/sandbox/setup.ts';
+import { SandboxStop } from '../../tools/sandbox/stop.ts';
 import {
   aboutJson,
   dependencies,
   enginePath,
   healthy,
-  repositoryRoot,
   vendoredCommit,
   type Call,
   type Script,
-} from './smoke-fixtures.ts';
+} from './sandbox-fixtures.ts';
 
 const other = 'a'.repeat(40);
 const fail = (stderr = 'no') => ({ code: 1, stdout: '', stderr });
@@ -110,8 +105,8 @@ async function stopOf(session: Session, script: Script) {
     () => null,
     (caught: unknown) => caught,
   );
-  expect(error).toBeInstanceOf(SmokeStop);
-  return { error: error as SmokeStop, calls };
+  expect(error).toBeInstanceOf(SandboxStop);
+  return { error: error as SandboxStop, calls };
 }
 
 describe('finding the engine through ian about', () => {
@@ -141,7 +136,7 @@ describe('finding the engine through ian about', () => {
         ? { code: 2, stdout: '', stderr: "No such command 'about'." }
         : undefined,
     );
-    expect(error.step).toBe('Step 1');
+    expect(error.step).toBe('Engine');
     expect(error.message).toBe(engineMessages.aboutUnknown());
     expect(error.message).toBe(
       'This engine does not know `ian about`, so it is older than the vendored commit. Update it by pulling main in your engine checkout, then try again.',
@@ -188,7 +183,7 @@ describe('finding the engine through ian about', () => {
     }
   });
 
-  it('records what ian about said without the installation folder', async () => {
+  it('logs what ian about said without the installation folder', async () => {
     const { deps } = dependencies(healthy());
     const session = newSession();
     await runSetup(deps, session);
@@ -196,7 +191,6 @@ describe('finding the engine through ian about', () => {
     expect(text).toContain('ian about --json');
     expect(text).toContain('commit: ' + vendoredCommit);
     expect(text).not.toContain(enginePath.replaceAll('\\', '\\\\'));
-    expect(session.engineVersion).toBe('0.1.0');
     expect(session.engineFolder).toBe(enginePath);
   });
 
@@ -206,7 +200,7 @@ describe('finding the engine through ian about', () => {
 });
 
 describe('switching the engine checkout', () => {
-  it('switches a clean checkout after Step 2, to the vendored commit, detached', async () => {
+  it('switches a clean checkout to the vendored commit, detached', async () => {
     const fake = engine({ branch: 'main' });
     const { deps, calls, progress } = dependencies(healthy(fake.script));
     const session = newSession();
@@ -224,14 +218,8 @@ describe('switching the engine checkout', () => {
       state: 'switched',
     });
     expect(session.engineCommit).toBe(vendoredCommit.slice(0, 7));
-    // The real database is read with the contributor's engine before the
-    // switch; every later ian command uses the throwaway database.
+    // Every command after the switch uses the throwaway database.
     const switchAt = calls.findIndex((call) => call.args.includes('switch'));
-    const statusAt = calls.findIndex(
-      (call) => call.args.join(' ') === 'db status --json',
-    );
-    expect(statusAt).toBeGreaterThan(-1);
-    expect(statusAt).toBeLessThan(switchAt);
     for (const call of calls
       .slice(switchAt + 1)
       .filter((c) => c.file !== 'git'))
@@ -274,7 +262,7 @@ describe('switching the engine checkout', () => {
     expect(progress.some((line) => line.includes('Switching'))).toBe(false);
   });
 
-  it('continues at the vendored commit with uncommitted changes, and notes them', async () => {
+  it('continues at the vendored commit with uncommitted changes', async () => {
     const { deps, calls } = dependencies(
       healthy((call) =>
         call.args.join(' ') === 'about --json'
@@ -285,7 +273,6 @@ describe('switching the engine checkout', () => {
     const session = newSession();
     await runSetup(deps, session);
     expect(calls.some((call) => call.file === 'git')).toBe(false);
-    expect(session.engineUncommitted).toBe(true);
   });
 
   it('fetches from origin only when the commit is missing', async () => {
@@ -307,13 +294,13 @@ describe('switching the engine checkout', () => {
     const fake = engine({ hasCommit: false });
     const session = newSession();
     const { error, calls } = await stopOf(session, fake.script);
-    expect(error.step).toBe('Step 1');
+    expect(error.step).toBe('Engine');
     expect(error.message).toBe(stopMessages.commitMissing(vendoredCommit));
     expect(gitCalls(calls)).toContain('fetch origin');
     expect(calls.some((call) => call.args.includes('switch'))).toBe(false);
     expect(session.engineSwitch).toBeNull();
-    // Nothing after Step 1 ran.
-    expect(session.scripted.has('Step 2')).toBe(false);
+    // Nothing after the engine stage ran.
+    expect(session.throwawayFolder).toBeNull();
   });
 
   it.each([
@@ -323,7 +310,7 @@ describe('switching the engine checkout', () => {
     const fake = engine({ dirty });
     const session = newSession();
     const { error, calls } = await stopOf(session, fake.script);
-    expect(error.step).toBe('Step 1');
+    expect(error.step).toBe('Engine');
     expect(error.message).toMatch(message);
     expect(error.message).toMatch(/will not switch it/);
     expect(calls.some((call) => call.file === 'git')).toBe(false);
@@ -358,23 +345,9 @@ describe('switching the engine checkout', () => {
   });
 });
 
-const recordSteps = parseSteps(
-  'Step 10. Start the desktop application.\n\nCheck A1. First check.\n\nCheck A2. Second check.\n',
-);
-
-// A fake machine for the whole run: signals the test can send, an application
-// the test controls, and a record that remembers the engine state each time it
-// was written.
-function machine(
-  script: Script,
-  options: {
-    exitCode?: number;
-    // Runs when the nth record write starts; the write ends when it settles.
-    duringWrite?: (index: number) => Promise<void> | void;
-    // The line ending the fake record file is written with.
-    eol?: '\n' | '\r\n';
-  } = {},
-) {
+// A fake machine for the whole run: signals the test can send and an
+// application the test controls.
+function machine(script: Script, options: { exitCode?: number } = {}) {
   const made = dependencies(healthy(script));
   const listeners = new Map<StopSignal, (() => void)[]>();
   const signals = {
@@ -392,63 +365,20 @@ function machine(
   };
   const out: string[] = [];
   const err: string[] = [];
-  const writes: { state: string | null; stopped: string | null }[] = [];
   const exits: number[] = [];
-  const events: string[] = [];
-  // The record file, as bytes: each whole write renders it. A test edits it as
-  // the contributor would.
-  const record = { file: null as Buffer | null };
   let application: ((code: number) => void) | null = null;
   let started = false;
   const deps: RunDependencies = {
     setup: made.deps,
     signals,
-    checkIds: [],
     startApplication: (env) => {
       started = true;
-      expect(env.IAN_DATABASE_URL).toMatch(/smoke-test\.sqlite3$/);
+      expect(env.IAN_DATABASE_URL).toMatch(/sandbox\.sqlite3$/);
       if (options.exitCode !== undefined)
         return Promise.resolve(options.exitCode);
       return new Promise<number>((resolve) => {
         application = resolve;
       });
-    },
-    writeRecord: async (session, stopped) => {
-      const index = writes.length;
-      writes.push({
-        state: session.engineSwitch?.state ?? null,
-        stopped: stopped?.step ?? null,
-      });
-      events.push(`start ${index}`);
-      await options.duringWrite?.(index);
-      events.push(`end ${index}`);
-      record.file = Buffer.from(
-        renderRecord({
-          date: 'd',
-          timeZone: 'z',
-          operatingSystem: 'o',
-          applicationCommit: 'c',
-          dirty: false,
-          data: null,
-          throwawayFolder: '.tmp/smoke/x',
-          log: [],
-          targeted: null,
-          stopped: stopped
-            ? { step: stopped.step, message: stopped.message }
-            : null,
-          engineCommit: session.engineCommit,
-          ianSource: session.ianSource,
-          engineVersion: session.engineVersion,
-          engineUncommitted: session.engineUncommitted,
-          engineSwitch:
-            session.engineSwitch === null
-              ? null
-              : { start: session.engineSwitch.start },
-          steps: recordSteps,
-          scripted: session.scripted,
-        }).replace(/\n/g, options.eol ?? '\n'),
-      );
-      return 'record.md';
     },
     print: (text) => out.push(text),
     printError: (text) => err.push(text),
@@ -460,16 +390,12 @@ function machine(
     signals,
     out,
     err,
-    writes,
-    events,
-    record,
     exits,
     started: () => started,
     endApplication: (code: number) => application?.(code),
   };
 }
 
-const fileText = (file: Buffer | null) => file?.toString('utf8') ?? '';
 const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 const restoreCalls = (calls: Call[]) =>
   gitCalls(calls).filter(
@@ -477,37 +403,37 @@ const restoreCalls = (calls: Call[]) =>
   );
 
 describe('restoring the engine checkout', () => {
-  it('restores when setup stops, before the record is written', async () => {
+  it('restores when setup stops, and says where it stopped', async () => {
     const fake = engine();
     const run = machine((call) =>
       call.args.join(' ') === 'db upgrade'
         ? { code: 3, stdout: '', stderr: '' }
         : fake.script(call),
     );
-    const code = await runSmoke(run.deps, []);
+    const code = await runSandbox(run.deps, []);
     expect(code).toBe(1);
     expect(restoreCalls(run.calls)).toEqual(['switch main']);
     expect(fake.state.commit).toBe(other);
-    expect(run.writes).toEqual([{ state: 'restored', stopped: 'Step 4' }]);
+    expect(run.err.join('')).toContain('Sandbox stopped at Database');
     expect(run.started()).toBe(false);
     expect(run.signals.count()).toBe(0);
     neverForced(run.calls);
   });
 
   it.each([0, 1, 137])(
-    'restores when the application exits with status %i, without writing the record again',
+    'restores when the application exits with status %i',
     async (exitCode) => {
       const fake = engine();
       const run = machine(fake.script, { exitCode });
-      const code = await runSmoke(run.deps, []);
+      const code = await runSandbox(run.deps, []);
       expect(code).toBe(exitCode);
       expect(restoreCalls(run.calls)).toEqual(['switch main']);
-      // Written once, before the application, with the restore still to come;
-      // the restore's result is in the terminal, not the record.
-      expect(run.writes).toEqual([{ state: 'switched', stopped: null }]);
       expect(run.out.join('')).toContain('The engine checkout is restored');
       expect(run.out.join('')).toContain(
         `restore it with: git -C "${enginePath}" switch main`,
+      );
+      expect(run.out.join('').includes('The application exited with')).toBe(
+        exitCode !== 0,
       );
       expect(run.signals.count()).toBe(0);
     },
@@ -517,7 +443,7 @@ describe('restoring the engine checkout', () => {
     const fake = engine();
     const run = machine(fake.script);
     run.deps.startApplication = () => Promise.reject(new Error('spawn failed'));
-    await expect(runSmoke(run.deps, [])).rejects.toThrow('spawn failed');
+    await expect(runSandbox(run.deps, [])).rejects.toThrow('spawn failed');
     expect(restoreCalls(run.calls)).toEqual(['switch main']);
     expect(run.signals.count()).toBe(0);
   });
@@ -525,7 +451,7 @@ describe('restoring the engine checkout', () => {
   it('restores a detached checkout with git switch --detach', async () => {
     const fake = engine({ branch: null });
     const run = machine(fake.script, { exitCode: 0 });
-    await runSmoke(run.deps, []);
+    await runSandbox(run.deps, []);
     expect(restoreCalls(run.calls)).toEqual([`switch --detach ${other}`]);
   });
 
@@ -555,7 +481,7 @@ describe('restoring the engine checkout', () => {
       }
       return fake.script(call);
     });
-    const code = await runSmoke(run.deps, []);
+    const code = await runSandbox(run.deps, []);
     await flush();
     const at = run.calls.findIndex((call) => call === triggered);
     expect(at).toBeGreaterThan(-1);
@@ -568,38 +494,32 @@ describe('restoring the engine checkout', () => {
       [],
     );
     expect(run.started()).toBe(false);
-    // One record, with the Interrupted stop.
-    expect(run.writes).toHaveLength(1);
-    expect(run.writes[0]?.stopped).toBe('Interrupted');
     expect(restoreCalls(run.calls)).toHaveLength(1);
     neverForced(run.calls);
-    return { run, code };
+    return { run, code, fake };
   }
 
   it.each(signals)(
     'stops setup on %s during a setup command, restores once and exits',
     async (signal, status) => {
-      const { run, code } = await interruptDuring(
+      const { run, code, fake } = await interruptDuring(
         (call) => call.args[0] === 'watchlist',
         signal,
       );
       expect(code).toBe(status);
       expect(run.exits).toEqual([status]);
-      expect(run.writes[0]).toEqual({
-        state: 'restored',
-        stopped: 'Interrupted',
-      });
+      expect(fake.state.commit).toBe(other);
     },
   );
 
   it.each(signals)(
-    'does not let Step 8 start when %s kills the Step 7 refresh',
+    'does not let the analysis start when %s kills the refresh',
     async (signal, status) => {
       const { run } = await interruptDuring(
         (call) => call.args[0] === 'refresh',
         signal,
         {},
-        // The killed refresh exits 1, which Step 7 would otherwise accept.
+        // The killed refresh exits 1, which the setup would otherwise accept.
         () => ({ code: 1, stdout: '', stderr: '' }),
       );
       expect(run.exits).toEqual([status]);
@@ -609,50 +529,8 @@ describe('restoring the engine checkout', () => {
     },
   );
 
-  it.each(signals)(
-    'keeps the Interrupted record last when %s arrives during the normal record write',
-    async (signal, status) => {
-      const fake = engine();
-      const run = machine(fake.script, {
-        // The normal pre-application write is slow, and the signal arrives in it.
-        duringWrite: async (index) => {
-          if (index !== 0) return;
-          run.signals.emit(signal);
-          await flush();
-          await flush();
-        },
-      });
-      const code = await runSmoke(run.deps, []);
-      await flush();
-      expect(code).toBe(status);
-      expect(run.exits).toEqual([status]);
-      expect(run.started()).toBe(false);
-      expect(restoreCalls(run.calls)).toHaveLength(1);
-      // The writes never overlap, and the last one is the Interrupted record.
-      expect(run.events).toEqual(['start 0', 'end 0', 'start 1', 'end 1']);
-      expect(run.writes.at(-1)?.stopped).toBe('Interrupted');
-      expect(run.writes).toHaveLength(2);
-    },
-  );
-
-  it('makes no normal record write once a signal has arrived', async () => {
-    const fake = engine();
-    const run = machine(fake.script);
-    const done = runSmoke(run.deps, []);
-    await flush();
-    expect(run.started()).toBe(true);
-    run.signals.emit('SIGTERM');
-    run.endApplication(1);
-    await done;
-    await flush();
-    // Only the write before the application: nothing follows the signal, and
-    // no Interrupted stop is recorded.
-    expect(run.writes.map((w) => w.stopped)).toEqual([null]);
-    expect(fileText(run.record.file)).not.toContain('Interrupted');
-  });
-
   it('attempts one unforced restore when the signal arrives during the switch', async () => {
-    const { run } = await interruptDuring(
+    const { run, fake } = await interruptDuring(
       (call) => call.args.includes('--detach'),
       'SIGTERM',
       {},
@@ -660,7 +538,7 @@ describe('restoring the engine checkout', () => {
       false,
     );
     expect(run.exits).toEqual([143]);
-    expect(run.writes[0]?.state).toBe('restored');
+    expect(fake.state.commit).toBe(other);
   });
 
   it('says "not restored" when the restore after a signal fails', async () => {
@@ -672,10 +550,6 @@ describe('restoring the engine checkout', () => {
       false,
     );
     expect(run.out.join('')).toContain('The engine checkout was NOT restored');
-    expect(run.writes[0]).toEqual({
-      state: 'not-restored',
-      stopped: 'Interrupted',
-    });
   });
 
   it('restores on SIGTERM and SIGHUP while the application runs', async () => {
@@ -685,7 +559,7 @@ describe('restoring the engine checkout', () => {
     ] as const) {
       const fake = engine();
       const run = machine(fake.script);
-      const done = runSmoke(run.deps, []);
+      const done = runSandbox(run.deps, []);
       await flush();
       expect(run.started()).toBe(true);
       run.signals.emit(signal);
@@ -701,7 +575,7 @@ describe('restoring the engine checkout', () => {
   it('leaves Ctrl+C to the application while it runs, then restores', async () => {
     const fake = engine();
     const run = machine(fake.script);
-    const done = runSmoke(run.deps, []);
+    const done = runSandbox(run.deps, []);
     await flush();
     run.signals.emit('SIGINT');
     await flush();
@@ -715,7 +589,7 @@ describe('restoring the engine checkout', () => {
   it('never forces a failed restore: it says so and names the one command', async () => {
     const fake = engine({ restoreCode: 1 });
     const run = machine(fake.script, { exitCode: 0 });
-    const code = await runSmoke(run.deps, []);
+    const code = await runSandbox(run.deps, []);
     expect(code).toBe(0);
     const text = run.out.join('');
     expect(text).toContain('The engine checkout was NOT restored');
@@ -730,208 +604,19 @@ describe('restoring the engine checkout', () => {
 
   it('has nothing to restore when the checkout was not switched', async () => {
     const run = machine(() => undefined, { exitCode: 0 });
-    await runSmoke(run.deps, []);
+    await runSandbox(run.deps, []);
     expect(run.calls.some((call) => call.file === 'git')).toBe(false);
-    expect(run.writes.map((w) => w.state)).toEqual([null]);
-  });
-});
-
-describe('the record after it is handed over', () => {
-  const engineLineOf = (file: Buffer | null) =>
-    /^- \*\*Engine:\*\*.*$/m.exec(fileText(file))![0];
-
-  // What the contributor does to the record while the application runs: marks
-  // on several checks, a note and an extra line. The editor may hold these
-  // unsaved, so the tool must not write the file at all.
-  function contributorEdits(file: Buffer, eol = '\n'): Buffer {
-    return Buffer.from(
-      fileText(file)
-        .replace(
-          '- **Check A1** First check:',
-          '- **Check A1** First check: pass',
-        )
-        .replace(
-          '- **Check A2** Second check:',
-          '- **Check A2** Second check: note, a slow table (naïve “quotes” — ok)',
-        ) + `${eol}My own line: the window opened.${eol}`,
-    );
-  }
-
-  // Starts a run, lets the contributor edit the record, then ends the run the
-  // way `end` says. Returns the record as handed over, as edited and at the end.
-  async function run(
-    end: (run: ReturnType<typeof machine>) => Promise<void> | void,
-    options: { restoreCode?: number; eol?: '\n' | '\r\n' } = {},
-  ) {
-    const fake = engine({ restoreCode: options.restoreCode });
-    const made = machine(fake.script, { eol: options.eol });
-    const done = runSmoke(made.deps, []);
-    await flush();
-    expect(made.started()).toBe(true);
-    const handed = made.record.file!;
-    const edited = contributorEdits(handed, options.eol);
-    made.record.file = edited;
-    await end(made);
-    await done;
-    await flush();
-    return { run: made, handed, edited, final: made.record.file! };
-  }
-
-  // The tool made no record write after the handover, and the file is the
-  // contributor's, byte for byte.
-  function untouched(made: ReturnType<typeof machine>, edited: Buffer) {
-    expect(made.writes).toHaveLength(1);
-    expect(made.record.file!.equals(edited)).toBe(true);
-  }
-
-  it('says at the handover that the checkout was switched, with no restore wording', async () => {
-    const { handed } = await run((m) => m.endApplication(0));
-    const line = engineLineOf(handed);
-    expect(line).toBe(
-      `- **Engine:** ${vendoredCommit.slice(0, 7)}, matches vendor/ian/SOURCE.md; version 0.1.0, from \`ian about\`; \`ian\` from \`PATH\`; switched from branch \`main\` to ${vendoredCommit.slice(0, 7)} for the test`,
-    );
-    expect(line).not.toMatch(/restor/);
-    expect(fileText(handed)).toContain(
-      `- **Restore command:** \`git -C <engine checkout> switch main\``,
-    );
-  });
-
-  it.each([
-    ['a successful restore', undefined, 'The engine checkout is restored'],
-    ['a failed restore', 1, 'The engine checkout was NOT restored'],
-  ])(
-    'leaves the record byte-identical after a normal exit with %s',
-    async (_name, restoreCode, said) => {
-      const {
-        run: made,
-        edited,
-        final,
-      } = await run((m) => m.endApplication(0), { restoreCode });
-      untouched(made, edited);
-      expect(made.out.join('')).toContain(said);
-      expect(final.equals(edited)).toBe(true);
-    },
-  );
-
-  it('leaves the record byte-identical after a failure exit, and says what to mark', async () => {
-    const { run: made, edited } = await run((m) => m.endApplication(101));
-    untouched(made, edited);
-    expect(made.out.join('')).toContain(failureExitMessage(101));
-    expect(failureExitMessage(101)).toBe(
-      'The application exited with status 101. In the record, mark Step 10 fail and note this exit status. The tool does not change the record once the application has started.\n',
-    );
-  });
-
-  it.each([
-    ['SIGTERM', 143],
-    ['SIGHUP', 129],
-  ] as const)(
-    'leaves the record byte-identical when %s arrives while the application runs',
-    async (signal, status) => {
-      const { run: made, edited } = await run(async (m) => {
-        m.signals.emit(signal);
-        await flush();
-        m.endApplication(1);
-      });
-      untouched(made, edited);
-      expect(made.exits).toEqual([status]);
-      expect(made.err.join('')).toContain(`Stopped by ${signal}.`);
-      expect(made.out.join('')).toContain('The engine checkout is restored');
-      expect(fileText(made.record.file)).not.toContain('Interrupted');
-    },
-  );
-
-  it('keeps CRLF line endings, because it writes nothing', async () => {
-    const {
-      run: made,
-      handed,
-      edited,
-    } = await run((m) => m.endApplication(101), { eol: '\r\n' });
-    expect(fileText(handed)).toContain('\r\n');
-    untouched(made, edited);
   });
 });
 
 describe('arguments', () => {
-  it.each([['--engine', 'C:/engine'], ['--engine=C:/engine']])(
-    'stops with one line when --engine is passed (%s)',
-    async (...args) => {
-      const run = machine(() => undefined);
-      expect(await runSmoke(run.deps, args)).toBe(1);
-      expect(run.err).toEqual([
-        '`--engine` is no longer needed: `pnpm smoke` finds the engine through `ian`. Run `pnpm smoke` without it.\n',
-      ]);
-      expect(run.calls).toEqual([]);
-    },
-  );
-
-  it('takes no other arguments either', () => {
-    expect(checkArguments(['x'], [])).toEqual({
-      message: '`pnpm smoke` takes only the `--checks` option, given once.',
-    });
-    expect(
-      checkArguments(['--checks', 'C1', '--checks', 'C2'], []),
-    ).toHaveProperty('message');
-    expect(checkArguments([], [])).toEqual({ targeted: null });
-  });
-});
-
-describe('the engine line of the record', () => {
-  const steps = parseSteps('Step 1. Get the engine.\n');
-  const base = {
-    date: 'd',
-    timeZone: 'z',
-    operatingSystem: 'o',
-    applicationCommit: 'c',
-    dirty: false,
-    engineCommit: 'beb58a2',
-    ianSource: 'PATH' as const,
-    engineVersion: '0.1.0',
-    engineUncommitted: false,
-    engineSwitch: null,
-    data: null,
-    throwawayFolder: '.tmp/smoke/x',
-    steps,
-    scripted: new Map(),
-    log: [],
-    stopped: null,
-    targeted: null,
-  };
-  const line = (input: Partial<Parameters<typeof renderRecord>[0]>) =>
-    renderRecord({ ...base, ...input })
-      .split('\n')
-      .filter((text) => /^- \*\*(Engine|Restore command):/.test(text));
-
-  it('says a switched checkout was switched for the test, and nothing about the restore', () => {
-    const lines = line({
-      engineSwitch: { start: { kind: 'branch', name: 'main' } },
-    });
-    expect(lines).toEqual([
-      '- **Engine:** beb58a2, matches vendor/ian/SOURCE.md; version 0.1.0, from `ian about`; `ian` from `PATH`; switched from branch `main` to beb58a2 for the test',
-      '- **Restore command:** `git -C <engine checkout> switch main`',
-    ]);
-    expect(lines[0]).not.toMatch(/restor/);
-  });
-
-  it('names a detached start by its full commit', () => {
-    expect(
-      line({
-        engineSwitch: { start: { kind: 'commit', commit: other } },
-      }),
-    ).toEqual([
-      expect.stringContaining(
-        `switched from commit \`${other}\` to beb58a2 for the test`,
-      ),
-      `- **Restore command:** \`git -C <engine checkout> switch --detach ${other}\``,
-    ]);
-  });
-
-  it('notes uncommitted changes at the vendored commit, and never the folder', () => {
-    const text = renderRecord({ ...base, engineUncommitted: true });
-    expect(text).toContain(
-      '; not switched; the engine checkout has uncommitted changes',
-    );
-    expect(text).not.toContain(enginePath);
-    expect(text).not.toContain(repositoryRoot);
+  it('takes no options, and says so before running anything', async () => {
+    const run = machine(() => undefined, { exitCode: 0 });
+    for (const args of [['--checks', 'W1'], ['--engine=x'], ['x']]) {
+      expect(await runSandbox(run.deps, args)).toBe(1);
+    }
+    expect(run.err.join('')).toContain('`pnpm sandbox` takes no options.');
+    expect(run.calls).toHaveLength(0);
+    expect(run.started()).toBe(false);
   });
 });
