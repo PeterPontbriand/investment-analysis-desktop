@@ -38,7 +38,8 @@ export function connectionMessage(
 }
 
 // Failures whose reason message the API words for a person: shown as given.
-// They are failures about one stored thing, or about an action's request.
+// They are failures about one stored thing, about an action's request, or about
+// a provider that could not answer a lookup (D300).
 const reasonShownCodes = new Set([
   'watchlist_not_found',
   'watchlist_name_conflict',
@@ -49,6 +50,11 @@ const reasonShownCodes = new Set([
   'unsupported_run_version',
   'invalid_stored_run',
   'unsupported_projection',
+  // A lookup that no provider could answer; the engine names the provider.
+  'provider_no_data',
+  'provider_unreachable',
+  'provider_rate_limited',
+  'provider_unexpected_response',
 ]);
 
 // What a screen shows for a request that failed.

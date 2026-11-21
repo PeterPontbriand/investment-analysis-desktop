@@ -30,6 +30,10 @@ import * as selection from '../fixtures/api/selection.ts';
 import type { Reply } from '../fixtures/api/server.ts';
 import en from '../../src/locales/en.json' with { type: 'json' };
 
+// The catalog a test reads names from: English unless it runs in another
+// locale.
+export type Words = typeof en;
+
 export const analyzedRun = '00000000-0000-4000-8000-000000000003';
 
 // One ticker under two strategies, one frame for each poll.
@@ -97,6 +101,8 @@ export type Options = {
   // Moves time only when the test says so; the default. A test that waits for
   // the form to focus a field on its own turns it off.
   clock?: boolean;
+  // The catalog of the locale under test.
+  words?: Words;
 };
 
 export async function openAnalyze(
@@ -119,23 +125,24 @@ export async function openAnalyze(
   } else {
     engine = await openApp(page, script, handler, options.discovered);
   }
-  await navLink(page, en.nav.analyze).click();
-  await expect(heading(page)).toHaveText(en.analyze.heading);
+  const words = options.words ?? en;
+  await navLink(page, words.nav.analyze, words).click();
+  await expect(heading(page)).toHaveText(words.analyze.heading);
   return engine;
 }
 
 export const heading = (page: Page) => page.getByRole('heading', { level: 1 });
-export const navLink = (page: Page, name: string) =>
+export const navLink = (page: Page, name: string, words: Words = en) =>
   page
-    .getByRole('navigation', { name: en.nav.label })
+    .getByRole('navigation', { name: words.nav.label })
     .getByRole('link', { name, exact: true });
 // By accessible name: the label's required mark is hidden from it.
-export const ticker = (page: Page) =>
-  page.getByRole('textbox', { name: en.analyze.ticker, exact: true });
+export const ticker = (page: Page, words: Words = en) =>
+  page.getByRole('textbox', { name: words.analyze.ticker, exact: true });
 export const asOf = (page: Page) =>
   page.getByLabel(en.analyze.asOf, { exact: true });
-export const analyze = (page: Page) =>
-  page.getByRole('button', { name: en.analyze.analyze, exact: true });
+export const analyze = (page: Page, words: Words = en) =>
+  page.getByRole('button', { name: words.analyze.analyze, exact: true });
 export const strategy = (page: Page, name: string) =>
   page.locator('.strategy').filter({ hasText: name }).first();
 export const checkbox = (page: Page, name: string) =>

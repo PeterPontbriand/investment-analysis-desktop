@@ -59,6 +59,10 @@ describe('failure views', () => {
     'watchlist_name_conflict',
     'watchlist_empty',
     'watchlist_entry_not_found',
+    'provider_no_data',
+    'provider_unreachable',
+    'provider_rate_limited',
+    'provider_unexpected_response',
   ])('shows the API reason as given for %s', (code) => {
     expect(failureView(failure(code, 'Why'))).toEqual({
       kind: 'reason',

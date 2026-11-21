@@ -7,11 +7,12 @@ import { expect, test } from './fixtures.ts';
 import { engineUrl, mockEngine, type Handler } from './engine-mock.ts';
 import { instantDateText, instantText } from './expected-text.ts';
 import { focusByKeyboard } from './keyboard.ts';
-import { advance, openApp } from './refresh-helpers.ts';
+import { advance, momentum, openApp } from './refresh-helpers.ts';
 import {
   analysisScript,
   analyze,
   choose,
+  frames,
   openAnalyze,
   ticker as tickerField,
 } from './analyze-helpers.ts';
@@ -21,7 +22,14 @@ import {
   identityOf,
 } from '../fixtures/api/compare.ts';
 import { refreshes } from '../fixtures/api/data.ts';
-import { job, totals } from '../fixtures/api/refresh.ts';
+import {
+  finished,
+  job,
+  summary,
+  totals,
+  type Frame,
+  type JobScript,
+} from '../fixtures/api/refresh.ts';
 import { lookedUp, profiles } from '../fixtures/api/profiles.ts';
 import { failure, ok, respond } from '../fixtures/api/server.ts';
 import en from '../../src/locales/en.json' with { type: 'json' };
@@ -458,12 +466,14 @@ for (const direction of directions) {
       expect(lookupPaths(engine, 'ACME')).toHaveLength(1);
     });
 
-    test('shows a failed lookup in the panel, with the existing catalog message', async ({
+    test('shows the reason the engine served for a lookup no provider could answer, in its language', async ({
       page,
     }) => {
+      const served =
+        'Unable to look up ACME: Yahoo Finance returned no data for it.';
       const engine = await start(page, direction, async (url, request) =>
         request.method === 'POST' && url.pathname.endsWith('/lookup')
-          ? failure(404, 'provider_no_data', 'No data provider has it.')
+          ? failure(404, 'provider_no_data', served, 'fr')
           : url.pathname === profilePath('ACME')
             ? failure(404, 'instrument_profile_not_found', 'None stored.')
             : undefined,
@@ -473,9 +483,10 @@ for (const direction of directions) {
       await panel(page)
         .getByRole('button', { name: words.tickerDetails.lookUp, exact: true })
         .click();
-      await expect(panel(page).getByRole('alert')).toContainText(
-        words.state.defect,
-      );
+      const reason = panel(page).getByRole('alert').getByText(served);
+      await expect(reason).toBeVisible();
+      await expect(reason).toHaveAttribute('lang', 'fr');
+      await expect(panel(page)).not.toContainText(words.state.defect);
       // Still offered, so the user can ask again.
       await expect(
         panel(page).getByRole('button', {
@@ -774,41 +785,107 @@ for (const direction of directions) {
 
 // The headings of the refresh progress screen are live and announced, so only
 // their ticker is a button; the announcement stays plain text (D299).
-test.describe('progress headings', () => {
-  const heading = (page: Page) => page.getByRole('heading', { level: 1 });
+for (const direction of directions) {
+  const { words } = direction;
+  test.describe(`progress headings (${direction.name})`, () => {
+    const heading = (page: Page) => page.getByRole('heading', { level: 1 });
+    const headingTrigger = (page: Page) =>
+      heading(page).getByRole('button', { name: 'ACME' });
 
-  test('make the ticker a button in the running and the ended heading', async ({
-    page,
-  }) => {
-    const script = analysisScript();
-    await openAnalyze(page, script);
-    await tickerField(page).fill('ACME');
-    await choose(page, 'Momentum');
-    await choose(page, 'Graham Number');
-    await analyze(page).click();
-    await expect(heading(page)).toHaveText(
-      fill(en.refresh.heading.running, { subject: 'ACME' }),
-    );
-    const trigger = heading(page).getByRole('button', { name: 'ACME' });
-    await trigger.click();
-    await expect(panel(page)).toContainText('Acme Corp');
-    // The refresh's rows have ticker buttons too, with the current profile.
-    await advance(page, script);
-    await expect(
-      page.locator('tbody').getByRole('button', { name: 'ACME' }),
-    ).toHaveCount(2);
-    await advance(page, script, 2);
-    await expect(heading(page)).toHaveText(
-      fill(en.refresh.heading.finished, { subject: 'ACME' }),
-    );
-    await expect(
-      heading(page).getByRole('button', { name: 'ACME' }),
-    ).toBeVisible();
-    await expect(
-      page
-        .getByRole('navigation', { name: en.nav.label })
-        .locator('[aria-live="polite"]')
-        .getByRole('button'),
-    ).toHaveCount(0);
+    // Opens the panel from the heading's ticker, and closes it again.
+    async function opensDetails(page: Page) {
+      await headingTrigger(page).click();
+      await expect(panel(page)).toContainText('Acme Corp');
+      await page.keyboard.press('Escape');
+      await expect(panel(page)).toHaveCount(0);
+    }
+
+    async function startAnalysis(page: Page, script: JobScript) {
+      await useDirection(page, direction);
+      await openAnalyze(page, script, { words });
+      await expect(page.locator('html')).toHaveAttribute('dir', direction.dir);
+      await tickerField(page, words).fill('ACME');
+      await choose(page, 'Momentum');
+      await choose(page, 'Graham Number');
+      await analyze(page, words).click();
+    }
+
+    test('make the ticker a button in the running and the finished heading', async ({
+      page,
+    }) => {
+      const script = analysisScript();
+      await startAnalysis(page, script);
+      await expect(heading(page)).toHaveText(
+        fill(words.refresh.heading.running, { subject: 'ACME' }),
+      );
+      await headingTrigger(page).click();
+      await expect(panel(page)).toContainText('Acme Corp');
+      await page.keyboard.press('Escape');
+      // The refresh's rows have ticker buttons too, with the current profile.
+      await advance(page, script);
+      await expect(
+        page.locator('tbody').getByRole('button', { name: 'ACME' }),
+      ).toHaveCount(2);
+      await advance(page, script, 2);
+      await expect(heading(page)).toHaveText(
+        fill(words.refresh.heading.finished, { subject: 'ACME' }),
+      );
+      await opensDetails(page);
+      await expect(
+        page
+          .getByRole('navigation', { name: words.nav.label })
+          .locator('[aria-live="polite"]')
+          .getByRole('button'),
+      ).toHaveCount(0);
+    });
+
+    test('make the ticker a button in the stopped heading', async ({
+      page,
+    }) => {
+      const stopped: Frame[] = [
+        frames[0]!,
+        { state: 'stopping', totals: totals(2, 2, 0) },
+        {
+          state: 'stopped',
+          totals: totals(2, 2, 1),
+          events: [finished(3, 0, 'ACME', momentum)],
+          summary: summary(
+            { completed: 1 },
+            {
+              refresh_id: analyzeRefreshId,
+              watchlist_id: null,
+              watchlist_name: null,
+            },
+          ),
+        },
+      ];
+      const script = analysisScript(stopped, 1);
+      await startAnalysis(page, script);
+      await advance(page, script);
+      await page.getByRole('button', { name: words.actions.stop }).click();
+      await advance(page, script);
+      await expect(heading(page)).toHaveText(
+        fill(words.refresh.heading.stopped, { subject: 'ACME' }),
+      );
+      await opensDetails(page);
+    });
+
+    test('make the ticker a button in the failed heading', async ({ page }) => {
+      const failed = failure(409, 'watchlist_empty', 'The entries failed.');
+      const script = analysisScript([
+        frames[0]!,
+        {
+          state: 'failed',
+          totals: totals(2, 2, 0),
+          failure: failed.body as never,
+        },
+      ]);
+      await startAnalysis(page, script);
+      await advance(page, script, 2);
+      await expect(heading(page)).toHaveText(
+        fill(words.refresh.heading.failed, { subject: 'ACME' }),
+      );
+      await opensDetails(page);
+    });
   });
-});
+}
