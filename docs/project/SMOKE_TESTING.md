@@ -1,5 +1,7 @@
 # Smoke Testing the Desktop Application
 
+> **This document is no longer maintained with each pull request (D310).** A pull request no longer records or waits for a manual run (D307), so nothing here is updated when a screen changes. `pnpm smoke` is now `pnpm sandbox`, which only creates the throwaway database with its sample data and starts the application (D311): it writes no record and takes no `--checks`, so the parts below about the record and targeted runs no longer describe a command. What becomes of this document is decided in GUI.6 (see [GUI.6: Preview release and feedback](milestones/v0.1/IMPLEMENTATION_PLAN.md#gui6-preview-release-and-feedback) in the v0.1 implementation plan). The decisions are D307 to D312 in the [GUI.4 slice plan](milestones/v0.1/gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#appendix-a-2026-11-20-decision-record).
+
 Follow this guide to perform a manual "smoke test" of the Investment Analysis Desktop application's user interface: a short check that its main functions work. This guide is for a contributor who starts the application from a terminal they opened themselves, and who judges each screen as a user would see it.
 
 The Investment Analysis Desktop application neither holds data nor performs analysis; it only shows data from a connected Investment Analysis Engine instance (the engine), the separate program that does the analysis and holds all of the data.
