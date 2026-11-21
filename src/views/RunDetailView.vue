@@ -2,12 +2,14 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import type { ApiResult, GetResponse } from '../api/client.ts';
+import { runIdentitySource } from '../api/identitySource.ts';
 import { useScreenData } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import HeadlineCards from '../components/HeadlineCards.vue';
 import OutcomePill from '../components/OutcomePill.vue';
 import RunTabs from '../components/RunTabs.vue';
 import ScreenState from '../components/ScreenState.vue';
+import TickerButton from '../components/TickerButton.vue';
 import TermName from '../components/TermName.vue';
 import { useRouteParam } from '../composables/useRouteParam.ts';
 import {
@@ -64,8 +66,10 @@ const fullDocument = computed(() => {
   return document?.ok ? document.result : null;
 });
 
+// The name the run kept, from the overview, so it shows even when the full
+// document cannot be read (D293).
 const companyName = computed(
-  () => fullDocument.value?.data.security_identity.instrument_name ?? null,
+  () => loaded.value?.overview.data.security_identity.instrument_name ?? null,
 );
 
 const crumbs = computed(() =>
@@ -108,7 +112,15 @@ const asOf = computed(() =>
         tag="span"
       >
         <template #name>{{ companyName }}</template>
-        <template #ticker>{{ state.data.overview.data.ticker }}</template>
+        <template #ticker
+          ><TickerButton
+            :source="
+              runIdentitySource(
+                state.data.overview.data.ticker,
+                state.data.overview.data.analysis_run_id,
+              )
+            "
+        /></template>
         <template #strategy>
           <span
             :data-term-id="state.data.overview.data.strategy.term ?? undefined"

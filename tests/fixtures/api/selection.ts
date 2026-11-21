@@ -569,8 +569,8 @@ export const failures = {
     ruleError(
       'entries.duplicate',
       ['tickers'],
-      '{tickers} must not duplicate an entry: {ticker} is already listed for {strategy} with an equal selection in the watchlist.',
-      'tickers must not duplicate an entry: KO is already listed for Momentum with an equal selection in the watchlist.',
+      '{tickers} must not duplicate an entry: {ticker} is already in the watchlist for {strategy} with the same as-of date and options.',
+      'tickers must not duplicate an entry: KO is already in the watchlist for Momentum with the same as-of date and options.',
       { ticker: 'KO', strategy: 'Momentum' },
     ),
   ]),
@@ -578,8 +578,8 @@ export const failures = {
     ruleError(
       'entries.duplicate',
       ['tickers'],
-      '{tickers} must not duplicate an entry: {ticker} is listed twice for {strategy} with an equal selection in this request.',
-      'tickers must not duplicate an entry: KO is listed twice for Momentum with an equal selection in this request.',
+      '{tickers} must not duplicate an entry: {ticker} is listed twice for {strategy} with the same as-of date and options.',
+      'tickers must not duplicate an entry: KO is listed twice for Momentum with the same as-of date and options.',
       { ticker: 'KO', strategy: 'Momentum' },
     ),
   ]),

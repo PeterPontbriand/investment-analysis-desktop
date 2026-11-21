@@ -374,9 +374,28 @@ export function documentOf(
   } as unknown as RunDocument;
 }
 
+// The identity a run kept when it ran (D289): every descriptive field is null
+// when no provider gave a name.
+export function identityOf(
+  ticker: string,
+  name: string | null,
+  venue: string | null = null,
+): Schemas['SecurityIdentityPart'] {
+  return {
+    ticker,
+    instrument_name: name,
+    listing_venue: venue,
+    issuer_identifier: null,
+    instrument_identifier: null,
+    provider_id: name === null ? null : 'yahoo',
+    resolved_at: name === null ? null : '2026-10-30T18:00:00+00:00',
+  };
+}
+
 function overviewOf(
   id: string,
   ticker: string,
+  name: string | null,
   strategy: Strategy,
   outcome: Outcome,
   completedAt: string,
@@ -386,7 +405,8 @@ function overviewOf(
   periodEnd: string | null = null,
 ): Schemas['RunOverviewDocument'] {
   return {
-    schema_version: 2,
+    schema_version: 3,
+    security_identity: identityOf(ticker, name),
     analysis_run_id: id,
     ticker,
     strategy,
@@ -411,6 +431,7 @@ export const runDetails: Record<string, RunDetail> = {
     overview: overviewOf(
       savedId(1),
       'MSFT',
+      'Microsoft Corp',
       strategyDocuments.graham,
       'completed',
       '2026-11-02T14:41:00+00:00',
@@ -432,6 +453,7 @@ export const runDetails: Record<string, RunDetail> = {
     overview: overviewOf(
       savedId(2),
       'MSFT',
+      null,
       strategyDocuments.momentum,
       'unavailable',
       '2026-10-30T18:02:00+00:00',
@@ -455,6 +477,7 @@ export const runDetails: Record<string, RunDetail> = {
     overview: overviewOf(
       savedId(3),
       'ZED',
+      'Zed Holdings',
       strategyDocuments.quality,
       'completed',
       '2026-10-29T18:02:00+00:00',
@@ -467,6 +490,7 @@ export const runDetails: Record<string, RunDetail> = {
     overview: overviewOf(
       savedId(4),
       'OLD',
+      'Old Industries',
       strategyDocuments.retired,
       'failed',
       '2026-10-28T18:02:00+00:00',
@@ -481,6 +505,7 @@ export const runDetails: Record<string, RunDetail> = {
     overview: overviewOf(
       runId(1),
       'ACME',
+      'Acme Corp',
       strategyDocuments.momentum,
       'completed',
       '2026-10-30T18:00:00+00:00',
@@ -493,6 +518,7 @@ export const runDetails: Record<string, RunDetail> = {
     overview: overviewOf(
       runId(2),
       'ACME',
+      'Acme Corp',
       strategyDocuments.graham,
       'completed',
       '2026-10-30T18:00:00+00:00',
@@ -507,6 +533,7 @@ export const runDetails: Record<string, RunDetail> = {
     overview: overviewOf(
       runId(4),
       'ZED',
+      'Zed Holdings',
       strategyDocuments.graham,
       'not_applicable',
       '2026-10-30T18:01:00+00:00',
@@ -519,6 +546,7 @@ export const runDetails: Record<string, RunDetail> = {
     overview: overviewOf(
       runId(5),
       'ZED',
+      'Zed Holdings',
       strategyDocuments.quality,
       'unavailable',
       '2026-10-30T18:02:00+00:00',
@@ -532,6 +560,7 @@ export const runDetails: Record<string, RunDetail> = {
     overview: overviewOf(
       runId(12),
       'OLD',
+      'Old Industries',
       strategyDocuments.retired,
       'failed',
       '2026-10-27T12:00:20+00:00',
@@ -541,10 +570,37 @@ export const runDetails: Record<string, RunDetail> = {
     ),
     document: null,
   },
+  [runId(31)]: {
+    overview: overviewOf(
+      runId(31),
+      'ACME',
+      'Acme Corp',
+      strategyDocuments.momentum,
+      'completed',
+      '2026-11-19T13:15:10+00:00',
+      analyzeRefreshId,
+      momentumCells(),
+    ),
+    document: documentOf('ACME', 'Acme Corp', 'sma_crossover', '2026-11-19'),
+  },
+  [runId(32)]: {
+    overview: overviewOf(
+      runId(32),
+      'ACME',
+      'Acme Corp',
+      strategyDocuments.graham,
+      'completed',
+      '2026-11-19T13:15:20+00:00',
+      analyzeRefreshId,
+      grahamCells(),
+    ),
+    document: documentOf('ACME', 'Acme Corp', 'graham_number', '2026-11-19'),
+  },
   [runId(21)]: {
     overview: overviewOf(
       runId(21),
       'ACME',
+      'Acme Corp',
       strategyDocuments.momentum,
       'completed',
       '2026-10-29T13:15:10+00:00',

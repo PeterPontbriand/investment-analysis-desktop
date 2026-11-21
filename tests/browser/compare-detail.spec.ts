@@ -534,8 +534,10 @@ test.describe('run detail', () => {
     page,
   }) => {
     await openRun(page, 3);
+    // The name comes from the overview, so it shows without the document
+    // (D293); the retired strategy has no term id.
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'OLD — retired_method',
+      'Old Industries (OLD) — retired_method',
     );
     await expect(
       page.getByRole('heading', { level: 1 }).locator('[data-term-id]'),

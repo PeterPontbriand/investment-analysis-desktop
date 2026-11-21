@@ -13,8 +13,8 @@
 | GUI.0 | [Charter and governance](#gui0-charter-and-governance) | Complete | 2026-10-30 |
 | GUI.1 | [Technology decision and scaffold](#gui1-technology-decision-and-scaffold) | Complete | 2026-11-02 |
 | GUI.2 | [Read-only screens against IAN API.2](#gui2-read-only-screens) | Complete | 2026-11-15 |
-| GUI.3 | [Actions and refresh progress against IAN API.4](#gui3-actions-and-refresh-progress) | Next | |
-| GUI.4 | [Help in place against IAN API.6](#gui4-help-in-place) | Planned | |
+| GUI.3 | [Actions and refresh progress against IAN API.4](#gui3-actions-and-refresh-progress) | Complete | 2026-11-20 |
+| GUI.4 | [Help in place against IAN API.6](#gui4-help-in-place) | Next | |
 | GUI.5 | [First-run screen and installer](#gui5-first-run-and-installer) | Planned | |
 | GUI.6 | [Preview release and feedback intake](#gui6-preview-release-and-feedback) | Planned | |
 
@@ -59,10 +59,13 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 ### GUI.4: Help in place
 
 - **Problem:** New investors need explanations without leaving the application.
-- **Decision:** Load all analysis explanations and term links from IAN's /v1/help endpoints.
-- **Scope:** Show a short definition popup on hover or keyboard focus; open a help panel on click with the full entry, linked terms, and longer guide. Make the same help available through explicit controls on touch screens. Keep help links inside the application; optional further-reading links may open externally. A run's own derivation stays in its Details view. GUI.4 also decides whether the application's own labels that the comparison and run detail show with no term id ("Saved", "As of", "Saved by", "Warnings", "Limitations", "Not run", "Refresh comparison" and "Ad hoc entries") get help; IAN's glossary has an "As-of Date" term, for example (D165 in the [GUI.2 read-only screens slice plan](gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record)). GUI.4 also plans ticker details from any ticker cell (IAD issue #19), which needs an IAN endpoint for a ticker's instrument profile first.
-- **Branch:** A dedicated GUI.4 branch after IAN API.6 merges and GUI.1 establishes the scaffold.
-- **Detail:** ⚠ no slice plan yet.
+- **Decision:** Load all analysis explanations and term links from IAN's /v1/help endpoints, in three sub-slices: ticker details (GUI.4a), term popups (GUI.4b) and help panel content (GUI.4c). Engine prerequisites: API.6 (the help endpoints), API.15 (instrument profiles) and API.16 (the ticker check on adding entries), all merged.
+- **Scope:**
+  - **Term help:** Show a short definition popup on hover or keyboard focus; open a help panel on click with the full entry, linked terms, and longer guide. Make the same help available through explicit controls on touch screens. Keep help links inside the application; optional further-reading links may open externally. A run's own derivation stays in its Details view.
+  - **The application's own labels:** GUI.4 also decides whether the application's own labels that the comparison and run detail show with no term id ("Saved", "As of", "Saved by", "Warnings", "Limitations", "Not run", "Refresh comparison" and "Ad hoc entries") get help; IAN's glossary has an "As-of Date" term, for example (D165 in the [GUI.2 read-only screens slice plan](gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record)). The project owner decides it before GUI.4b.
+  - **Ticker details:** GUI.4a gives any ticker cell, and the headings that name a ticker, a preview and a details panel from the engine's instrument profiles (IAD issue #19).
+- **Branch:** `feat/gui-4a-ticker-details`, then `feat/gui-4b-term-popups`, then `feat/gui-4c-help-panel`.
+- **Detail:** [GUI.4 help in place slice plan](gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md).
 
 ### GUI.5: First-run and installer
 
@@ -90,6 +93,7 @@ Answers to Q4 inform the signing decision, so these decisions are made after the
 - **Problem:** The preview needs a controlled release and a way for users to report what they cannot understand or complete.
 - **Decision:** Release the application as a preview and collect feedback against the screens and setup flow.
 - **Scope:** Publish preview builds, explain the pre-release status, and provide a feedback intake route. Before preview builds are published, run and record a human smoke test of the installed application that walks through the preview's screens against a real engine started by the application. It is the human end-to-end check of IAN's local HTTP API, which [IAN's smoke test](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/SMOKE_TESTING.md) does not cover. Quitting on macOS while a refresh runs is tracked in [issue 24](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/24); it waits for a Mac and is run then.
+- **Open decision:** What becomes of [docs/project/SMOKE_TESTING.md](../../SMOKE_TESTING.md) (D310 in the [GUI.4 slice plan](gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#appendix-a-2026-11-20-decision-record)). It is no longer maintained per pull request. The expected answer is a short checklist for the installed application (the installer, the first start, the engine found, and the macOS quit check of [issue 24](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/24)), run once per release, but GUI.6 decides.
 - **Branch:** A dedicated release branch or tag from the accepted GUI implementation.
 - **Detail:** ⚠ no slice plan yet.
 

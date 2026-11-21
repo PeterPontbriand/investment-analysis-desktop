@@ -1,7 +1,7 @@
-// Switching the engine checkout to the vendored commit for the smoke test, and
+// Switching the engine checkout to the vendored commit for the sandbox, and
 // putting it back. Only `git switch` is used, never with --force, and never
 // `reset`, so a checkout that cannot be switched or restored is left as it is.
-import type { Runner } from './types.ts';
+import type { Runner } from '../engine/types.ts';
 
 // Where the engine checkout was before the switch: on a branch, or detached at
 // a commit (a checkout of a commit rather than a branch).

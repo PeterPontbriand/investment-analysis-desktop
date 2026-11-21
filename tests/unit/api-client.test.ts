@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError, createApiClient } from '../../src/api/client.ts';
 import { info } from '../fixtures/api/data.ts';
@@ -284,4 +285,61 @@ describe('API adapter', () => {
       expect((error as ApiError).unreadable).toBeNull();
     }
   });
+});
+
+// D282: every failure status the vendored description documents is answered
+// with a failure document, and the adapter reads each as one.
+describe('every documented failure status', () => {
+  const description = JSON.parse(
+    readFileSync('vendor/ian/openapi.json', 'utf8'),
+  ) as {
+    paths: Record<
+      string,
+      Record<string, { responses?: Record<string, { content?: unknown }> }>
+    >;
+  };
+  const failures = Object.values(description.paths)
+    .flatMap((operations) => Object.values(operations))
+    .flatMap((operation) => Object.entries(operation.responses ?? {}))
+    .filter(([status]) => Number(status) >= 400);
+  const statuses = new Set(failures.map(([status]) => Number(status)));
+
+  it('documents each as a failure envelope, for the statuses tested here', () => {
+    expect(
+      failures.filter(
+        ([, response]) =>
+          !JSON.stringify(response.content).includes('FailureEnvelope'),
+      ),
+    ).toEqual([]);
+    expect([...statuses].sort()).toEqual([
+      400, 401, 404, 405, 409, 429, 500, 502, 503,
+    ]);
+  });
+
+  it.each([...statuses].sort())(
+    'reads a %i as a failure document',
+    async (status) => {
+      const fetchStub = vi
+        .fn()
+        .mockResolvedValue(
+          json(
+            { reason_code: 'provider_unreachable', reason: 'No answer.' },
+            { status, headers: { 'Content-Language': 'en' } },
+          ),
+        );
+
+      const error = await client(fetchStub)
+        .get('/v1/info')
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ApiError);
+      expect(error).toMatchObject({
+        kind: 'failure',
+        status,
+        reasonCode: 'provider_unreachable',
+        reason: 'No answer.',
+        contentLanguage: 'en',
+      });
+    },
+  );
 });

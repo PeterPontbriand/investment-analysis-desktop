@@ -2,12 +2,14 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { ApiError } from '../api/client.ts';
 import { useEngine } from '../api/engine.ts';
+import { currentProfileSource } from '../api/identitySource.ts';
 import type { ScreenState as ScreenStateType } from '../api/useScreenData.ts';
 import ActionFailure from '../components/ActionFailure.vue';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import OutcomePill from '../components/OutcomePill.vue';
 import ScreenState from '../components/ScreenState.vue';
 import StrategyName from '../components/StrategyName.vue';
+import TickerButton from '../components/TickerButton.vue';
 import TableScroll from '../components/TableScroll.vue';
 import TermName from '../components/TermName.vue';
 import { createAnnouncer } from '../composables/announcer.ts';
@@ -96,12 +98,15 @@ const end = computed(() =>
 const stopping = computed(() => record.value?.state === 'stopping');
 const live = computed(() => record.value !== null && end.value === null);
 
+// The heading's message, and the same words as one string for announcements.
+const headingKey = computed(() =>
+  end.value !== null ? end.value : stopping.value ? 'stopping' : 'running',
+);
 const heading = computed(() => {
   if (record.value === null) return '';
-  if (end.value !== null)
-    return t(`refresh.heading.${end.value}`, { subject: subjectLabel.value });
-  if (stopping.value) return t('refresh.heading.stopping');
-  return t('refresh.heading.running', { subject: subjectLabel.value });
+  return t(`refresh.heading.${headingKey.value}`, {
+    subject: subjectLabel.value,
+  });
 });
 
 const countsLine = computed(() => {
@@ -187,7 +192,23 @@ function stop(): void {
   </template>
   <template v-else-if="record !== null">
     <div class="heading-row">
-      <h1>{{ heading }}</h1>
+      <h1>
+        <template v-if="headingKey === 'stopping'">{{ heading }}</template>
+        <i18n-t
+          v-else
+          :keypath="`refresh.heading.${headingKey}`"
+          scope="global"
+          tag="span"
+        >
+          <template #subject>
+            <TickerButton
+              v-if="subject?.kind === 'ticker'"
+              :source="currentProfileSource(subject.ticker)"
+            />
+            <template v-else>{{ subjectLabel }}</template>
+          </template>
+        </i18n-t>
+      </h1>
       <button
         v-if="live"
         type="button"
@@ -258,7 +279,9 @@ function stop(): void {
         </thead>
         <tbody>
           <tr v-for="row in record.rows" :key="row.position">
-            <th scope="row">{{ row.ticker }}</th>
+            <th scope="row">
+              <TickerButton :source="currentProfileSource(row.ticker)" />
+            </th>
             <td><StrategyName :method-id="row.methodId" /></td>
             <td>
               <template v-if="!row.finished">{{

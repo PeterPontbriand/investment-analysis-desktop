@@ -4,7 +4,9 @@ import { onErrorCaptured, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useEngine } from './api/engine.ts';
 import ConfirmDialog from './components/ConfirmDialog.vue';
+import DetailsPanel from './components/DetailsPanel.vue';
 import RefreshMarker from './components/RefreshMarker.vue';
+import { closePanel } from './composables/useDetailsPanel.ts';
 import { useMessages } from './i18n/index.ts';
 
 const { t } = useMessages();
@@ -43,6 +45,12 @@ watch(
   () => {
     renderFailed.value = false;
   },
+);
+// The panel's content belongs to the screen it was opened on, which a
+// navigation replaces; focus is not returned to a trigger that is gone.
+watch(
+  () => route.path,
+  () => closePanel({ returnFocus: false }),
 );
 </script>
 
@@ -86,6 +94,7 @@ watch(
       </div>
       <RouterView v-else />
     </main>
+    <DetailsPanel />
     <ConfirmDialog
       v-if="closeAsked"
       :title="t('close.title')"

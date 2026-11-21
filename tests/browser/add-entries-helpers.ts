@@ -9,6 +9,7 @@ import {
   type RecordedRequest,
 } from './engine-mock.ts';
 import { coreId, watchlistDocuments } from '../fixtures/api/data.ts';
+import { entriesAdded } from '../fixtures/api/actions.ts';
 import { ok, type Reply } from '../fixtures/api/server.ts';
 import * as selection from '../fixtures/api/selection.ts';
 import en from '../../src/locales/en.json' with { type: 'json' };
@@ -39,6 +40,8 @@ export type Options = {
     request: Record<string, unknown>,
   ) => Reply | undefined;
   extra?: Handler;
+  // The warnings to answer an add of these tickers with (D282).
+  warnings?: (tickers: string[]) => Parameters<typeof entriesAdded>[1];
   // Holds each add request open until it settles.
   hold?: Promise<void>;
 };
@@ -55,7 +58,9 @@ export async function openAdd(page: Page, options: Options = {}) {
       if (forced !== undefined) return forced;
       await options.hold;
       count += body.tickers.length;
-      return ok(coreWith(count));
+      return ok(
+        entriesAdded(coreWith(count), options.warnings?.(body.tickers)),
+      );
     }
     if (request.method === 'GET' && url.pathname === `/v1/watchlists/${coreId}`)
       return ok(coreWith(count));
