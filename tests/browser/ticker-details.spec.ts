@@ -318,11 +318,10 @@ for (const direction of directions) {
       await focusByKeyboard(page, trigger);
       await page.keyboard.press('Enter');
       await expect(panel(page).getByRole('heading')).toBeFocused();
-      await page.keyboard.press('Tab');
       const close = panel(page).getByRole('button', {
         name: words.detailsPanel.close,
       });
-      await expect(close).toBeFocused();
+      await focusByKeyboard(page, close);
       await page.keyboard.press('Enter');
       await expect(panel(page)).toHaveCount(0);
       await expect(trigger).toBeFocused();

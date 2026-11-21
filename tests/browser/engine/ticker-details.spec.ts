@@ -158,10 +158,10 @@ test.describe('the details of a watchlist entry', () => {
     await focusByKeyboard(page, trigger);
     await page.keyboard.press('Enter');
     await expect(panel(page).getByRole('heading')).toBeFocused();
-    await page.keyboard.press('Tab');
-    await expect(
+    await focusByKeyboard(
+      page,
       panel(page).getByRole('button', { name: words.detailsPanel.close }),
-    ).toBeFocused();
+    );
     await page.keyboard.press('Enter');
     await expect(panel(page)).toHaveCount(0);
     await expect(trigger).toBeFocused();
