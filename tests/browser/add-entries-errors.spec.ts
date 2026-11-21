@@ -94,7 +94,7 @@ test.describe('engine errors at their fields', () => {
     await choose(page, 'Momentum');
     await add(page).click();
     const message = page.getByText(
-      'Tickers must not duplicate an entry: KO is already listed for Momentum with an equal selection in the watchlist.',
+      'Tickers must not duplicate an entry: KO is already in the watchlist for Momentum with the same as-of date and options.',
     );
     await expect(message).toBeVisible();
     await describedBy(tickers(page), message);
@@ -103,10 +103,10 @@ test.describe('engine errors at their fields', () => {
     await add(page).click();
     await expect(
       page.getByText(
-        'Tickers must not duplicate an entry: KO is listed twice for Momentum with an equal selection in this request.',
+        'Tickers must not duplicate an entry: KO is listed twice for Momentum with the same as-of date and options.',
       ),
     ).toBeVisible();
-    await expect(page.getByText('already listed')).toHaveCount(0);
+    await expect(page.getByText('already in the watchlist')).toHaveCount(0);
   });
 
   test('shows a ticker error and an as-of error at their fields', async ({
@@ -215,7 +215,9 @@ test.describe('several strategies', () => {
     await expect(checkbox(page, 'Graham Number')).not.toBeChecked();
     await expect(checkbox(page, 'Graham Growth')).toBeChecked();
     await expect(
-      page.getByText(/must not duplicate an entry: KO is already listed/),
+      page.getByText(
+        /must not duplicate an entry: KO is already in the watchlist/,
+      ),
     ).toBeVisible();
     expect(posts(engine)).toHaveLength(3);
 
@@ -263,7 +265,7 @@ test.describe('several strategies', () => {
     await tickers(page).fill('KO');
     await choose(page, 'Momentum');
     await add(page).click();
-    await expect(page.getByText(/already listed/)).toBeVisible();
+    await expect(page.getByText(/already in the watchlist/)).toBeVisible();
     await expect(
       status(page, en.addEntries.partial.split('. ')[1]!.split(' | ')[0]!),
     ).toHaveCount(0);

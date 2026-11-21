@@ -7,6 +7,7 @@ import type { Page } from '@playwright/test';
 import type { components } from '../../../src/api/schema.ts';
 import { instantDateText, instantText } from '../expected-text.ts';
 import { focusByKeyboard } from '../keyboard.ts';
+import * as selection from '../../fixtures/api/selection.ts';
 import en from '../../../src/locales/en.json' with { type: 'json' };
 import {
   expect,
@@ -20,8 +21,8 @@ import {
 } from './real-engine.ts';
 
 // The failures these tests provoke (no stored profile, a lookup no provider can
-// answer) are logged by the browser.
-test.use({ allowedHttpStatuses: [404] });
+// answer, a duplicate entry) are logged by the browser.
+test.use({ allowedHttpStatuses: [400, 404] });
 
 const noProviders = 'The data providers cannot be reached from this machine.';
 const words = en;
@@ -330,5 +331,108 @@ test.describe('the identity a saved run kept', () => {
           : `${identity.instrument_name} (${overview.ticker}) `,
       ),
     ).toBe(true);
+  });
+});
+
+// The template the mocked tests' fixture gives a rule error.
+const fixtureTemplate = (reply: { body: unknown }) =>
+  (reply.body as components['schemas']['FailureEnvelope']).errors![0]!.template;
+
+test.describe('a duplicate entry', () => {
+  test("shows the engine's message at Tickers, for a twin in the watchlist and in the request", async ({
+    page,
+    engine,
+  }, testInfo) => {
+    const name = `Duplicate ${testInfo.project.name}`;
+    expect((await engine.cli(['watchlist', 'create', name])).code).toBe(0);
+    const strategies = (
+      await engine.get<components['schemas']['StrategiesDocument']>(
+        '/v1/strategies',
+      )
+    ).body.items;
+    const strategy = strategies.find((item) => item.method === 'piotroski');
+    expect(strategy, 'the engine lists a Piotroski strategy').toBeDefined();
+    const lists = (
+      await engine.get<{
+        items: { watchlist_id: string; display_name: string }[];
+      }>('/v1/watchlists')
+    ).body.items;
+    const id = lists.find((item) => item.display_name === name)?.watchlist_id;
+    const path = `/v1/watchlists/${id}/entries`;
+    const request = (tickers: string[]) => ({
+      method_id: 'piotroski',
+      tickers,
+    });
+
+    await openWatchlist(page, engine, name);
+    const open = async () => {
+      await page
+        .getByRole('button', { name: words.watchlist.addEntries })
+        .click();
+      await page
+        .getByRole('checkbox', { name: strategy!.label, exact: true })
+        .check();
+    };
+    const submit = async (tickers: string) => {
+      await page.getByLabel(words.addEntries.tickers).fill(tickers);
+      await page
+        .getByRole('button', { name: words.addEntries.add, exact: true })
+        .click();
+    };
+    // What the engine serves for the same request, as the field shows it: the
+    // template with the field's label and the engine's arguments.
+    const served = async (tickers: string[]) => {
+      const reply = await engine.post<components['schemas']['FailureEnvelope']>(
+        path,
+        request(tickers),
+      );
+      expect(reply.status).toBe(400);
+      const error = reply.body.errors?.[0];
+      expect(error?.rule).toBe('entries.duplicate');
+      const args = error!.arguments as Record<string, string>;
+      return {
+        template: error!.template,
+        text: error!
+          .template!.replace('{tickers}', words.addEntries.tickers)
+          .replace('{ticker}', args.ticker!)
+          .replace('{strategy}', args.strategy!),
+      };
+    };
+
+    await open();
+    await submit('KO');
+    await expect(
+      page
+        .getByRole('status')
+        .filter({ hasText: 'KO' })
+        .or(page.getByRole('heading', { level: 1 }).filter({ hasText: name }))
+        .first(),
+    ).toBeVisible();
+    await expect
+      .poll(
+        async () =>
+          (await engine.get<{ entries: unknown[] }>(`/v1/watchlists/${id}`))
+            .body.entries.length,
+      )
+      .toBe(1);
+
+    // An entry already in the watchlist.
+    await open();
+    await submit('KO');
+    const inWatchlist = await served(['KO']);
+    expect(inWatchlist.template).toBe(
+      fixtureTemplate(selection.failures.duplicate),
+    );
+    const message = page.getByText(inWatchlist.text);
+    await expect(message).toBeVisible();
+    await expect(page.getByLabel(words.addEntries.tickers)).toBeFocused();
+
+    // A ticker listed twice in one request.
+    await submit('MSFT MSFT');
+    const twice = await served(['MSFT', 'MSFT']);
+    expect(twice.template).toBe(
+      fixtureTemplate(selection.failures.twinInRequest),
+    );
+    await expect(page.getByText(twice.text)).toBeVisible();
   });
 });
