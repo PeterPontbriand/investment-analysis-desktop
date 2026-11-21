@@ -45,3 +45,9 @@ export const lookedUp = (ticker: string) =>
     'CAD',
     '2026-11-20T15:00:00+00:00',
   );
+
+// A profile identified by SEC EDGAR, which serves no listing venue (D306).
+export const withoutVenue = (ticker: string, name: string) => ({
+  ...profile(ticker, name, null, 'equity', 'USD'),
+  provider_id: 'sec_edgar',
+});

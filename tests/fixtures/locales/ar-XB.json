@@ -180,7 +180,6 @@
     "identifiedNoProvider": "[ar-XB] Identified for this run {date}",
     "lookUp": "[ar-XB] Look up",
     "lookingUp": "[ar-XB] Looking up…",
-    "lookUpAgain": "[ar-XB] Look up again",
     "nameAndTicker": "[ar-XB] {name} ({ticker})"
   },
   "detailsPanel": {

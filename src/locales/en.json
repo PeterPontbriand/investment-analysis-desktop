@@ -180,7 +180,6 @@
     "identifiedNoProvider": "Identified for this run {date}",
     "lookUp": "Look up",
     "lookingUp": "Looking up…",
-    "lookUpAgain": "Look up again",
     "nameAndTicker": "{name} ({ticker})"
   },
   "detailsPanel": {

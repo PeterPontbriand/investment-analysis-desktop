@@ -1,6 +1,6 @@
 <script setup lang="ts">
-/* global HTMLElement -- DOM types; src/ configures no browser globals */
-import { nextTick, ref, watch } from 'vue';
+/* global HTMLElement, KeyboardEvent, document -- DOM types; src/ configures no browser globals */
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useMessages } from '../i18n/index.ts';
 import {
   closePanel,
@@ -10,11 +10,23 @@ import {
 
 // The one details panel (D285): non-modal, on the inline-end side, over the
 // content, which stays usable. Another trigger replaces its content. Opening
-// it moves focus to its heading; Escape or the close button closes it and
-// returns focus to the trigger.
+// it moves focus to its heading. Escape closes it wherever focus is, unless a
+// modal dialog is open, and the close button does too; focus returns to the
+// trigger (D304). An open preview takes the Escape first.
 const { t } = useMessages();
 const content = openPanelContent;
 const heading = ref<HTMLElement | null>(null);
+
+// Escape closes the panel wherever focus is. A preview closes first: its
+// handler runs in the capture phase and stops the key press. A modal dialog
+// closes itself on Escape and keeps the panel.
+function onEscape(event: KeyboardEvent): void {
+  if (event.key !== 'Escape' || content.value === null) return;
+  if (document.querySelector(':modal') !== null) return;
+  closePanel();
+}
+onMounted(() => document.addEventListener('keydown', onEscape));
+onBeforeUnmount(() => document.removeEventListener('keydown', onEscape));
 
 watch(content, (held, previous) => {
   if (held === null) return;
@@ -29,7 +41,6 @@ watch(content, (held, previous) => {
     :id="panelId"
     class="details-panel"
     aria-labelledby="details-panel-heading"
-    @keydown.esc="closePanel()"
   >
     <div class="panel-head">
       <h2 id="details-panel-heading" ref="heading" tabindex="-1">

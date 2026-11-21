@@ -30,7 +30,7 @@ import {
   type Frame,
   type JobScript,
 } from '../fixtures/api/refresh.ts';
-import { lookedUp, profiles } from '../fixtures/api/profiles.ts';
+import { lookedUp, profiles, withoutVenue } from '../fixtures/api/profiles.ts';
 import { failure, ok, respond } from '../fixtures/api/server.ts';
 import en from '../../src/locales/en.json' with { type: 'json' };
 import ar from '../fixtures/locales/ar-XB.json' with { type: 'json' };
@@ -125,6 +125,38 @@ for (const direction of directions) {
       await expect(popup(page).getByRole('link')).toHaveCount(0);
       const id = await popup(page).getAttribute('id');
       await expect(trigger).toHaveAttribute('aria-describedby', id ?? '');
+    });
+
+    test('shows no venue for a profile the engine serves without one', async ({
+      page,
+    }) => {
+      await start(page, direction, (url) =>
+        url.pathname === profilePath('ACME')
+          ? ok(withoutVenue('ACME', 'Acme Corp'))
+          : undefined,
+      );
+      await openCore(page);
+      const trigger = tickerButton(page, 'ACME');
+      await trigger.hover();
+      await expect(popup(page)).toBeVisible();
+      // The name, then the kind and the currency only (D306).
+      await expect(popup(page)).toContainText(
+        `Equity ${words.common.separator} USD`,
+      );
+      await expect(popup(page)).not.toContainText(
+        `${words.common.separator} Equity`,
+      );
+      await expect(popup(page)).not.toContainText('NASDAQ');
+      await trigger.click();
+      await expect(panel(page)).toContainText('Acme Corp');
+      await expect(panel(page)).toContainText('USD');
+      await expect(panel(page)).not.toContainText('NASDAQ');
+      await expect(panel(page)).toContainText(
+        fill(words.tickerDetails.checked, {
+          date: await instantText(page, profiles.ACME!.refreshed_at, locale),
+          provider: 'SEC EDGAR',
+        }),
+      );
     });
 
     test('does not open when the pointer passes by', async ({ page }) => {
@@ -246,11 +278,10 @@ for (const direction of directions) {
       );
       await expect(panel(page)).not.toContainText('ISSUER');
       await expect(panel(page)).not.toContainText('INSTRUMENT');
+      // A stored profile offers no lookup (D303).
       await expect(
-        panel(page).getByRole('button', {
-          name: words.tickerDetails.lookUpAgain,
-        }),
-      ).toBeVisible();
+        panel(page).getByRole('button', { name: words.tickerDetails.lookUp }),
+      ).toHaveCount(0);
       await page.keyboard.press('Escape');
       await expect(panel(page)).toHaveCount(0);
       await expect(trigger).toBeFocused();
@@ -276,6 +307,91 @@ for (const direction of directions) {
         .click();
       await expect(panel(page)).toHaveCount(0);
       await expect(trigger).toBeFocused();
+    });
+
+    test('closes from the keyboard on the close button, and the focus ring shows on the trigger', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      const trigger = tickerButton(page, 'ACME');
+      await focusByKeyboard(page, trigger);
+      await page.keyboard.press('Enter');
+      await expect(panel(page).getByRole('heading')).toBeFocused();
+      await page.keyboard.press('Tab');
+      const close = panel(page).getByRole('button', {
+        name: words.detailsPanel.close,
+      });
+      await expect(close).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(panel(page)).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+      expect(await trigger.evaluate((e) => e.matches(':focus-visible'))).toBe(
+        true,
+      );
+      await expect(popup(page)).toHaveCount(0);
+    });
+
+    test('Escape closes the panel wherever focus is, after a click in the table behind it', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      const trigger = tickerButton(page, 'ACME');
+      await trigger.click();
+      await expect(panel(page)).toBeVisible();
+      // A click in the content behind the panel takes focus out of it.
+      await page.locator('tbody tr').first().locator('td').first().click();
+      await expect(panel(page).getByRole('heading')).not.toBeFocused();
+      await page.keyboard.press('Escape');
+      await expect(panel(page)).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+      await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+      await expect(popup(page)).toHaveCount(0);
+    });
+
+    test('Escape with a modal dialog open closes the dialog and leaves the panel open', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      await tickerButton(page, 'ACME').click();
+      await expect(panel(page)).toBeVisible();
+      // The panel is fixed over the end side; reach the table's first Remove
+      // button by keyboard instead of by pointer.
+      await page
+        .getByRole('button', {
+          name: fill(words.watchlist.removeEntry, {
+            index: 1,
+            ticker: 'ACME',
+            strategy: 'Momentum',
+          }),
+        })
+        .focus();
+      await page.keyboard.press('Enter');
+      await expect(page.locator('dialog:modal')).toHaveCount(1);
+      await page.keyboard.press('Escape');
+      await expect(page.locator('dialog:modal')).toHaveCount(0);
+      await expect(panel(page)).toBeVisible();
+      // With no dialog open, the next Escape closes the panel.
+      await page.keyboard.press('Escape');
+      await expect(panel(page)).toHaveCount(0);
+    });
+
+    test('Escape with a preview open closes only the preview', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      await tickerButton(page, 'ACME').click();
+      await expect(panel(page)).toBeVisible();
+      await focusByKeyboard(page, tickerButton(page, 'ZED'));
+      await expect(popup(page)).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(popup(page)).toHaveCount(0);
+      await expect(panel(page)).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(panel(page)).toHaveCount(0);
     });
 
     test('shows one panel, replaced by the next ticker', async ({ page }) => {
@@ -421,11 +537,10 @@ for (const direction of directions) {
           provider: 'Yahoo Finance',
         }),
       );
+      // A stored profile offers no lookup (D303).
       await expect(
-        panel(page).getByRole('button', {
-          name: words.tickerDetails.lookUpAgain,
-        }),
-      ).toBeVisible();
+        panel(page).getByRole('button', { name: words.tickerDetails.lookUp }),
+      ).toHaveCount(0);
       // One request, although the pending button was activated again.
       expect(lookupPaths(engine, 'ACME')).toHaveLength(1);
       // The lookup replaced the cached entry: no profile is asked for again.

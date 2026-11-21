@@ -10,9 +10,10 @@ import ActionFailure from './ActionFailure.vue';
 import ScreenState from './ScreenState.vue';
 import TickerDetailLines from './TickerDetailLines.vue';
 
-// The body of the details panel for a ticker (D285, D290, D291, D292). A
-// current profile always offers "Look up again", and a ticker with no stored
-// profile offers "Look up". A lookup only happens when the user chooses it.
+// The body of the details panel for a ticker (D285, D290, D291, D292, D303). A
+// ticker with no stored profile offers "Look up"; a stored profile shows its
+// checked date and offers nothing. A lookup only happens when the user chooses
+// it.
 const props = defineProps<{ source: IdentitySource }>();
 
 const { t } = useMessages();
@@ -28,12 +29,8 @@ async function lookUp(): Promise<void> {
 }
 
 const canLookUp = computed(
-  () =>
-    props.source.kind === 'currentProfile' &&
-    (details.value.kind === 'none' ||
-      (details.value.kind === 'described' && details.value.current)),
+  () => props.source.kind === 'currentProfile' && details.value.kind === 'none',
 );
-const noProfile = computed(() => details.value.kind === 'none');
 </script>
 
 <template>
@@ -65,16 +62,14 @@ const noProfile = computed(() => details.value.kind === 'none');
   <p v-if="canLookUp" class="actions">
     <button
       type="button"
-      :class="{ primary: noProfile }"
+      class="primary"
       :aria-disabled="lookup.pending.value ? 'true' : 'false'"
       @click="lookUp()"
     >
       {{
         lookup.pending.value
           ? t('tickerDetails.lookingUp')
-          : noProfile
-            ? t('tickerDetails.lookUp')
-            : t('tickerDetails.lookUpAgain')
+          : t('tickerDetails.lookUp')
       }}
     </button>
   </p>

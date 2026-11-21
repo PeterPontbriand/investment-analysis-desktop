@@ -12,7 +12,10 @@ export const info: Schemas['InfoDocument'] = {
   api_versions: ['v1'],
   engine_version: '4.5.6',
   locales: [{ tag: 'en', name: 'English' }],
-  providers: [{ id: 'yahoo', name: 'Yahoo Finance' }],
+  providers: [
+    { id: 'yahoo', name: 'Yahoo Finance' },
+    { id: 'sec_edgar', name: 'SEC EDGAR' },
+  ],
   schema_version: 3,
   sec_identity_configured: false,
 };
