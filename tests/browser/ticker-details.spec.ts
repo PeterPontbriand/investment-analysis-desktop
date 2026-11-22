@@ -855,6 +855,116 @@ for (const direction of directions) {
       );
     });
 
+    // D331: a ticker beside the company name previews what the heading lacks.
+    const msftRun = '00000000-0000-4000-8000-000000000001';
+    const withVenue =
+      (ticker: string, name: string, runId: string): Handler =>
+      (url) => {
+        if (url.pathname !== `/v1/runs/${runId}/overview`) return undefined;
+        const reply = respond(url);
+        return {
+          ...reply,
+          body: {
+            ...(reply.body as object),
+            security_identity: identityOf(ticker, name, 'NYSE'),
+          },
+        };
+      };
+    async function openFirstRun(page: Page, handler?: Handler) {
+      await start(page, direction, handler);
+      await page
+        .getByRole('navigation', { name: en.nav.label })
+        .getByRole('link', { name: words.nav.runs })
+        .click();
+      await page.locator('tbody tr').nth(0).locator('th a').click();
+      await expect(h1(page)).toContainText('Microsoft Corp');
+    }
+
+    test('run detail: the preview shows the venue and not the name the heading already shows', async ({
+      page,
+    }) => {
+      await openFirstRun(page, withVenue('MSFT', 'Microsoft Corp', msftRun));
+      const ticker = h1(page).getByRole('button', { name: 'MSFT' });
+      await ticker.hover();
+      await expect(popup(page)).toBeVisible();
+      await expect(popup(page)).toHaveText('NYSE');
+      await expect(popup(page)).not.toContainText('Microsoft Corp');
+      // The panel keeps every line.
+      await ticker.click();
+      await expect(panel(page)).toContainText('Microsoft Corp');
+      await expect(panel(page)).toContainText('NYSE');
+    });
+
+    test('run detail: with nothing but the name, no preview opens and Enter opens the panel with every line', async ({
+      page,
+    }) => {
+      await openFirstRun(page);
+      const ticker = h1(page).getByRole('button', { name: 'MSFT' });
+      await ticker.hover();
+      await page.waitForTimeout(800);
+      await expect(popup(page)).toHaveCount(0);
+      await expect(ticker).not.toHaveAttribute('aria-describedby', /.+/);
+      await page.mouse.move(0, 0);
+      await focusByKeyboard(page, ticker);
+      await page.waitForTimeout(200);
+      await expect(popup(page)).toHaveCount(0);
+      await page.keyboard.press('Enter');
+      await expect(panel(page)).toContainText('Microsoft Corp');
+      // The name and when and with which provider it was identified.
+      await expect(panel(page).locator('.lines > p')).toHaveCount(2);
+    });
+
+    test('run detail: with previews off nothing changes for the heading ticker', async ({
+      page,
+    }) => {
+      await openFirstRun(page);
+      await page
+        .getByRole('switch', { name: words.previewSwitch.label })
+        .click();
+      const ticker = h1(page).getByRole('button', { name: 'MSFT' });
+      await expect(ticker).not.toHaveAttribute('aria-describedby', /.+/);
+      await focusByKeyboard(page, ticker);
+      await page.keyboard.press('Enter');
+      await expect(panel(page)).toContainText('Microsoft Corp');
+    });
+
+    test('a ticker in a table cell still previews its name', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await page
+        .getByRole('navigation', { name: en.nav.label })
+        .getByRole('link', { name: words.nav.runs })
+        .click();
+      const cell = page
+        .locator('tbody tr')
+        .nth(0)
+        .getByRole('button', { name: 'MSFT' });
+      await cell.hover();
+      await expect(popup(page)).toContainText('Microsoft Corp');
+    });
+
+    test('the one-ticker comparison heading previews the venue and not the name', async ({
+      page,
+    }) => {
+      await openOneTicker(page, withVenue('ACME', 'Acme Corp', analyzeRun));
+      const ticker = h1(page).getByRole('button', { name: 'ACME' });
+      await ticker.hover();
+      await expect(popup(page)).toHaveText('NYSE');
+    });
+
+    test('the one-ticker comparison heading opens no preview when only the name is known', async ({
+      page,
+    }) => {
+      await openOneTicker(page, () => undefined);
+      const ticker = h1(page).getByRole('button', { name: 'ACME' });
+      await ticker.hover();
+      await page.waitForTimeout(800);
+      await expect(popup(page)).toHaveCount(0);
+      await ticker.click();
+      await expect(panel(page)).toContainText('Acme Corp');
+    });
+
     test('keeps the heading of a comparison of a watchlist as it was', async ({
       page,
     }) => {

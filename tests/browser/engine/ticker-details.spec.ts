@@ -332,6 +332,50 @@ test.describe('the identity a saved run kept', () => {
       ),
     ).toBe(true);
   });
+
+  test("the heading's ticker previews only what the heading lacks, by what the engine serves for the run's identity (D331)", async ({
+    page,
+    engine,
+  }) => {
+    test.skip(engine.savedRunId === null, noProviders);
+    const overview = (
+      await engine.get<components['schemas']['RunOverviewDocument']>(
+        `/v1/runs/${engine.savedRunId}/overview`,
+      )
+    ).body;
+    const identity = overview.security_identity;
+    await openApp(page, engine);
+    await page
+      .getByRole('navigation', { name: words.nav.label })
+      .getByRole('link', { name: words.nav.runs })
+      .click();
+    await page.locator('tbody tr').first().getByRole('link').first().click();
+    const heading = page.getByRole('heading', { level: 1 });
+    await expect(heading).toContainText(overview.ticker);
+    const trigger = heading.getByRole('button', {
+      name: overview.ticker,
+      exact: true,
+    });
+
+    // The preview shows the venue the engine serves, never the name the
+    // heading shows; with no venue and a name, no preview opens at all.
+    await trigger.hover();
+    if (identity.instrument_name !== null && identity.listing_venue !== null) {
+      await expect(popup(page)).toHaveText(identity.listing_venue);
+    } else if (identity.instrument_name !== null) {
+      await page.waitForTimeout(800);
+      await expect(popup(page)).toHaveCount(0);
+    }
+    await page.mouse.move(0, 0);
+
+    // The panel keeps every line.
+    await trigger.click();
+    await expect(panel(page)).toBeVisible();
+    if (identity.instrument_name !== null)
+      await expect(panel(page)).toContainText(identity.instrument_name);
+    if (identity.listing_venue !== null)
+      await expect(panel(page)).toContainText(identity.listing_venue);
+  });
 });
 
 // The template the mocked tests' fixture gives a rule error.

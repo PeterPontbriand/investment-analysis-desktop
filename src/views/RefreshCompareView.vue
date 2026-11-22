@@ -141,7 +141,7 @@ const counts = computed(() =>
               >
                 <template #name>{{ named.name }}</template>
                 <template #ticker
-                  ><TickerButton :source="named.source"
+                  ><TickerButton :source="named.source" name-shown
                 /></template>
               </i18n-t>
               <TickerButton v-else :source="named.source" />

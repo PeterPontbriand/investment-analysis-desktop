@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import type { ApiResult, GetResponse } from '../api/client.ts';
+import { useEngine } from '../api/engine.ts';
 import { runIdentitySource } from '../api/identitySource.ts';
 import { useScreenData } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
@@ -33,6 +34,7 @@ type Loaded = {
 };
 
 const { t, locale } = useMessages();
+const engine = useEngine();
 const route = useRoute();
 const runId = useRouteParam('run', 'runId');
 // Where the reader came from, kept from when the screen opened: the route
@@ -47,6 +49,10 @@ const { state, reload } = useScreenData<Loaded>(
       client.get('/v1/runs/{analysis_run_id}', { path }),
     ]);
     if (overview.status === 'rejected') throw overview.reason;
+    engine.identities.rememberRunIdentity(
+      runId.value,
+      overview.value.data.security_identity,
+    );
     return {
       overview: overview.value,
       document:
@@ -114,6 +120,7 @@ const asOfDate = computed(() =>
         <template #name>{{ companyName }}</template>
         <template #ticker
           ><TickerButton
+            :name-shown="companyName !== null"
             :source="
               runIdentitySource(
                 state.data.overview.data.ticker,
