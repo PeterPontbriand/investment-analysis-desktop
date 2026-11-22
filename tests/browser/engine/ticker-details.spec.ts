@@ -333,7 +333,7 @@ test.describe('the identity a saved run kept', () => {
     ).toBe(true);
   });
 
-  test("the heading's ticker previews only what the heading lacks, by what the engine serves for the run's identity (D331)", async ({
+  test("the heading's ticker previews the venue the engine served for the run's identity (D331)", async ({
     page,
     engine,
   }) => {
@@ -344,6 +344,19 @@ test.describe('the identity a saved run kept', () => {
       )
     ).body;
     const identity = overview.security_identity;
+    // A run of the known ticker saved on this engine must keep a listing
+    // venue (engine API.17); the no-venue case is the mocked tests'.
+    expect(
+      identity.listing_venue,
+      `the engine served no listing venue in the identity of run ${engine.savedRunId}`,
+    ).not.toBeNull();
+    expect(
+      identity.instrument_name,
+      `the engine served no name in the identity of run ${engine.savedRunId}`,
+    ).not.toBeNull();
+    const venue = identity.listing_venue!;
+    const name = identity.instrument_name!;
+
     await openApp(page, engine);
     await page
       .getByRole('navigation', { name: words.nav.label })
@@ -357,24 +370,19 @@ test.describe('the identity a saved run kept', () => {
       exact: true,
     });
 
-    // The preview shows the venue the engine serves, never the name the
-    // heading shows; with no venue and a name, no preview opens at all.
+    // The preview is the venue the engine served, and not the name the
+    // heading already shows.
     await trigger.hover();
-    if (identity.instrument_name !== null && identity.listing_venue !== null) {
-      await expect(popup(page)).toHaveText(identity.listing_venue);
-    } else if (identity.instrument_name !== null) {
-      await page.waitForTimeout(800);
-      await expect(popup(page)).toHaveCount(0);
-    }
+    await expect(popup(page)).toBeVisible();
+    await expect(popup(page)).toHaveText(venue);
+    await expect(popup(page)).not.toContainText(name);
     await page.mouse.move(0, 0);
 
-    // The panel keeps every line.
+    // The panel keeps the name and the venue.
     await trigger.click();
     await expect(panel(page)).toBeVisible();
-    if (identity.instrument_name !== null)
-      await expect(panel(page)).toContainText(identity.instrument_name);
-    if (identity.listing_venue !== null)
-      await expect(panel(page)).toContainText(identity.listing_venue);
+    await expect(panel(page)).toContainText(name);
+    await expect(panel(page)).toContainText(venue);
   });
 });
 
