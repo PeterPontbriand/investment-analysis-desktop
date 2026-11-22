@@ -9,6 +9,7 @@ import {
 } from '../composables/useDetailsPanel.ts';
 import { usePreviewTrigger } from '../composables/usePreviewTrigger.ts';
 import { useResolvedEntry } from '../composables/useResolvedEntry.ts';
+import { showPreviews } from '../preferences.ts';
 import { useMessages } from '../i18n/index.ts';
 import { termDefinitionId } from './termDefinitionId.ts';
 import PreviewPopup from './PreviewPopup.vue';
@@ -48,6 +49,7 @@ const entry = useResolvedEntry(
 const button = ref<HTMLElement | null>(null);
 const owner = {};
 const popupId = useId();
+const describedId = useId();
 const preview = usePreviewTrigger();
 const expanded = computed(() => isPanelOpenFor(owner));
 
@@ -92,7 +94,9 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
       "
       :aria-expanded="expanded ? 'true' : 'false'"
       :aria-controls="panelId"
-      :aria-describedby="preview.open.value ? popupId : undefined"
+      :aria-describedby="
+        preview.open.value ? popupId : showPreviews ? undefined : describedId
+      "
       @click="open()"
       @pointerenter="preview.trigger.onPointerenter"
       @pointerleave="preview.trigger.onPointerleave"
@@ -114,6 +118,17 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
         {{ t('termHelp.f1') }}
       </p>
     </PreviewPopup>
+    <!-- With previews off the description stays, as hidden text (D330). -->
+    <span
+      v-if="!showPreviews"
+      :id="describedId"
+      class="visually-hidden"
+      :lang="entry.lang ?? undefined"
+      >{{ entry.definition
+      }}<template v-if="control !== undefined">
+        {{ t('termHelp.f1') }}</template
+      ></span
+    >
     <span
       v-if="kind === 'help' && control !== undefined"
       :id="termDefinitionId(control)"

@@ -8,6 +8,7 @@ import {
   togglePanel,
 } from '../composables/useDetailsPanel.ts';
 import { usePreviewTrigger } from '../composables/usePreviewTrigger.ts';
+import { showPreviews } from '../preferences.ts';
 import { useMessages } from '../i18n/index.ts';
 import PreviewPopup from './PreviewPopup.vue';
 import TickerDetailsBody from './TickerDetailsBody.vue';
@@ -22,6 +23,7 @@ const { t } = useMessages();
 const button = ref<HTMLElement | null>(null);
 const owner = {};
 const popupId = useId();
+const describedId = useId();
 const preview = usePreviewTrigger();
 const expanded = computed(() => isPanelOpenFor(owner));
 
@@ -46,7 +48,9 @@ function open(): void {
     class="ticker-button"
     :aria-expanded="expanded ? 'true' : 'false'"
     :aria-controls="panelId"
-    :aria-describedby="preview.open.value ? popupId : undefined"
+    :aria-describedby="
+      preview.open.value ? popupId : showPreviews ? undefined : describedId
+    "
     @click="open()"
     @pointerenter="preview.trigger.onPointerenter"
     @pointerleave="preview.trigger.onPointerleave"
@@ -55,6 +59,10 @@ function open(): void {
   >
     {{ source.ticker }}
   </button>
+  <!-- With previews off the description stays, as hidden text (D330). -->
+  <span v-if="!showPreviews" :id="describedId" class="visually-hidden"
+    ><TickerPreview :source="source"
+  /></span>
   <PreviewPopup
     v-if="preview.open.value"
     :id="popupId"

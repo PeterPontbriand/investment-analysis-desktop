@@ -1,5 +1,6 @@
 /* global document, setTimeout, clearTimeout, HTMLElement, PointerEvent, KeyboardEvent -- DOM types and timers; src/ configures no browser globals */
 import { onBeforeUnmount, ref, watch } from 'vue';
+import { showPreviews } from '../preferences.ts';
 import { restoringFocus } from './useDetailsPanel.ts';
 
 // How long the pointer rests on a trigger before its preview opens, and how
@@ -40,7 +41,7 @@ export function usePreviewTrigger() {
   const trigger = {
     onPointerenter(event: PointerEvent): void {
       // A touch has no hover; a tap opens the panel instead.
-      if (event.pointerType === 'touch') return;
+      if (event.pointerType === 'touch' || !showPreviews.value) return;
       overTrigger = true;
       if (closeTimer !== null) clearTimeout(closeTimer);
       closeTimer = null;
@@ -59,7 +60,7 @@ export function usePreviewTrigger() {
     onFocus(event: FocusEvent): void {
       const element = event.currentTarget as HTMLElement;
       // Focus from a mouse click, or given back by the panel, opens nothing.
-      if (restoringFocus.value === element) return;
+      if (restoringFocus.value === element || !showPreviews.value) return;
       if (element.matches(':focus-visible')) {
         clearTimers();
         open.value = true;
@@ -87,6 +88,10 @@ export function usePreviewTrigger() {
     event.stopPropagation();
     close();
   }
+  // Turning previews off closes the one that is open (D330).
+  watch(showPreviews, (shown) => {
+    if (!shown) close();
+  });
   watch(open, (isOpen) => {
     if (isOpen) document.addEventListener('keydown', onEscape, true);
     else document.removeEventListener('keydown', onEscape, true);

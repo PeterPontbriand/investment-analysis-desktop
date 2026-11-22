@@ -185,6 +185,9 @@
     "lookingUp": "Looking up…",
     "nameAndTicker": "{name} ({ticker})"
   },
+  "previewSwitch": {
+    "label": "Show popups"
+  },
   "termHelp": {
     "about": "About {name}",
     "mark": "?",

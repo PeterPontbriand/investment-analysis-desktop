@@ -185,6 +185,9 @@
     "lookingUp": "[ar-XB] Looking up…",
     "nameAndTicker": "[ar-XB] {name} ({ticker})"
   },
+  "previewSwitch": {
+    "label": "[ar-XB] Show popups"
+  },
   "termHelp": {
     "about": "[ar-XB] About {name}",
     "mark": "[ar-XB] ?",

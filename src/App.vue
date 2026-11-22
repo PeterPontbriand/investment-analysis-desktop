@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router';
 import { useEngine } from './api/engine.ts';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import DetailsPanel from './components/DetailsPanel.vue';
+import PreviewSwitch from './components/PreviewSwitch.vue';
 import RefreshMarker from './components/RefreshMarker.vue';
 import { closePanel } from './composables/useDetailsPanel.ts';
 import { useMessages } from './i18n/index.ts';
@@ -95,6 +96,9 @@ watch(
           </li>
         </ul>
       </nav>
+      <div class="preferences">
+        <PreviewSwitch />
+      </div>
     </header>
     <main class="content">
       <div v-if="renderFailed" role="alert" class="failure">
@@ -126,6 +130,8 @@ watch(
 }
 
 .sidebar {
+  display: flex;
+  flex-direction: column;
   border-inline-end: var(--border-width) solid var(--color-border);
   flex: 0 0 var(--sidebar-size);
   padding: var(--space-4) var(--space-3);
@@ -141,6 +147,12 @@ watch(
   color: var(--color-text-secondary);
   font-size: var(--font-size-small);
   margin-block: 0 var(--space-6);
+}
+
+.preferences {
+  border-block-start: var(--border-width) solid var(--color-border);
+  margin-block-start: auto;
+  padding-block-start: var(--space-3);
 }
 
 .sidebar ul {
