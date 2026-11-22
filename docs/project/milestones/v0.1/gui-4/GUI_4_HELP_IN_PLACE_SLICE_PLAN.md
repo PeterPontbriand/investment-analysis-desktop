@@ -28,10 +28,10 @@
 ### GUI.4b — Term popups
 
 - **Problem:** Every element that shows an engine term keeps its term id and explains nothing yet.
-- **Decision:** Give each of them the preview and the details panel of GUI.4a, with the term's definition from `/v1/help/terms/{term_id}`.
-- **Scope:** the preview and the panel on every element that keeps a term id; the explicit control touch screens need where hover does not exist; the decision on the application's own labels, below.
-- **Branch:** `feat/gui-4b-term-popups`, from main after GUI.4a merges; its own pull request.
-- **Detail:** no slice plan exists; the sub-slice records its decisions in its own pull request.
+- **Decision:** Give each of them the preview and the details panel of GUI.4a, with the term's definition from the cached `/v1/help` index (D320). The single-term request `/v1/help/terms/{term_id}` and the full entry come in GUI.4c.
+- **Scope:** the preview and the panel on every element that keeps a term id (D315); the small help button for form controls (D316); the application's own labels (D314); the re-vendor and the separate messages for request-time database failures (D313, D325 to D327).
+- **Branch:** `feat/gui-4b-term-popups`, from main after GUI.4a merges; its own pull request, which closes IAD issue #31.
+- **Detail:** [GUI.4b decisions](#gui4b-term-popups) in Appendix A of this plan.
 
 ### GUI.4c — Help panel content
 
@@ -41,11 +41,9 @@
 - **Branch:** `feat/gui-4c-help-panel`, from main after GUI.4b merges; its own pull request.
 - **Detail:** no slice plan exists; the sub-slice records its decisions in its own pull request.
 
-### Decision to approve before GUI.4b
+### Application labels and help (settled)
 
-| Decision | Recommendation and trade-off |
-| :--- | :--- |
-| Whether the application's own labels that the comparison and run detail show with no term id ("Saved", "As of", "Saved by", "Warnings", "Limitations", "Not run", "Refresh comparison" and "Ad hoc entries") get help (D165 in the [GUI.2 slice plan](../gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record)). | Open; the project owner decides it before GUI.4b starts. The engine's glossary has an "As-of Date" term, for example, so some labels could take a term id. Help for the others would be the application's own text ("how to use this application", AGENTS.md), which needs its own catalog entries and would show in the same panel. Giving none of them help leaves the rule "every term explains itself" true only for engine content. |
+The question left open by D281, whether the application's own labels get help (D165 in the [GUI.2 slice plan](../gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record)), is settled by D314.
 
 ## Interaction model
 
@@ -170,7 +168,7 @@ Approved by the project owner on 2026-11-20. The numbering continues [Appendix A
 | :--- | :--- |
 | D279 | Plan. This plan holds the sub-slice table (D281), the GUI.4-wide interaction decisions (D283 to D286), GUI.4a's detail with file scope and acceptance criteria, and this appendix. Later sub-slices record their decisions in their own pull requests. In the v0.1 implementation plan, the GUI.4 section names engine prerequisites API.15 and API.16 (both merged), adds headings to the ticker-details scope, and links this plan as its Detail, replacing "no slice plan yet". |
 | D280 | Missed GUI.3 status updates (D278 was not applied on main). In the first commit: the GUI.3 slice plan's GUI.3d row becomes Complete, 2026-11-20; in the implementation plan GUI.3 becomes Complete, 2026-11-20, and GUI.4 Next. GUI.4a's own row is Next; it becomes Complete with the date the pull request is opened. |
-| D281 | Sub-slices. GUI.4a: ticker details, building the shared preview popup and details panel. GUI.4b: term popups on every element that keeps a term id. GUI.4c: help panel content (the full entry, linked terms, guides from `/v1/help/documents/{id}`). The D165 question (help for the application's own labels) is recorded as an open decision to settle before GUI.4b. |
+| D281 | Sub-slices. GUI.4a: ticker details, building the shared preview popup and details panel. GUI.4b: term popups on every element that keeps a term id. GUI.4c: help panel content (the full entry, linked terms, guides from `/v1/help/documents/{id}`). The D165 question (help for the application's own labels) was recorded as an open decision; D314 settles it. |
 | D282 | Re-vendor and API.16. The branch's first commit is `pnpm vendor-ian 965e279` with a decision row naming the commit. "Add entries" reads the watchlist from `EntriesAddedDocument.watchlist`. Each warning shows as a status line naming the ticker and the warning code's term name (through the existing term-name element, term id kept). The D262 fixture and test gain every new `FailureReasonCode` and warning code, filled from the engine at 965e279. Check that the adapter treats every failure status the vendored description now documents as a failure document; stop if one is not covered. |
 
 ### Interaction model
@@ -224,4 +222,18 @@ Approved by the project owner on 2026-11-22. Decisions D313 to D327 are recorded
 
 | # | Decision |
 | :--- | :--- |
-| D313 | Re-vendor. The branch's first commit is `pnpm vendor-ian 570b2fa2c7fdec7057b0b05aff56a814a5a4aad5` (engine main after API.18, the glossary entries Analysis Warning and Analysis Limitation, and API.19). It picks up API.18 (IAD issue #31) and API.19, which D326 and D327 cover. The pull request closes #31. |
+| D313 | Re-vendor. The branch's first commit is `pnpm vendor-ian 570b2fa2c7fdec7057b0b05aff56a814a5a4aad5` (engine main after API.18, the glossary entries Analysis Warning and Analysis Limitation, and API.19). It picks up API.18 (IAD issue #31) and API.19, which D325 to D327 cover. The pull request closes #31. |
+| D314 | The application's own labels (settles D165 in the GUI.2 slice plan). Labels that name an engine concept get that engine term's help: "As of" → `as-of-date`; "Ad hoc entries" → `refresh`; "Warnings" → `analysis-warning`; "Limitations" → `analysis-limitation`. "Refresh comparison" would also have named `refresh`, but it appears only as a breadcrumb crumb, which is a link, so it gets no help (B5 rules out a trigger inside a link); the label-to-term map keeps `refresh` for "Ad hoc entries" only and does not hold the crumb. "Saved", "Saved by" and "Not run" get no help; they are ordinary words, not concepts. The application keeps one small typed map from these labels to engine term ids (`src/api/labelTerms.ts`). The "As of" labels on Analyze and Add entries get D316's help button, and run detail's "As of {date}" message is split so the label is the trigger (D315). |
+| D315 | Which elements become term triggers. Every element that shows a term name with a term id where people read rather than fill in a form: table cells and column headers; headline card labels, statuses and reasons; outcome pills, including the counts pills; provider check verdicts; the run detail heading's strategy; the stored-options list; the persistent "Add entries" warning lines. Not: visually hidden live-region announcements, dialogs, and the cases of D316, D317 and D321. A code the engine serves without a term stays plain text. |
+| D316 | Form controls. Strategy checkboxes, and selection fields whose term id is set, get a small separate help button after the label, with the same preview and panel and an accessible name such as "About Graham Number". Values inside native selects (the Saved runs filters, choice fields) get no help in GUI.4b. Rendered form: `[x] Graham Number (?)  [Show options]` and `Margin of safety (?)  [ 30 ]%`. |
+| D317 | A term is never inside a link. Comparison value cells: the link keeps the value or "—", and the term is a trigger beside it. Comparison outcome column: the pill becomes a trigger; the row's value cells still link to the run. Refresh progress rows: the pill becomes a trigger, followed by a "View run" link. |
+| D318 | Tab stops. As D286, every trigger is a tab stop. No roving tabindex. |
+| D319 | How a term looks. Inline terms and column headers: a dotted underline in the text colour, and a help cursor. Pills stay pills: no underline, a darker hover background, the standard focus ring. Links keep P1's quiet solid underline, so the two stay distinct. |
+| D320 | Content and source. The preview shows the definition only, since the trigger shows the name. The panel shows the term name as its heading, then the definition. Both come from the cached `/v1/help` index (`HelpTermItem.definition`, with the index's content language), with no per-term request; `/v1/help/terms/{term_id}` and the full entry come in GUI.4c. |
+| D321 | No triggers inside the ticker preview or the ticker details panel in GUI.4b; links inside the panel are GUI.4c's. |
+| D322 | Touch. A tap opens the panel (D283); there is no other touch control besides D316's help buttons. |
+| D323 | Tests. Vitest: the definition lookup by term id; the D314 label map. Playwright, Chromium and WebKit, both text directions: preview and panel on a pill, a column header, the run detail heading's strategy and a headline card; a D316 help button; D317's cells, with the link and the trigger working separately; a touch tap opening the panel; plain text for a code with no term. Real-engine suite (D308): a term's preview shows the definition the engine serves for that id in `/v1/help`; every D314 term id is served. Engine text is never hard-coded. |
+| D324 | Recording. D313 onward as above. The GUI.4b row is Next in the branch's first plan commit, and Complete, dated the day the pull request is opened, in a commit made then. |
+| D325 | Separate messages for request-time database failures. `failureView` in `src/api/engineState.ts` has its own catalog keys; `connectionMessage` keeps today's launch messages unchanged. `database_busy`, with "Try again": "The analysis engine's database is busy with another program. Try again in a moment." The other `database_*` codes except the setup and upgrade codes, with no "Try again": "The analysis engine could not read or write its database." The setup and upgrade codes: unchanged (`engine.state.databaseSetup`). The keys are in every catalog the repository keeps (`en.json` and the `ar-XB` test catalog). |
+| D326 | Tests for D325. Mock-engine Playwright tests: a screen request answered with 503 `database_busy` shows D325's message with "Try again", and that "Try again" then loads the screen; a 500 `database_io_error` shows the other message with no "Try again". The launch messages are unchanged and stay covered by the Vitest tests of `connectionMessage`, because the browser build has no launch state. No real-engine test. |
+| D327 | What the re-vendor covers, from IAD issue #31 and API.19. Fixtures, labels and tests are checked against the vendored description: a run for an unknown ticker is Unavailable (outcome `unavailable`, status `input_unavailable`) with `provider_no_data` in the `provider_failure` element and a null `failure_reason_code` and refresh-result `reason_code`; the refresh summary's `schema_version` is 5 and the provider-check section reads sensibly for an Unavailable job; a storage error after readiness answers its precise `database_*` code with a `database` element whose `expected_revision` is null (`database_busy` 503, the others 500). Runs stored under older versions are refused with the engine's own message, which `failureView` shows as served. |
