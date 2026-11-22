@@ -373,6 +373,7 @@ export const references: Schemas['HelpReferencesDocument'] = {
     ProviderCheckVerdict: {
       healthy: 'verdict-healthy',
       unreachable: 'verdict-unreachable',
+      no_data: 'verdict-no-data',
     },
     HeadlineUnavailable: {
       no_result_stored: 'headline-no-result',

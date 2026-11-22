@@ -28,7 +28,11 @@ export function failure(
     reason_code: reasonCode,
     reason,
     analysis: null,
-    database: null,
+    // A storage error after readiness carries the database element with no
+    // expected revision (API.19).
+    database: reasonCode.startsWith('database_')
+      ? { database_path: 'ian.sqlite3', expected_revision: null }
+      : null,
     diagnostics: [],
     errors: null,
     method: null,

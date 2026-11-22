@@ -515,9 +515,7 @@ test.describe('errors', () => {
         return failure(503, 'database_busy', 'Run the command to clear it.');
       return undefined;
     });
-    await expect(page.getByRole('status')).toContainText(
-      en.engine.state.databaseBusy,
-    );
+    await expect(page.getByRole('status')).toContainText(en.state.databaseBusy);
     await expect(page.getByText('Run the command')).toHaveCount(0);
     busy = false;
     await page.getByRole('button', { name: en.common.tryAgain }).click();
@@ -538,9 +536,7 @@ test.describe('errors', () => {
       .getByRole('navigation', { name: en.nav.label })
       .getByRole('link', { name: en.nav.runs })
       .click();
-    await expect(page.getByRole('status')).toContainText(
-      en.engine.state.databaseBusy,
-    );
+    await expect(page.getByRole('status')).toContainText(en.state.databaseBusy);
     await expect(page.locator('table')).toHaveCount(0);
     await expect(page.getByText('completed', { exact: true })).toHaveCount(0);
     down = false;
@@ -579,12 +575,10 @@ test.describe('errors', () => {
   }) => {
     await open(page, (url) =>
       url.pathname === '/v1/watchlists'
-        ? failure(503, 'database_io_error', 'A message naming a path.')
+        ? failure(500, 'database_io_error', 'A message naming a path.')
         : undefined,
     );
-    await expect(page.getByRole('status')).toHaveText(
-      en.engine.state.databaseOther,
-    );
+    await expect(page.getByRole('status')).toHaveText(en.state.databaseOther);
     await expect(
       page.getByRole('button', { name: en.common.tryAgain }),
     ).toHaveCount(0);

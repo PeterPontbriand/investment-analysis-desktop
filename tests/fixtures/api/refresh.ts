@@ -78,7 +78,7 @@ export const summary = (
   counts: Record<string, number>,
   fields: Partial<Schemas['RefreshSummaryDocument']> = {},
 ): Schemas['RefreshSummaryDocument'] => ({
-  schema_version: 4,
+  schema_version: 5,
   refresh_id: refreshId,
   watchlist_id: coreId,
   watchlist_name: 'Core',

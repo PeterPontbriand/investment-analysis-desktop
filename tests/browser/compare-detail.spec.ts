@@ -694,15 +694,11 @@ test.describe('run detail views', () => {
         : undefined,
     );
     await page.getByRole('tab', { name: en.runDetail.tabs.details }).click();
-    await expect(page.getByRole('status')).toContainText(
-      en.engine.state.databaseBusy,
-    );
+    await expect(page.getByRole('status')).toContainText(en.state.databaseBusy);
     await page.getByRole('tab', { name: en.runDetail.tabs.summary }).click();
     await expect(page.getByRole('tabpanel')).toContainText('in concise mode');
     await page.getByRole('tab', { name: en.runDetail.tabs.details }).click();
-    await expect(page.getByRole('status')).toContainText(
-      en.engine.state.databaseBusy,
-    );
+    await expect(page.getByRole('status')).toContainText(en.state.databaseBusy);
     await expect(
       page.getByRole('button', { name: en.common.tryAgain }),
     ).toBeVisible();
@@ -848,7 +844,7 @@ test.describe('request failures by reason code group', () => {
             : undefined,
         );
         await expect(page.getByRole('status')).toContainText(
-          en.engine.state.databaseBusy,
+          en.state.databaseBusy,
         );
         busy = false;
         await page.getByRole('button', { name: en.common.tryAgain }).click();
@@ -861,11 +857,11 @@ test.describe('request failures by reason code group', () => {
       }) => {
         await screen.open(page, (url) =>
           screen.match(url)
-            ? failure(503, 'database_io_error', 'Names a path.')
+            ? failure(500, 'database_io_error', 'Names a path.')
             : undefined,
         );
         await expect(page.getByRole('status')).toHaveText(
-          en.engine.state.databaseOther,
+          en.state.databaseOther,
         );
         await expect(
           page.getByRole('button', { name: en.common.tryAgain }),

@@ -578,6 +578,45 @@ test.describe('ended states', () => {
     await expect(page.getByText('Yahoo Finance')).toBeVisible();
   });
 
+  test('an unknown ticker finishes as Unavailable with no reason, and the provider check still shows', async ({
+    page,
+  }) => {
+    // API.18: a provider that has no data leaves the run Unavailable with a
+    // null reason code; the summary still carries the provider check.
+    const script = scriptedJob([
+      frames[0]!,
+      {
+        state: 'completed',
+        totals: totals(4, 4, 4),
+        events: [
+          finished(3, 0, 'ZZZZQ', momentum, {
+            outcome: 'unavailable',
+            reason_code: null,
+            saved: true,
+            analysis_run_id: failedRunId,
+          }),
+        ],
+        summary: summary(
+          { unavailable: 1 },
+          {
+            provider_check: [{ provider_id: 'yahoo', verdict: 'no_data' }],
+          },
+        ),
+      },
+    ]);
+    await openApp(page, script, (url) =>
+      url.pathname === '/v1/info'
+        ? ok({ ...info, providers: [{ id: 'yahoo', name: 'Yahoo Finance' }] })
+        : undefined,
+    );
+    await startFromCore(page);
+    await advance(page, script, 2);
+    await expect(rows(page).nth(0)).toContainText('Unavailable');
+    await expect(rows(page).nth(0)).not.toContainText('Provider Error');
+    await expect(page.getByText(en.refresh.providersHeading)).toBeVisible();
+    await expect(page.getByText('Yahoo Finance')).toBeVisible();
+  });
+
   test('a refresh of entries that belong to no watchlist says so', async ({
     page,
   }) => {

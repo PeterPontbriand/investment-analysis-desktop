@@ -79,13 +79,18 @@ export function failureView(error: unknown): FailureView {
     // The engine's text for this failure names a raw refresh identifier.
     if (code === 'refresh_job_running')
       return { kind: 'message', key: 'actions.refreshRunning', retry: false };
-    const database = databaseMessage(code);
-    if (database !== null)
+    // A request that fails on the database has its own messages: the launch
+    // messages tell the reader to restart the application (H1).
+    if (code !== null && databaseSetupCodes.has(code))
       return {
         kind: 'message',
-        key: database,
-        retry: code === 'database_busy',
+        key: 'engine.state.databaseSetup',
+        retry: false,
       };
+    if (code === 'database_busy')
+      return { kind: 'message', key: 'state.databaseBusy', retry: true };
+    if (code?.startsWith('database_'))
+      return { kind: 'message', key: 'state.databaseOther', retry: false };
   }
   return { kind: 'message', key: 'state.defect', retry: false };
 }

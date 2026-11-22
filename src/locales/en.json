@@ -31,6 +31,8 @@
   },
   "state": {
     "defect": "Something went wrong in the analysis engine.",
+    "databaseBusy": "The analysis engine's database is busy with another program. Try again in a moment.",
+    "databaseOther": "The analysis engine could not read or write its database.",
     "renderFailed": "Something went wrong in the application. Try another screen, or restart the application."
   },
   "watchlists": {
