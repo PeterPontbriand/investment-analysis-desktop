@@ -3,6 +3,7 @@
 import { useId } from 'vue';
 import ActionFailure from '../components/ActionFailure.vue';
 import TermTrigger from '../components/TermTrigger.vue';
+import { termDefinitionId } from '../components/termDefinitionId.ts';
 import type { ResolvedName } from '../api/terms.ts';
 import { useMessages } from '../i18n/index.ts';
 import type { FieldValue, Values } from './form.ts';
@@ -61,6 +62,11 @@ function failureOf(method: string): unknown {
           :id="`${base}-${strategy.method}`"
           type="checkbox"
           :checked="chosen.has(strategy.method)"
+          :aria-describedby="
+            strategy.name.termId === null
+              ? undefined
+              : termDefinitionId(`${base}-${strategy.method}`)
+          "
           :data-method="strategy.method"
           @change="onChoose(strategy.method, $event)"
         />
@@ -74,6 +80,7 @@ function failureOf(method: string): unknown {
           kind="help"
           :term-id="strategy.name.termId"
           :name="strategy.name.text"
+          :control="`${base}-${strategy.method}`"
         />
         <button
           type="button"

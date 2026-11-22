@@ -187,7 +187,8 @@
   },
   "termHelp": {
     "about": "[ar-XB] About {name}",
-    "mark": "[ar-XB] ?"
+    "mark": "[ar-XB] ?",
+    "f1": "[ar-XB] Press F1 for details."
   },
   "detailsPanel": {
     "close": "[ar-XB] Close details",

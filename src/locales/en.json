@@ -187,7 +187,8 @@
   },
   "termHelp": {
     "about": "About {name}",
-    "mark": "?"
+    "mark": "?",
+    "f1": "Press F1 for details."
   },
   "detailsPanel": {
     "close": "Close details",

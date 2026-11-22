@@ -13,6 +13,7 @@ import { useMessages } from '../i18n/index.ts';
 import { asOfTarget, tickersTarget } from '../selection/problems.ts';
 import StrategyChooser from '../selection/StrategyChooser.vue';
 import TermTrigger from '../components/TermTrigger.vue';
+import { termDefinitionId } from '../components/termDefinitionId.ts';
 import { labelTerms } from '../api/labelTerms.ts';
 import { singleTickerProblem, splitTickers } from '../selection/tickers.ts';
 import {
@@ -141,6 +142,7 @@ const messagesAt = (target: string) => form.messagesAt(target);
         kind="help"
         :term-id="labelTerms.asOf"
         :name="t('analyze.asOf')"
+        :control="`${base}-as-of`"
       />
       <input
         :id="`${base}-as-of`"
@@ -150,7 +152,13 @@ const messagesAt = (target: string) => form.messagesAt(target);
         :data-target="asOfTarget"
         :aria-invalid="describe(asOfTarget) ? 'true' : undefined"
         :aria-describedby="
-          [describe(asOfTarget), `${base}-as-of-hint`].filter(Boolean).join(' ')
+          [
+            describe(asOfTarget),
+            `${base}-as-of-hint`,
+            termDefinitionId(`${base}-as-of`),
+          ]
+            .filter(Boolean)
+            .join(' ')
         "
       />
       <p :id="`${base}-as-of-hint`" class="hint">

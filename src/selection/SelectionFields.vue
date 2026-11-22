@@ -10,6 +10,7 @@ import {
   type Problem,
 } from './problems.ts';
 import TermTrigger from '../components/TermTrigger.vue';
+import { termDefinitionId } from '../components/termDefinitionId.ts';
 import type { Field } from './schema.ts';
 import type { FieldValue, Values } from './form.ts';
 
@@ -41,6 +42,9 @@ function describe(
     ...describedBy(problems, fieldTarget(method, field.key)),
     ...(hint && field.description !== null
       ? [`${idOf(method, field.key)}-hint`]
+      : []),
+    ...(field.kind !== 'group' && field.termId !== null
+      ? [termDefinitionId(idOf(method, field.key))]
       : []),
     ...(field.kind === 'unsupported'
       ? [`${idOf(method, field.key)}-unsupported`]
@@ -135,6 +139,7 @@ function onNumber(key: string, event: Event): void {
             kind="help"
             :term-id="field.termId"
             :name="field.label"
+            :control="idOf(method, field.key)"
           />
         </template>
         <template v-else>
@@ -154,6 +159,7 @@ function onNumber(key: string, event: Event): void {
             kind="help"
             :term-id="field.termId"
             :name="field.label"
+            :control="idOf(method, field.key)"
           />
           <ChoiceSelect
             v-if="field.kind === 'choice'"

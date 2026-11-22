@@ -1,6 +1,6 @@
 <script setup lang="ts">
-/* global console -- the browser's console; src/ configures no browser globals */
-import { onErrorCaptured, ref, watch } from 'vue';
+/* global console, document, KeyboardEvent -- the browser's console and DOM types; src/ configures no browser globals */
+import { onBeforeUnmount, onErrorCaptured, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useEngine } from './api/engine.ts';
 import ConfirmDialog from './components/ConfirmDialog.vue';
@@ -31,6 +31,14 @@ watch(
     void engine.platform.closeWindow();
   },
 );
+
+// F1 opens a term's panel from a field (D328). A webview may answer F1 with
+// a help page of its own, so the application keeps the key for itself.
+function keepF1(event: KeyboardEvent): void {
+  if (event.key === 'F1') event.preventDefault();
+}
+onMounted(() => document.addEventListener('keydown', keepF1));
+onBeforeUnmount(() => document.removeEventListener('keydown', keepF1));
 
 // A screen that fails to render is replaced by one message, and the navigation
 // keeps working (D171). Going to another screen clears the message.

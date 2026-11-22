@@ -19,6 +19,7 @@ import { formatConjunction } from '../selection/format.ts';
 import { asOfTarget, tickersTarget } from '../selection/problems.ts';
 import StrategyChooser from '../selection/StrategyChooser.vue';
 import TermTrigger from '../components/TermTrigger.vue';
+import { termDefinitionId } from '../components/termDefinitionId.ts';
 import { labelTerms } from '../api/labelTerms.ts';
 import { splitTickers } from '../selection/tickers.ts';
 import {
@@ -241,6 +242,7 @@ function cancel(): void {
           kind="help"
           :term-id="labelTerms.asOf"
           :name="t('addEntries.asOf')"
+          :control="`${base}-as-of`"
         />
         <input
           :id="`${base}-as-of`"
@@ -250,7 +252,11 @@ function cancel(): void {
           :data-target="asOfTarget"
           :aria-invalid="describe(asOfTarget) ? 'true' : undefined"
           :aria-describedby="
-            [describe(asOfTarget), `${base}-as-of-hint`]
+            [
+              describe(asOfTarget),
+              `${base}-as-of-hint`,
+              termDefinitionId(`${base}-as-of`),
+            ]
               .filter(Boolean)
               .join(' ')
           "

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-/* global HTMLElement -- DOM types; src/ configures no browser globals */
-import { computed, ref, useId } from 'vue';
+/* global HTMLElement, KeyboardEvent, document -- DOM types; src/ configures no browser globals */
+import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue';
 import { useEngine } from '../api/engine.ts';
 import {
   isPanelOpenFor,
@@ -10,6 +10,7 @@ import {
 import { usePreviewTrigger } from '../composables/usePreviewTrigger.ts';
 import { useResolvedEntry } from '../composables/useResolvedEntry.ts';
 import { useMessages } from '../i18n/index.ts';
+import { termDefinitionId } from './termDefinitionId.ts';
 import PreviewPopup from './PreviewPopup.vue';
 import TermDefinition from './TermDefinition.vue';
 
@@ -27,8 +28,12 @@ const props = withDefaults(
     // The name the trigger shows; the panel's heading until the index answers.
     name: string;
     kind?: 'text' | 'pill' | 'help';
+    // For a help button: the id of the field or checkbox it belongs to. The
+    // control is described by the definition, and F1 on it opens the panel
+    // (D328). A legend has no control.
+    control?: string;
   }>(),
-  { kind: 'text' },
+  { kind: 'text', control: undefined },
 );
 
 const { t } = useMessages();
@@ -46,8 +51,8 @@ const popupId = useId();
 const preview = usePreviewTrigger();
 const expanded = computed(() => isPanelOpenFor(owner));
 
-function open(): void {
-  const trigger = button.value;
+function open(from: HTMLElement | null = button.value): void {
+  const trigger = from;
   const term = entry.value;
   if (trigger === null || term === null) return;
   preview.dismiss();
@@ -60,6 +65,18 @@ function open(): void {
     props: { definition: term.definition, lang: term.lang },
   });
 }
+
+// F1 on the focused field or checkbox opens its term's panel, and Escape gives
+// focus back to the field (D328).
+function onKeydown(event: KeyboardEvent): void {
+  if (event.key !== 'F1' || props.control === undefined) return;
+  const field = document.getElementById(props.control);
+  if (field === null || document.activeElement !== field) return;
+  event.preventDefault();
+  open(field);
+}
+onMounted(() => document.addEventListener('keydown', onKeydown));
+onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
 </script>
 
 <template>
@@ -69,6 +86,7 @@ function open(): void {
       type="button"
       class="term-trigger"
       :class="`kind-${kind}`"
+      :tabindex="kind === 'help' ? -1 : undefined"
       :aria-label="
         kind === 'help' ? t('termHelp.about', { name: entry.name }) : undefined
       "
@@ -92,7 +110,17 @@ function open(): void {
       @pointerleave="preview.popup.onPointerleave"
     >
       <TermDefinition :definition="entry.definition" :lang="entry.lang" />
+      <p v-if="control !== undefined" class="f1-hint">
+        {{ t('termHelp.f1') }}
+      </p>
     </PreviewPopup>
+    <span
+      v-if="kind === 'help' && control !== undefined"
+      :id="termDefinitionId(control)"
+      class="visually-hidden"
+      :lang="entry.lang ?? undefined"
+      >{{ entry.definition }}</span
+    >
   </template>
   <template v-else-if="kind === 'help'" />
   <slot v-else />
@@ -109,6 +137,12 @@ function open(): void {
 }
 
 /* Running text and column headers: a dotted underline in the text colour. */
+.f1-hint {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  margin-block-start: var(--space-1);
+}
+
 .kind-text {
   text-decoration: underline dotted currentcolor;
   text-decoration-thickness: 1px;

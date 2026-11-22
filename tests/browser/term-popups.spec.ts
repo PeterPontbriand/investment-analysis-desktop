@@ -89,7 +89,7 @@ async function previewAndPanel(page: Page, trigger: Locator, id: string) {
   const item = term(id);
   await trigger.hover();
   await expect(popup(page)).toBeVisible();
-  await expect(popup(page)).toHaveText(item.definition);
+  await expect(popup(page)).toContainText(item.definition);
   await expect(trigger).toHaveAttribute('aria-describedby', /.+/);
   await trigger.click();
   await expect(panel(page)).toBeVisible();
@@ -280,8 +280,108 @@ for (const direction of directions) {
     });
   });
 
+  test.describe(`form help buttons (${direction.name})`, () => {
+    const checkbox = (page: Page) =>
+      page.getByRole('checkbox', { name: 'Momentum' });
+    const asOf = (page: Page) => page.getByLabel(words.addEntries.asOf).first();
+    const helpButton = (page: Page, name: string) =>
+      page.getByRole('button', {
+        name: words.termHelp.about.replace('{name}', name),
+      });
+
+    test('Tab moves from field to field without stopping on a help button', async ({
+      page,
+    }) => {
+      await useDirection(page, direction);
+      await openAdd(page, { words });
+      await expect(helpButton(page, 'Momentum')).toHaveAttribute(
+        'tabindex',
+        '-1',
+      );
+      await checkbox(page).focus();
+      await page.keyboard.press('Tab');
+      // The next stop is "Show options", not the (?) button.
+      await expect(
+        page.getByRole('button', {
+          name: words.selection.showOptions.replace('{strategy}', 'Momentum'),
+        }),
+      ).toBeFocused();
+      // Every help button on the screen is out of the tab order.
+      const stops = await page
+        .locator('.kind-help:not([tabindex="-1"])')
+        .count();
+      expect(stops).toBe(0);
+    });
+
+    test('F1 on a focused checkbox and on a focused field opens that term\x27s panel, and Escape returns focus', async ({
+      page,
+    }) => {
+      await useDirection(page, direction);
+      await openAdd(page, { words });
+      await checkbox(page).focus();
+      await page.keyboard.press('F1');
+      await expect(panel(page).getByRole('heading')).toHaveText(
+        term('strategy-momentum').name,
+      );
+      await expect(panel(page)).toContainText(
+        term('strategy-momentum').definition,
+      );
+      await page.keyboard.press('Escape');
+      await expect(panel(page)).toHaveCount(0);
+      await expect(checkbox(page)).toBeFocused();
+
+      await asOf(page).focus();
+      await page.keyboard.press('F1');
+      await expect(panel(page).getByRole('heading')).toHaveText(
+        term('as-of-date').name,
+      );
+      await page.keyboard.press('Escape');
+      await expect(asOf(page)).toBeFocused();
+    });
+
+    test('F1 does nothing on a control with no term', async ({ page }) => {
+      await useDirection(page, direction);
+      await openAdd(page, { words });
+      await page.getByLabel(words.addEntries.tickers).focus();
+      await page.keyboard.press('F1');
+      await expect(panel(page)).toHaveCount(0);
+    });
+
+    test('the control is described by the definition, and the preview names F1', async ({
+      page,
+    }) => {
+      await useDirection(page, direction);
+      await openAdd(page, { words });
+      await expect(checkbox(page)).toHaveAccessibleDescription(
+        term('strategy-momentum').definition,
+      );
+      await expect(asOf(page)).toHaveAccessibleDescription(
+        new RegExp(term('as-of-date').definition),
+      );
+      await helpButton(page, 'Momentum').hover();
+      await expect(popup(page)).toContainText(
+        term('strategy-momentum').definition,
+      );
+      await expect(popup(page)).toContainText(words.termHelp.f1);
+    });
+  });
+
   test.describe(`term popups on touch (${direction.name})`, () => {
     test.use({ hasTouch: true });
+
+    test('a tap on a form help button opens the panel', async ({ page }) => {
+      await useDirection(page, direction);
+      await openAdd(page, { words });
+      await page
+        .getByRole('button', {
+          name: words.termHelp.about.replace('{name}', 'Momentum'),
+        })
+        .tap();
+      await expect(panel(page).getByRole('heading')).toHaveText(
+        term('strategy-momentum').name,
+      );
+      await expect(popup(page)).toHaveCount(0);
+    });
 
     test('a tap on a pill opens the panel, and no preview', async ({
       page,
