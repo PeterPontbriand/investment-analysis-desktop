@@ -12,7 +12,7 @@
 | Sub-slice | Scope | Status | Completed |
 | :--- | :--- | :--- | :--- |
 | GUI.4a | [Ticker details](#gui4a--ticker-details) | Complete | 2026-11-21 |
-| GUI.4b | [Term popups](#gui4b--term-popups) | Next | |
+| GUI.4b | [Term popups](#gui4b--term-popups) | Complete | 2026-11-22 |
 | GUI.4c | [Help panel content](#gui4c--help-panel-content) | Planned | |
 
 ## Sub-slices
