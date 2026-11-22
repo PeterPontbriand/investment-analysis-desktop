@@ -597,7 +597,10 @@ test.describe('run detail views', () => {
     const pre = page.getByRole('tabpanel').locator('pre');
     await expect(pre).toHaveAttribute('lang', 'en');
     await expect(pre).toHaveAttribute('dir', 'ltr');
-    await expect(pre).toHaveCSS('white-space', 'pre');
+    await expect(pre.locator('.line').first()).toHaveCSS(
+      'white-space',
+      'pre-wrap',
+    );
     await expect(page.getByRole('tabpanel')).toHaveAttribute('tabindex', '0');
     await expect(page.getByRole('button', { name: /copy/i })).toHaveCount(0);
 
