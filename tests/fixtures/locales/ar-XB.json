@@ -159,7 +159,7 @@
     "title": "[ar-XB] {name} ({ticker}) — {strategy}",
     "titleNoName": "[ar-XB] {ticker} — {strategy}",
     "saved": "[ar-XB] Saved {date}",
-    "asOf": "{label} {date}",
+    "asOf": "[ar-XB] {label} {date}",
     "asOfLabel": "[ar-XB] As of",
     "savedByRefresh": "[ar-XB] Saved by refresh",
     "savedByDirect": "[ar-XB] Saved by direct analysis",
@@ -187,7 +187,7 @@
   },
   "termHelp": {
     "about": "[ar-XB] About {name}",
-    "mark": "?"
+    "mark": "[ar-XB] ?"
   },
   "detailsPanel": {
     "close": "[ar-XB] Close details",

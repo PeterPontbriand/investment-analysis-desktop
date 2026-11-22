@@ -23,7 +23,7 @@ const compareRunId = (n: number) =>
 
 async function cells(row: Locator): Promise<string[]> {
   return (await row.locator('th, td').allInnerTexts()).map((text) =>
-    plain(text),
+    plain(text).replace(/\s+/g, ' '),
   );
 }
 
