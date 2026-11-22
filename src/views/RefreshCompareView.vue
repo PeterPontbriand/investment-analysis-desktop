@@ -180,7 +180,7 @@ const counts = computed(() =>
         <OutcomePill :code="item.code" :count="item.count" />
       </li>
     </ul>
-    <TableScroll>
+    <TableScroll sticky="thead .ticker">
       <table class="compare">
         <thead>
           <tr>

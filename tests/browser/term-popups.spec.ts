@@ -194,58 +194,7 @@ for (const direction of directions) {
         .nth(1)
         .getByRole('button', { name: 'Unavailable' });
       await expect(pill).toBeVisible();
-      // Diagnostics for a failure seen only on WebKit on macOS in right-to-left
-      // layout: the pointer events the pill received, and what sits at its centre.
-      await pill.evaluate((element) => {
-        const log: string[] = [];
-        (window as unknown as { __pointerLog: string[] }).__pointerLog = log;
-        for (const name of [
-          'pointerover',
-          'pointerenter',
-          'pointerleave',
-          'pointerout',
-        ])
-          element.addEventListener(name, () =>
-            log.push(name + ' ' + Math.round(performance.now())),
-          );
-      });
-      try {
-        await previewAndPanel(page, pill, 'outcome-unavailable');
-      } catch (error) {
-        console.log(
-          'pill diagnostics',
-          JSON.stringify(
-            await page.evaluate(() => {
-              const scroll = document.querySelector('.table-scroll')!;
-              const button = [
-                ...document.querySelectorAll('tbody tr'),
-              ][1]!.querySelector('td button')!;
-              const box = button.getBoundingClientRect();
-              const hit = document.elementFromPoint(
-                box.left + box.width / 2,
-                box.top + box.height / 2,
-              );
-              const sticky = document
-                .querySelector('tbody tr:nth-child(2) .ticker')!
-                .getBoundingClientRect();
-              return {
-                events: (window as unknown as { __pointerLog: string[] })
-                  .__pointerLog,
-                scrollLeft: scroll.scrollLeft,
-                scrollWidth: scroll.scrollWidth,
-                clientWidth: scroll.clientWidth,
-                innerWidth: window.innerWidth,
-                pill: [box.left, box.right, box.top, box.bottom],
-                sticky: [sticky.left, sticky.right],
-                hit: hit === null ? null : hit.tagName + '.' + hit.className,
-                hitIsPill: hit !== null && button.contains(hit),
-                hoverMatches: button.matches(':hover'),
-              };
-            }),
-          ),
-        );
-        throw error;
-      }
+      await previewAndPanel(page, pill, 'outcome-unavailable');
       await expect(rows(page).nth(1).locator('td a').first()).toBeVisible();
     });
 
