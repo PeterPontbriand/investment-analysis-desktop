@@ -19,6 +19,8 @@ import EmptyMessage from '../components/EmptyMessage.vue';
 import ScreenState from '../components/ScreenState.vue';
 import SecIdentityNotice from '../components/SecIdentityNotice.vue';
 import StrategyName from '../components/StrategyName.vue';
+import TermTrigger from '../components/TermTrigger.vue';
+import { labelTerms } from '../api/labelTerms.ts';
 import TickerButton from '../components/TickerButton.vue';
 import TableScroll from '../components/TableScroll.vue';
 import { useAction } from '../composables/useAction.ts';
@@ -424,7 +426,13 @@ const deleteTitle = computed(() =>
             <th scope="col">{{ t('watchlist.columns.position') }}</th>
             <th scope="col">{{ t('watchlist.columns.ticker') }}</th>
             <th scope="col">{{ t('watchlist.columns.strategy') }}</th>
-            <th scope="col">{{ t('watchlist.columns.asOf') }}</th>
+            <th scope="col">
+              <TermTrigger
+                :term-id="labelTerms.asOf"
+                :name="t('watchlist.columns.asOf')"
+                >{{ t('watchlist.columns.asOf') }}</TermTrigger
+              >
+            </th>
             <th scope="col">{{ t('watchlist.columns.options') }}</th>
             <th scope="col">
               <span class="visually-hidden">{{

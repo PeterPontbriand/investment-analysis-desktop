@@ -159,7 +159,8 @@
     "title": "[ar-XB] {name} ({ticker}) — {strategy}",
     "titleNoName": "[ar-XB] {ticker} — {strategy}",
     "saved": "[ar-XB] Saved {date}",
-    "asOf": "[ar-XB] As of {date}",
+    "asOf": "{label} {date}",
+    "asOfLabel": "[ar-XB] As of",
     "savedByRefresh": "[ar-XB] Saved by refresh",
     "savedByDirect": "[ar-XB] Saved by direct analysis",
     "warnings": "[ar-XB] Warnings",
@@ -183,6 +184,10 @@
     "lookUp": "[ar-XB] Look up",
     "lookingUp": "[ar-XB] Looking up…",
     "nameAndTicker": "[ar-XB] {name} ({ticker})"
+  },
+  "termHelp": {
+    "about": "[ar-XB] About {name}",
+    "mark": "?"
   },
   "detailsPanel": {
     "close": "[ar-XB] Close details",
@@ -250,6 +255,7 @@
     }
   },
   "refresh": {
+    "viewRun": "[ar-XB] View run",
     "now": "[ar-XB] Refresh now",
     "running": "[ar-XB] A refresh is running.",
     "showProgress": "[ar-XB] Show progress",

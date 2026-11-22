@@ -9,6 +9,7 @@ import {
   messagesAt,
   type Problem,
 } from './problems.ts';
+import TermTrigger from '../components/TermTrigger.vue';
 import type { Field } from './schema.ts';
 import type { FieldValue, Values } from './form.ts';
 
@@ -71,6 +72,11 @@ function onNumber(key: string, event: Event): void {
       >
         <legend :data-term-id="field.termId ?? undefined">
           {{ field.label }}
+          <TermTrigger
+            kind="help"
+            :term-id="field.termId"
+            :name="field.label"
+          />
         </legend>
         <p
           v-if="field.description !== null"
@@ -125,6 +131,11 @@ function onNumber(key: string, event: Event): void {
             :data-term-id="field.termId ?? undefined"
             >{{ field.label }}</label
           >
+          <TermTrigger
+            kind="help"
+            :term-id="field.termId"
+            :name="field.label"
+          />
         </template>
         <template v-else>
           <label
@@ -139,6 +150,11 @@ function onNumber(key: string, event: Event): void {
               *</span
             ></label
           >
+          <TermTrigger
+            kind="help"
+            :term-id="field.termId"
+            :name="field.label"
+          />
           <ChoiceSelect
             v-if="field.kind === 'choice'"
             :id="idOf(method, field.key)"

@@ -35,7 +35,7 @@ const stamp = computed(() => {
     <p v-if="lines.name !== null" class="name">{{ lines.name }}</p>
     <p v-if="lines.venue !== null">{{ lines.venue }}</p>
     <p v-if="lines.kind !== null">
-      <TermName code-set="InstrumentKind" :code="lines.kind" />
+      <TermName code-set="InstrumentKind" :code="lines.kind" plain />
     </p>
     <p v-if="lines.currency !== null">{{ lines.currency }}</p>
     <p v-if="stamp !== null" class="stamp">{{ stamp }}</p>

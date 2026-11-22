@@ -266,7 +266,7 @@ test.describe('comparison', () => {
         '— Does not apply',
         '— Does not apply',
         'Not Applicable',
-        'No result was stored',
+        '— No result was stored',
         'Unavailable',
       ]);
     const notRun = rows(page).nth(1).locator('td').first();
@@ -304,7 +304,7 @@ test.describe('comparison', () => {
   }) => {
     const engine = await openComparison(page);
     const acme = rows(page).nth(0);
-    await expect(acme.locator('td a')).toHaveCount(9);
+    await expect(acme.locator('td a')).toHaveCount(7);
     await acme.locator('td a').nth(1).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       en.runDetail.title
@@ -343,7 +343,7 @@ test.describe('comparison', () => {
         'OLD',
         'Bullish',
         '58.2',
-        'Strategy no longer available',
+        '— Strategy no longer available',
         'Failed',
       ]);
     expect(adHocRefreshId).toBeTruthy();
@@ -429,7 +429,9 @@ test.describe('run detail', () => {
       ),
     );
     await expect(meta.nth(2)).toContainText(
-      en.runDetail.asOf.replace('{date}', 'Dec 31, 2025'),
+      en.runDetail.asOf
+        .replace('{label}', en.runDetail.asOfLabel)
+        .replace('{date}', 'Dec 31, 2025'),
     );
     await expect(meta.nth(3)).toContainText('fiscal year-end Dec 31, 2025');
     await expect(meta.nth(4)).toHaveText(en.runDetail.savedByDirect);
@@ -523,7 +525,7 @@ test.describe('run detail', () => {
   }) => {
     await openComparison(page);
     // ZED's quality run has no headline.
-    await rows(page).nth(1).locator('td a').nth(4).click();
+    await rows(page).nth(1).locator('td a').nth(3).click();
     await expect(page.locator('.cards')).toHaveCount(0);
     await expect(
       page.locator('[data-term-id="headline-no-result"]'),
@@ -543,7 +545,9 @@ test.describe('run detail', () => {
       page.getByRole('heading', { level: 1 }).locator('[data-term-id]'),
     ).toHaveCount(0);
     await expect(page.locator('.meta')).not.toContainText(
-      en.runDetail.asOf.replace('{date}', ''),
+      en.runDetail.asOf
+        .replace('{label}', en.runDetail.asOfLabel)
+        .replace('{date}', ''),
     );
     const reason = page.getByText('This run cannot be shown as a document.');
     await expect(reason).toHaveCount(1);

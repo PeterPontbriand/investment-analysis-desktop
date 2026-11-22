@@ -245,6 +245,11 @@ export const helpIndex: Schemas['HelpIndexDocument'] = {
           definition: 'The provider answered.',
         },
         {
+          id: 'verdict-no-data',
+          name: 'No Data',
+          definition: 'The provider answered and has nothing.',
+        },
+        {
           id: 'verdict-unreachable',
           name: 'Unreachable',
           definition: 'The provider did not answer.',
@@ -270,6 +275,37 @@ export const helpIndex: Schemas['HelpIndexDocument'] = {
           id: 'instrument-kind-cryptocurrency',
           name: 'Cryptocurrency',
           definition: 'A digital currency.',
+        },
+      ],
+    },
+    {
+      id: 'concepts',
+      title: 'Concepts',
+      terms: [
+        {
+          id: 'as-of-date',
+          name: 'As-of Date',
+          definition: 'The day the data is read as of.',
+        },
+        {
+          id: 'refresh',
+          name: 'Refresh',
+          definition: 'A pass that analyzes every entry again.',
+        },
+        {
+          id: 'analysis-warning',
+          name: 'Analysis Warning',
+          definition: 'A note that a result may need care.',
+        },
+        {
+          id: 'cell-max_price',
+          name: 'Maximum Price',
+          definition: 'The most a value strategy would pay.',
+        },
+        {
+          id: 'analysis-limitation',
+          name: 'Analysis Limitation',
+          definition: 'A reason a result cannot say more.',
         },
       ],
     },

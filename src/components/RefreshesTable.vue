@@ -9,6 +9,8 @@ import EmptyMessage from './EmptyMessage.vue';
 import ScreenState from './ScreenState.vue';
 import TableScroll from './TableScroll.vue';
 import TermName from './TermName.vue';
+import TermTrigger from './TermTrigger.vue';
+import { labelTerms } from '../api/labelTerms.ts';
 
 const props = defineProps<{ watchlistId?: string; emptyKey: MessageKey }>();
 
@@ -91,7 +93,17 @@ function countOf(counts: Record<string, number>, code: string): string {
                 >{{ t('refresh.runningTag') }}</RouterLink
               >
             </th>
-            <td>{{ refresh.watchlist_name ?? t('refreshes.adHoc') }}</td>
+            <td>
+              <template v-if="refresh.watchlist_name !== null">{{
+                refresh.watchlist_name
+              }}</template>
+              <TermTrigger
+                v-else
+                :term-id="labelTerms.adHocEntries"
+                :name="t('refreshes.adHoc')"
+                >{{ t('refreshes.adHoc') }}</TermTrigger
+              >
+            </td>
             <td class="num">{{ formatCount(locale, refresh.run_count) }}</td>
             <td v-for="code in columns" :key="code" class="num">
               {{ countOf(refresh.outcome_counts, code) }}

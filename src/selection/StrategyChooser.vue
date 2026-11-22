@@ -2,6 +2,7 @@
 /* global Event, HTMLInputElement -- DOM types; src/ configures no browser globals */
 import { useId } from 'vue';
 import ActionFailure from '../components/ActionFailure.vue';
+import TermTrigger from '../components/TermTrigger.vue';
 import type { ResolvedName } from '../api/terms.ts';
 import { useMessages } from '../i18n/index.ts';
 import type { FieldValue, Values } from './form.ts';
@@ -69,6 +70,11 @@ function failureOf(method: string): unknown {
           :lang="strategy.name.lang ?? undefined"
           >{{ strategy.name.text }}</label
         >
+        <TermTrigger
+          kind="help"
+          :term-id="strategy.name.termId"
+          :name="strategy.name.text"
+        />
         <button
           type="button"
           :aria-expanded="expanded.has(strategy.method) ? 'true' : 'false'"

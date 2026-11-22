@@ -201,7 +201,9 @@ describe('run detail meta line', () => {
         '{date}',
         instant('2026-11-02T14:41:00+00:00'),
       ),
-      en.runDetail.asOf.replace('{date}', day('2025-12-31')),
+      en.runDetail.asOf
+        .replace('{label}', en.runDetail.asOfLabel)
+        .replace('{date}', day('2025-12-31')),
       `fiscal year-end ${day('2025-12-31')}`,
       en.runDetail.savedByDirect,
     ]);
@@ -230,7 +232,9 @@ describe('run detail meta line', () => {
         .replace('{strategy}', 'retired_method'),
     );
     expect(wrapper.get('.meta').text()).not.toContain(
-      en.runDetail.asOf.replace('{date}', ''),
+      en.runDetail.asOf
+        .replace('{label}', en.runDetail.asOfLabel)
+        .replace('{date}', ''),
     );
   });
 });

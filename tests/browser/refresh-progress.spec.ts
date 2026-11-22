@@ -199,19 +199,22 @@ test.describe('progress', () => {
     await expect(
       page.getByText(counts(1, 4), { exact: true }).first(),
     ).toBeVisible();
-    // A finished row's outcome is a pill linked to its saved run.
+    // A finished row's outcome is a term pill, followed by a link to its
+    // saved run (B5).
     await expect(
-      rows(page).nth(0).getByRole('link', { name: 'Completed' }),
+      rows(page).nth(0).getByRole('button', { name: 'Completed' }),
+    ).toBeVisible();
+    await expect(
+      rows(page).nth(0).getByRole('link', { name: en.refresh.viewRun }),
     ).toHaveAttribute('href', `/runs/${savedRunId}`);
     await advance(page, script);
     await expect(rows(page)).toHaveCount(4);
-    // A failed outcome shows only its pill, linked to its run; the reason is
-    // on the run's own screen.
+    // A failed outcome shows its pill and a link to its run; the reason is on
+    // the run's own screen.
     const failed = rows(page).nth(2);
-    await expect(failed.getByRole('link', { name: 'Failed' })).toHaveAttribute(
-      'href',
-      `/runs/${failedRunId}`,
-    );
+    await expect(
+      failed.getByRole('link', { name: en.refresh.viewRun }),
+    ).toHaveAttribute('href', `/runs/${failedRunId}`);
     await expect(failed).not.toContainText('Provider error');
     await advance(page, script);
     await expect(heading(page)).toHaveText(

@@ -10,6 +10,8 @@ export type PanelContent = {
   // Where focus returns to when the panel closes.
   trigger: HTMLElement;
   title: string;
+  // The language of the title, when it differs from the application's.
+  lang?: string | null;
   body: Component;
   props: Record<string, unknown>;
 };

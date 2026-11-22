@@ -190,7 +190,8 @@ for (const direction of directions) {
       await focusByKeyboard(page, trigger);
       await expect(popup(page)).toBeVisible();
       await page.keyboard.press('Tab');
-      await expect(popup(page)).toHaveCount(0);
+      // The next tab stop is a term trigger with a preview of its own.
+      await expect(popup(page).filter({ hasText: 'Acme Corp' })).toHaveCount(0);
     });
 
     test('does not open on the focus a mouse click gives', async ({ page }) => {

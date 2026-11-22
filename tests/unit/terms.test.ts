@@ -23,6 +23,39 @@ function setup(locale = () => 'en') {
   return { terms: createTerms(() => Promise.resolve(api), locale), fetchStub };
 }
 
+describe('term definitions', () => {
+  it(
+    'finds a term' + 's name and definition by its id, in the index language',
+    async () => {
+      const { terms } = setup();
+
+      expect(await terms.entry('outcome-completed')).toEqual({
+        termId: 'outcome-completed',
+        name: 'Completed',
+        definition: 'The analysis finished.',
+        lang: 'en',
+      });
+    },
+  );
+
+  it('answers null for a term the index does not list', async () => {
+    const { terms } = setup();
+
+    expect(await terms.entry('a-term-from-a-later-engine')).toBeNull();
+  });
+
+  it('asks for the help index once and never for a term', async () => {
+    const { terms, fetchStub } = setup();
+
+    await terms.entry('outcome-completed');
+    await terms.entry('outcome-failed');
+    const paths = fetchStub.mock.calls.map(
+      (c) => new URL(String(c[0])).pathname,
+    );
+    expect(paths).toEqual(['/v1/help']);
+  });
+});
+
 describe('term names', () => {
   it('names a code by its term, with the term id and language', async () => {
     const { terms } = setup();

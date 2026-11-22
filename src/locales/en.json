@@ -159,7 +159,8 @@
     "title": "{name} ({ticker}) — {strategy}",
     "titleNoName": "{ticker} — {strategy}",
     "saved": "Saved {date}",
-    "asOf": "As of {date}",
+    "asOf": "{label} {date}",
+    "asOfLabel": "As of",
     "savedByRefresh": "Saved by refresh",
     "savedByDirect": "Saved by direct analysis",
     "warnings": "Warnings",
@@ -183,6 +184,10 @@
     "lookUp": "Look up",
     "lookingUp": "Looking up…",
     "nameAndTicker": "{name} ({ticker})"
+  },
+  "termHelp": {
+    "about": "About {name}",
+    "mark": "?"
   },
   "detailsPanel": {
     "close": "Close details",
@@ -250,6 +255,7 @@
     }
   },
   "refresh": {
+    "viewRun": "View run",
     "now": "Refresh now",
     "running": "A refresh is running.",
     "showProgress": "Show progress",

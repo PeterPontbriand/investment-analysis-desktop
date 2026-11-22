@@ -13,6 +13,7 @@ import RefreshNowNote from '../components/RefreshNowNote.vue';
 import SecIdentityNotice from '../components/SecIdentityNotice.vue';
 import ScreenState from '../components/ScreenState.vue';
 import StrategyName from '../components/StrategyName.vue';
+import TermTrigger from '../components/TermTrigger.vue';
 import TickerButton from '../components/TickerButton.vue';
 import TableScroll from '../components/TableScroll.vue';
 import OutcomePill from '../components/OutcomePill.vue';
@@ -205,10 +206,12 @@ const counts = computed(() =>
                 :class="{ 'group-start': position === 0 }"
                 scope="col"
               >
-                <span
-                  :data-term-id="column.term"
-                  :lang="state.data.lang ?? undefined"
-                  >{{ column.label }}</span
+                <TermTrigger :term-id="column.term" :name="column.label"
+                  ><span
+                    :data-term-id="column.term"
+                    :lang="state.data.lang ?? undefined"
+                    >{{ column.label }}</span
+                  ></TermTrigger
                 >
               </th>
               <th v-if="group.outcomeColumn" scope="col">

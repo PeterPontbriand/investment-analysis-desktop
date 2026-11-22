@@ -18,6 +18,8 @@ import { useMessages } from '../i18n/index.ts';
 import { formatConjunction } from '../selection/format.ts';
 import { asOfTarget, tickersTarget } from '../selection/problems.ts';
 import StrategyChooser from '../selection/StrategyChooser.vue';
+import TermTrigger from '../components/TermTrigger.vue';
+import { labelTerms } from '../api/labelTerms.ts';
 import { splitTickers } from '../selection/tickers.ts';
 import {
   isFieldFailure,
@@ -235,6 +237,11 @@ function cancel(): void {
       </div>
       <div class="field">
         <label :for="`${base}-as-of`">{{ t('addEntries.asOf') }}</label>
+        <TermTrigger
+          kind="help"
+          :term-id="labelTerms.asOf"
+          :name="t('addEntries.asOf')"
+        />
         <input
           :id="`${base}-as-of`"
           v-model="asOf"

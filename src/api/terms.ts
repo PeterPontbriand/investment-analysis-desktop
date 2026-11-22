@@ -8,6 +8,15 @@ export type ResolvedName = {
   lang: string | null;
 };
 
+// A term as the help index lists it: its name and short definition, in the
+// index's language (B8). The full entry comes from the term's own document later.
+export type TermEntry = {
+  termId: string;
+  name: string;
+  definition: string;
+  lang: string | null;
+};
+
 type References = ApiResult<GetResponse<'/v1/help/references'>>;
 type HelpIndex = ApiResult<GetResponse<'/v1/help'>>;
 type Strategies = ApiResult<GetResponse<'/v1/strategies'>>;
@@ -21,6 +30,10 @@ export type Terms = {
   // A code of a code set as its term's name; as served, with no term id, when
   // the engine lists no reference or no term for it. A failed request rejects.
   term(codeSet: string, code: string): Promise<ResolvedName>;
+  // A term's name and definition by its id, from the cached help index with no
+  // request of its own; null when the index does not list the term. A failed
+  // request rejects.
+  entry(termId: string): Promise<TermEntry | null>;
   // A strategy's name, by method; as served when the engine does not list it.
   // A failed request rejects.
   strategy(methodId: string): Promise<ResolvedName>;
@@ -59,18 +72,27 @@ export function createTerms(
   const helpIndex = cache<HelpIndex>((api) => api.get('/v1/help'));
   const strategyList = cache<Strategies>((api) => api.get('/v1/strategies'));
 
-  const namesByIndex = new WeakMap<HelpIndex, Map<string, string>>();
-  function namesOf(index: HelpIndex): Map<string, string> {
-    let names = namesByIndex.get(index);
-    if (!names) {
-      names = new Map(
+  const itemsByIndex = new WeakMap<
+    HelpIndex,
+    Map<string, { name: string; definition: string }>
+  >();
+  function itemsOf(index: HelpIndex) {
+    let items = itemsByIndex.get(index);
+    if (!items) {
+      items = new Map(
         index.data.groups.flatMap((group) =>
-          group.terms.map((term) => [term.id, term.name] as const),
+          group.terms.map(
+            (term) =>
+              [
+                term.id,
+                { name: term.name, definition: term.definition },
+              ] as const,
+          ),
         ),
       );
-      namesByIndex.set(index, names);
+      itemsByIndex.set(index, items);
     }
-    return names;
+    return items;
   }
 
   const labelled = (
@@ -94,9 +116,16 @@ export function createTerms(
       const [refs, index] = await Promise.all([references(), helpIndex()]);
       const termId = refs.data.code_sets[codeSet]?.[code];
       const name =
-        termId === undefined ? undefined : namesOf(index).get(termId);
+        termId === undefined ? undefined : itemsOf(index).get(termId)?.name;
       if (termId === undefined || name === undefined) return asServed(code);
       return { text: name, termId, lang: index.contentLanguage };
+    },
+    async entry(termId) {
+      const index = await helpIndex();
+      const item = itemsOf(index).get(termId);
+      return item === undefined
+        ? null
+        : { termId, ...item, lang: index.contentLanguage };
     },
     async strategy(methodId) {
       const { data, contentLanguage } = await strategyList();

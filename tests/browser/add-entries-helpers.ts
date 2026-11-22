@@ -44,6 +44,8 @@ export type Options = {
   warnings?: (tickers: string[]) => Parameters<typeof entriesAdded>[1];
   // Holds each add request open until it settles.
   hold?: Promise<void>;
+  // The catalog the application shows, when it is not the English one.
+  words?: typeof en;
 };
 
 export async function openAdd(page: Page, options: Options = {}) {
@@ -68,9 +70,10 @@ export async function openAdd(page: Page, options: Options = {}) {
   });
   await page.goto(engineUrl);
   await page.getByRole('link', { name: 'Core' }).click();
-  await page.getByRole('button', { name: en.watchlist.addEntries }).click();
+  const words = options.words ?? en;
+  await page.getByRole('button', { name: words.watchlist.addEntries }).click();
   await expect(heading(page)).toHaveText(
-    en.addEntries.heading.replace('{name}', 'Core'),
+    words.addEntries.heading.replace('{name}', 'Core'),
   );
   return engine;
 }
@@ -94,7 +97,7 @@ export const expanded = (page: Page, name: string) =>
     .locator('.strategy')
     .filter({ hasText: name })
     .first()
-    .locator('.row button')
+    .locator('.row button[aria-controls$="-options"]')
     .getAttribute('aria-expanded');
 export const showOptions = (page: Page, name: string) =>
   page

@@ -44,6 +44,7 @@ const failure = computed(() =>
           v-if="'kind' in part"
           code-set="InstrumentKind"
           :code="part.kind"
+          plain
         />
         <template v-else>{{ part.text }}</template>
       </template>

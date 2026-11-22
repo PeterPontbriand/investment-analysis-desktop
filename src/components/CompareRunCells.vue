@@ -43,15 +43,16 @@ function view(key: string) {
       class="group-start"
       :colspan="group.valueSpan"
     >
-      <RouterLink :to="runLocation(run.analysis_run_id)" class="value">
-        <template v-if="run.headline_unavailable !== null">
-          <TermName
-            code-set="HeadlineUnavailable"
-            :code="run.headline_unavailable"
-          />
-        </template>
-        <template v-else>{{ t('common.noValue') }}</template>
-      </RouterLink>
+      <RouterLink :to="runLocation(run.analysis_run_id)" class="value">{{
+        t('common.noValue')
+      }}</RouterLink>
+      {{ ' '
+      }}<small v-if="run.headline_unavailable !== null">
+        <TermName
+          code-set="HeadlineUnavailable"
+          :code="run.headline_unavailable"
+        />
+      </small>
     </td>
     <template v-else>
       <td v-if="group.columns.length === 0" class="group-start">
@@ -66,26 +67,24 @@ function view(key: string) {
         }"
         :lang="view(column.key).number ? undefined : (lang ?? undefined)"
       >
-        <RouterLink :to="runLocation(run.analysis_run_id)" class="value">
-          <template v-if="view(column.key).text !== null">{{
-            view(column.key).text
-          }}</template>
-          <template v-else>
-            {{ t('common.noValue') }}
-            <small v-if="view(column.key).status !== null">
-              <TermName
-                code-set="CellStatusValue"
-                :code="view(column.key).status!"
-              />
-            </small>
-          </template>
-        </RouterLink>
+        <RouterLink :to="runLocation(run.analysis_run_id)" class="value">{{
+          view(column.key).text ?? t('common.noValue')
+        }}</RouterLink>
+        {{ ' '
+        }}<small
+          v-if="
+            view(column.key).text === null && view(column.key).status !== null
+          "
+        >
+          <TermName
+            code-set="CellStatusValue"
+            :code="view(column.key).status!"
+          />
+        </small>
       </td>
     </template>
     <td v-if="group.outcomeColumn">
-      <RouterLink :to="runLocation(run.analysis_run_id)" class="pill-link">
-        <OutcomePill :code="run.outcome" />
-      </RouterLink>
+      <OutcomePill :code="run.outcome" />
     </td>
   </template>
 </template>
@@ -98,12 +97,6 @@ function view(key: string) {
 .value {
   color: var(--color-text);
   font-weight: var(--font-weight-medium);
-}
-
-.pill-link,
-.pill-link:hover,
-.pill-link:focus-visible {
-  text-decoration-line: none;
 }
 
 small {

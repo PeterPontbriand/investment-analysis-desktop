@@ -43,7 +43,12 @@ watch(content, (held, previous) => {
     aria-labelledby="details-panel-heading"
   >
     <div class="panel-head">
-      <h2 id="details-panel-heading" ref="heading" tabindex="-1">
+      <h2
+        id="details-panel-heading"
+        ref="heading"
+        tabindex="-1"
+        :lang="content.lang ?? undefined"
+      >
         {{ content.title }}
       </h2>
       <button
