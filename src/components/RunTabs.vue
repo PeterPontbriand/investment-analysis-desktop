@@ -146,7 +146,7 @@ const textState = computed(() =>
       :aria-labelledby="`${id}-tab-${selected}`"
     >
       <template v-if="selected === 'json'">
-        <pre v-if="runDocument.ok" dir="ltr"><WrappedLines :text="json" /></pre>
+        <WrappedLines v-if="runDocument.ok" dir="ltr" :text="json" />
         <ScreenState
           v-else
           :state="{ kind: 'error', error: runDocument.error }"
@@ -154,11 +154,11 @@ const textState = computed(() =>
         />
       </template>
       <template v-else-if="textState?.kind === 'ready'">
-        <pre
+        <WrappedLines
           :lang="textState.data.lang ?? undefined"
           :dir="directionOf(textState.data.lang)"
-        ><WrappedLines :text="textState.data.text"
-        /></pre>
+          :text="textState.data.text"
+        />
       </template>
       <p
         v-else-if="textState === undefined || textState.kind === 'loading'"
@@ -200,12 +200,6 @@ const textState = computed(() =>
 
 .panel {
   margin-block-start: var(--space-3);
-}
-
-pre {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-body);
-  margin: 0;
 }
 
 .loading {

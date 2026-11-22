@@ -41,48 +41,76 @@ async function openRun(page: Page, direction: (typeof directions)[number]) {
 }
 
 // What a tab's text box measures: whether anything scrolls sideways, and the
-// left edges of the fragments of one line, in pixels, with one column's width.
+// left edges of the fragments of one line, in pixels, with the measured width of the runs of spaces the checks use.
 function measure(page: Page) {
   return page.evaluate(() => {
     const panel = document.querySelector('[role="tabpanel"]')!;
     const pre = panel.querySelector('pre')!;
-    const probe = document.createElement('span');
-    probe.style.cssText = 'position:absolute;visibility:hidden;inline-size:1ch';
-    pre.append(probe);
-    const column = probe.getBoundingClientRect().width;
-    probe.remove();
+    // Widths are measured on runs of spaces, the text's own indentation, not
+    // taken from the ch unit, which some engines round to whole pixels.
+    const widthOf = (spaces: number) => {
+      const probe = document.createElement('span');
+      probe.style.cssText =
+        'position:absolute;visibility:hidden;white-space:pre';
+      probe.textContent = ' '.repeat(spaces);
+      pre.parentElement!.append(probe);
+      const width = probe.getBoundingClientRect().width;
+      probe.remove();
+      return width;
+    };
     return {
       panelOverflow: panel.scrollWidth - panel.clientWidth,
       preOverflow: pre.scrollWidth - pre.clientWidth,
       pageOverflow: document.documentElement.scrollWidth - window.innerWidth,
-      column,
+      spaces: { 2: widthOf(2), 10: widthOf(10) },
     };
   });
 }
 
-// The left edge of each visual line of the line whose text starts with `start`.
+// The left edge of each visual line of the line whose text starts with `start`,
+// relative to the line. Range rectangles are snapped to whole pixels in WebKit,
+// so only their tops find where each visual line begins; the left edge is read
+// from a marker element wrapped round that first character, which has the layout's own,
+// fractional position.
 function fragments(page: Page, start: string) {
   return page.evaluate((prefix) => {
     const line = [...document.querySelectorAll('[role="tabpanel"] .line')].find(
       (element) => (element.textContent ?? '').trimStart().startsWith(prefix),
     )!;
-    const text = line.firstChild!;
-    const range = document.createRange();
-    // From the first character after the line's own leading spaces.
+    const text = line.firstChild as Text;
     const body = text.textContent ?? '';
-    range.setStart(text, body.length - body.trimStart().length);
-    range.setEnd(text, body.length);
+    // From the first character after the line's own leading spaces.
+    const first = body.length - body.trimStart().length;
+    const starts: number[] = [];
+    let previousTop: number | null = null;
+    for (let at = first; at < body.length; at += 1) {
+      // A space at a wrap hangs past the end of its line; only a letter starts one.
+      if (body[at] === ' ') continue;
+      const range = document.createRange();
+      range.setStart(text, at);
+      range.setEnd(text, at + 1);
+      const top = Math.round(range.getBoundingClientRect().top);
+      if (previousTop === null || top !== previousTop) starts.push(at);
+      previousTop = top;
+    }
     const origin = line.getBoundingClientRect().left;
-    // The left edge of each visual line: the least left of the fragments at
-    // one height (a trailing space that hangs past the end is a fragment too).
-    const byTop = new Map<number, number>();
-    for (const rect of range.getClientRects()) {
-      const top = Math.round(rect.top);
-      byTop.set(top, Math.min(byTop.get(top) ?? Infinity, rect.left));
+    const markers: HTMLElement[] = [];
+    // Last offset first, so an insertion does not move the offsets before it.
+    for (const at of [...starts].reverse()) {
+      const range = document.createRange();
+      range.setStart(text, at);
+      range.setEnd(text, at + 1);
+      const marker = document.createElement('span');
+      range.surroundContents(marker);
+      markers.push(marker);
     }
     const lefts = new Set<number>();
-    for (const left of byTop.values())
-      lefts.add(Math.round((left - origin) * 10) / 10);
+    for (const marker of markers)
+      lefts.add(
+        Math.round((marker.getBoundingClientRect().left - origin) * 10) / 10,
+      );
+    for (const marker of markers) marker.replaceWith(...marker.childNodes);
+    line.normalize();
     return [...lefts].sort((a, b) => a - b);
   }, start);
 }
@@ -135,14 +163,21 @@ for (const direction of directions) {
         const notes = await fragments(page, 'notes:');
         expect(notes).toHaveLength(2);
         expect(notes[0]).toBeCloseTo(0, 0);
-        expect(notes[1]! - notes[0]!).toBeCloseTo(2 * size.column, 0);
+        expect(notes[1]! - notes[0]!).toBeCloseTo(size.spaces[2], 0);
 
         // An indented line keeps its indentation: a continuation is two
         // columns right of it, not of the margin.
         const indented = await fragments(page, 'bvps:');
         expect(indented.length).toBeGreaterThanOrEqual(2);
-        expect(indented[0]!).toBeCloseTo(2 * size.column, 0);
-        expect(indented[1]! - indented[0]!).toBeCloseTo(2 * size.column, 0);
+        expect(indented[0]!).toBeCloseTo(size.spaces[2], 0);
+        expect(indented[1]! - indented[0]!).toBeCloseTo(size.spaces[2], 0);
+
+        // A line indented several spaces starts at that many columns, and its
+        // continuation two further in.
+        const deep = await fragments(page, 'deep:');
+        expect(deep.length).toBeGreaterThanOrEqual(2);
+        expect(deep[0]!).toBeCloseTo(size.spaces[10], 0);
+        expect(deep[1]! - deep[0]!).toBeCloseTo(size.spaces[2], 0);
 
         // A token with no break opportunity breaks anywhere.
         const token = await fragments(page, 'token:');
