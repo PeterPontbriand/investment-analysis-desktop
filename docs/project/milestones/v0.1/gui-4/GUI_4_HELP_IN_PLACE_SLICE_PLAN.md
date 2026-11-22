@@ -12,7 +12,7 @@
 | Sub-slice | Scope | Status | Completed |
 | :--- | :--- | :--- | :--- |
 | GUI.4a | [Ticker details](#gui4a--ticker-details) | Complete | 2026-11-21 |
-| GUI.4b | [Term popups](#gui4b--term-popups) | Planned | |
+| GUI.4b | [Term popups](#gui4b--term-popups) | Next | |
 | GUI.4c | [Help panel content](#gui4c--help-panel-content) | Planned | |
 
 ## Sub-slices
@@ -217,3 +217,11 @@ Approved by the project owner on 2026-11-20. The numbering continues [Appendix A
 | D310 | `docs/project/SMOKE_TESTING.md` is no longer maintained per pull request (approved 2026-11-21). It gains one note at its top saying so, naming D310 and saying that its future is decided in GUI.6, and is otherwise unchanged and not deleted. The GUI.6 section of the implementation plan gains the open decision: what becomes of it. The expected answer is a short checklist for the installed application (the installer, the first start, the engine found, and the macOS quit check of issue 24), run once per release, but GUI.6 decides. |
 | D311 | `pnpm smoke` becomes `pnpm sandbox` (approved 2026-11-21). It keeps the engine discovery, the vendored-commit check with the engine-checkout switch and its restore, the stop handling, and the setup that creates the throwaway database with its sample data (now named `Sandbox`, `Sandbox Empty` and `Sandbox Scratch`, in `.tmp/sandbox/<time>/sandbox.sqlite3`) and starts the application against it. It drops the record (`SMOKE_RECORD.md`), `--checks`, the check list, the document reader, the read of the contributor's real database state, and their tests, after a search showed that nothing else used them. The tool's folder is `tools/sandbox/`. What `pnpm vendor-ian` shares with it (finding the engine through `ian about`, the vendored commit, the process runner) moved to `tools/engine/`, where `pnpm test:engine` also uses it. |
 | D312 | GUI.4a finishes with D308's first tests and the owner's look (D309), approved 2026-11-21. Its pull request has no manual-run section and no smoke record. The GUI.4a row is marked Complete, with the date the pull request is opened, in a commit made then. |
+
+### GUI.4b: term popups
+
+Approved by the project owner on 2026-11-22. Decisions D313 to D327 are recorded in this section, in the order approved.
+
+| # | Decision |
+| :--- | :--- |
+| D313 | Re-vendor. The branch's first commit is `pnpm vendor-ian 570b2fa2c7fdec7057b0b05aff56a814a5a4aad5` (engine main after API.18, the glossary entries Analysis Warning and Analysis Limitation, and API.19). It picks up API.18 (IAD issue #31) and API.19, which D326 and D327 cover. The pull request closes #31. |

@@ -2512,7 +2512,7 @@ export interface components {
          * @description Machine-readable reasons shared by deterministic metric results.
          * @enum {string}
          */
-        ReasonCode: "insufficient_history" | "non_contiguous_history" | "missing_fact" | "incompatible_period" | "incompatible_units" | "incompatible_currency" | "incompatible_scope" | "ambiguous_fact" | "not_available_as_of" | "quote_timing_unusable" | "stale_anchor" | "earlier_basis" | "nonpositive_beginning" | "nonpositive_ending" | "sign_change" | "fcf_not_growing" | "eps_not_growing" | "fcf_and_eps_not_growing" | "forward_growth_not_confirmed" | "consensus_unavailable" | "market_cap_unavailable" | "provider_error" | "invalid_request" | "instrument_kind_not_applicable" | "industry_class_not_applicable" | "industry_class_unknown" | "unsupported_mapping" | "debt_not_visible" | "nonpositive_denominator" | "insufficient_tests" | "nonpositive_input" | "override_only";
+        ReasonCode: "insufficient_history" | "non_contiguous_history" | "missing_fact" | "incompatible_period" | "incompatible_units" | "incompatible_currency" | "incompatible_scope" | "ambiguous_fact" | "not_available_as_of" | "quote_timing_unusable" | "stale_anchor" | "earlier_basis" | "nonpositive_beginning" | "nonpositive_ending" | "sign_change" | "fcf_not_growing" | "eps_not_growing" | "fcf_and_eps_not_growing" | "forward_growth_not_confirmed" | "consensus_unavailable" | "market_cap_unavailable" | "provider_error" | "provider_no_data" | "invalid_request" | "instrument_kind_not_applicable" | "industry_class_not_applicable" | "industry_class_unknown" | "unsupported_mapping" | "debt_not_visible" | "nonpositive_denominator" | "insufficient_tests" | "nonpositive_input" | "override_only";
         /**
          * RefreshEntryRequest
          * @description One entry of a refresh over a list of entries: a ticker and one strategy's selection.
@@ -2730,10 +2730,10 @@ export interface components {
             results: components["schemas"]["RefreshResultDocument"][];
             /**
              * Schema Version
-             * @default 4
+             * @default 5
              * @constant
              */
-            schema_version: 4;
+            schema_version: 5;
             /**
              * Watchlist Id
              * @description The watchlist refreshed; null for a refresh of a list of entries.
