@@ -3,6 +3,7 @@
 // test runs left to right and right to left, against the engine mock.
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures.ts';
+import { hoverSettled } from './hover.ts';
 import { engineUrl, mockEngine } from './engine-mock.ts';
 import { openAdd } from './add-entries-helpers.ts';
 import { focusByKeyboard } from './keyboard.ts';
@@ -92,7 +93,7 @@ for (const direction of directions) {
       const term = page.getByRole('button', { name: 'Momentum' }).first();
 
       for (const trigger of [ticker, term]) {
-        await trigger.hover();
+        await hoverSettled(page, trigger);
         // Past the hover delay, nothing has opened.
         await page.waitForTimeout(800);
         await expect(popup(page)).toHaveCount(0);

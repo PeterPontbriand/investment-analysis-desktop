@@ -4,6 +4,7 @@
 // test runs left to right and right to left, against the engine mock.
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures.ts';
+import { hoverSettled } from './hover.ts';
 import { openAdd } from './add-entries-helpers.ts';
 import { engineUrl, mockEngine, type Handler } from './engine-mock.ts';
 import { focusByKeyboard } from './keyboard.ts';
@@ -85,9 +86,14 @@ const withRetired: Handler = (url) =>
 
 // Hovering shows the definition only; clicking opens the panel with the term's
 // name as its heading, then the definition (B8).
-async function previewAndPanel(page: Page, trigger: Locator, id: string) {
+async function previewAndPanel(
+  page: Page,
+  trigger: Locator,
+  id: string,
+  trace?: string[],
+) {
   const item = term(id);
-  await trigger.hover();
+  await hoverSettled(page, trigger, trace);
   await expect(popup(page)).toBeVisible();
   await expect(popup(page)).toContainText(item.definition);
   await expect(trigger).toHaveAttribute('aria-describedby', /.+/);
@@ -194,7 +200,16 @@ for (const direction of directions) {
         .nth(1)
         .getByRole('button', { name: 'Unavailable' });
       await expect(pill).toBeVisible();
-      await previewAndPanel(page, pill, 'outcome-unavailable');
+      // Temporary: where the pill and its container were, shown if this fails.
+      const trace: string[] = [];
+      try {
+        await previewAndPanel(page, pill, 'outcome-unavailable', trace);
+      } catch (error) {
+        const message = (error as Error).message;
+        throw new Error(`${message}\npositions:\n${trace.join('\n')}`, {
+          cause: error,
+        });
+      }
       await expect(rows(page).nth(1).locator('td a').first()).toBeVisible();
     });
 
@@ -366,7 +381,7 @@ for (const direction of directions) {
       await expect(asOf(page)).toHaveAccessibleDescription(
         new RegExp(term('as-of-date').definition),
       );
-      await helpButton(page, 'Momentum').hover();
+      await hoverSettled(page, helpButton(page, 'Momentum'));
       await expect(popup(page)).toContainText(
         term('strategy-momentum').definition,
       );
