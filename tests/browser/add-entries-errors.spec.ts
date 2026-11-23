@@ -362,7 +362,7 @@ test.describe('pending, cancel and unsupported options', () => {
     });
     await showOptions(page, 'Graham Number');
     const box = strategy(page, 'Graham Number');
-    await expect(box.getByText(en.engine.state.databaseBusy)).toBeVisible();
+    await expect(box.getByText(en.state.databaseBusy)).toBeVisible();
     await tickers(page).fill('KO');
     await choose(page, 'Piotroski F-Score');
     broken = false;

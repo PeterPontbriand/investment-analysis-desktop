@@ -199,19 +199,22 @@ test.describe('progress', () => {
     await expect(
       page.getByText(counts(1, 4), { exact: true }).first(),
     ).toBeVisible();
-    // A finished row's outcome is a pill linked to its saved run.
+    // A finished row's outcome is a term pill, followed by a link to its
+    // saved run (B5).
     await expect(
-      rows(page).nth(0).getByRole('link', { name: 'Completed' }),
+      rows(page).nth(0).getByRole('button', { name: 'Completed' }),
+    ).toBeVisible();
+    await expect(
+      rows(page).nth(0).getByRole('link', { name: en.refresh.viewRun }),
     ).toHaveAttribute('href', `/runs/${savedRunId}`);
     await advance(page, script);
     await expect(rows(page)).toHaveCount(4);
-    // A failed outcome shows only its pill, linked to its run; the reason is
-    // on the run's own screen.
+    // A failed outcome shows its pill and a link to its run; the reason is on
+    // the run's own screen.
     const failed = rows(page).nth(2);
-    await expect(failed.getByRole('link', { name: 'Failed' })).toHaveAttribute(
-      'href',
-      `/runs/${failedRunId}`,
-    );
+    await expect(
+      failed.getByRole('link', { name: en.refresh.viewRun }),
+    ).toHaveAttribute('href', `/runs/${failedRunId}`);
     await expect(failed).not.toContainText('Provider error');
     await advance(page, script);
     await expect(heading(page)).toHaveText(
@@ -575,6 +578,45 @@ test.describe('ended states', () => {
       'data-term-id',
       'verdict-unreachable',
     );
+    await expect(page.getByText('Yahoo Finance')).toBeVisible();
+  });
+
+  test('an unknown ticker finishes as Unavailable with no reason, and the provider check still shows', async ({
+    page,
+  }) => {
+    // API.18: a provider that has no data leaves the run Unavailable with a
+    // null reason code; the summary still carries the provider check.
+    const script = scriptedJob([
+      frames[0]!,
+      {
+        state: 'completed',
+        totals: totals(4, 4, 4),
+        events: [
+          finished(3, 0, 'ZZZZQ', momentum, {
+            outcome: 'unavailable',
+            reason_code: null,
+            saved: true,
+            analysis_run_id: failedRunId,
+          }),
+        ],
+        summary: summary(
+          { unavailable: 1 },
+          {
+            provider_check: [{ provider_id: 'yahoo', verdict: 'no_data' }],
+          },
+        ),
+      },
+    ]);
+    await openApp(page, script, (url) =>
+      url.pathname === '/v1/info'
+        ? ok({ ...info, providers: [{ id: 'yahoo', name: 'Yahoo Finance' }] })
+        : undefined,
+    );
+    await startFromCore(page);
+    await advance(page, script, 2);
+    await expect(rows(page).nth(0)).toContainText('Unavailable');
+    await expect(rows(page).nth(0)).not.toContainText('Provider Error');
+    await expect(page.getByText(en.refresh.providersHeading)).toBeVisible();
     await expect(page.getByText('Yahoo Finance')).toBeVisible();
   });
 

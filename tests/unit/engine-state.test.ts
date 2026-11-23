@@ -74,7 +74,7 @@ describe('failure views', () => {
   it('uses the catalog for database codes, with retry for database_busy only', () => {
     expect(failureView(failure('database_busy'))).toEqual({
       kind: 'message',
-      key: 'engine.state.databaseBusy',
+      key: 'state.databaseBusy',
       retry: true,
     });
     expect(failureView(failure('database_migration_failed'))).toMatchObject({
@@ -82,7 +82,7 @@ describe('failure views', () => {
       retry: false,
     });
     expect(failureView(failure('database_io_error'))).toMatchObject({
-      key: 'engine.state.databaseOther',
+      key: 'state.databaseOther',
       retry: false,
     });
   });

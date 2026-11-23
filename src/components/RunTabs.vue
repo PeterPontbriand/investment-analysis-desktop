@@ -6,6 +6,7 @@ import type { ScreenState as ScreenStateValue } from '../api/useScreenData.ts';
 import { directionOf } from '../i18n/direction.ts';
 import { useMessages, type MessageKey } from '../i18n/index.ts';
 import ScreenState from './ScreenState.vue';
+import WrappedLines from './WrappedLines.vue';
 
 type Mode = 'concise' | 'details' | 'diagnostics';
 type RunDocument = ApiResult<GetResponse<'/v1/runs/{analysis_run_id}'>>;
@@ -145,7 +146,7 @@ const textState = computed(() =>
       :aria-labelledby="`${id}-tab-${selected}`"
     >
       <template v-if="selected === 'json'">
-        <pre v-if="runDocument.ok" dir="ltr">{{ json }}</pre>
+        <WrappedLines v-if="runDocument.ok" dir="ltr" :text="json" />
         <ScreenState
           v-else
           :state="{ kind: 'error', error: runDocument.error }"
@@ -153,10 +154,11 @@ const textState = computed(() =>
         />
       </template>
       <template v-else-if="textState?.kind === 'ready'">
-        <pre
+        <WrappedLines
           :lang="textState.data.lang ?? undefined"
           :dir="directionOf(textState.data.lang)"
-          >{{ textState.data.text }}</pre>
+          :text="textState.data.text"
+        />
       </template>
       <p
         v-else-if="textState === undefined || textState.kind === 'loading'"
@@ -198,14 +200,6 @@ const textState = computed(() =>
 
 .panel {
   margin-block-start: var(--space-3);
-  overflow-x: auto;
-}
-
-pre {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-body);
-  margin: 0;
-  white-space: pre;
 }
 
 .loading {

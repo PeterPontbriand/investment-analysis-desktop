@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
 import type { ApiResult, GetResponse } from '../api/client.ts';
+import { useEngine } from '../api/engine.ts';
 import { runIdentitySource } from '../api/identitySource.ts';
 import { useScreenData } from '../api/useScreenData.ts';
 import AppBreadcrumb from '../components/AppBreadcrumb.vue';
@@ -11,6 +12,8 @@ import RunTabs from '../components/RunTabs.vue';
 import ScreenState from '../components/ScreenState.vue';
 import TickerButton from '../components/TickerButton.vue';
 import TermName from '../components/TermName.vue';
+import TermTrigger from '../components/TermTrigger.vue';
+import { labelTerms } from '../api/labelTerms.ts';
 import { useRouteParam } from '../composables/useRouteParam.ts';
 import {
   formatDate,
@@ -31,6 +34,7 @@ type Loaded = {
 };
 
 const { t, locale } = useMessages();
+const engine = useEngine();
 const route = useRoute();
 const runId = useRouteParam('run', 'runId');
 // Where the reader came from, kept from when the screen opened: the route
@@ -45,6 +49,10 @@ const { state, reload } = useScreenData<Loaded>(
       client.get('/v1/runs/{analysis_run_id}', { path }),
     ]);
     if (overview.status === 'rejected') throw overview.reason;
+    engine.identities.rememberRunIdentity(
+      runId.value,
+      overview.value.data.security_identity,
+    );
     return {
       overview: overview.value,
       document:
@@ -87,15 +95,13 @@ const crumbs = computed(() =>
   ),
 );
 
-const asOf = computed(() =>
+const asOfDate = computed(() =>
   fullDocument.value === null
     ? null
-    : t('runDetail.asOf', {
-        date: formatDateOrInstant(
-          locale.value,
-          fullDocument.value.data.effective_as_of,
-        ),
-      }),
+    : formatDateOrInstant(
+        locale.value,
+        fullDocument.value.data.effective_as_of,
+      ),
 );
 </script>
 
@@ -114,6 +120,7 @@ const asOf = computed(() =>
         <template #name>{{ companyName }}</template>
         <template #ticker
           ><TickerButton
+            :name-shown="companyName !== null"
             :source="
               runIdentitySource(
                 state.data.overview.data.ticker,
@@ -122,10 +129,16 @@ const asOf = computed(() =>
             "
         /></template>
         <template #strategy>
-          <span
-            :data-term-id="state.data.overview.data.strategy.term ?? undefined"
-            :lang="state.data.overview.contentLanguage ?? undefined"
-            >{{ state.data.overview.data.strategy.label }}</span
+          <TermTrigger
+            :term-id="state.data.overview.data.strategy.term"
+            :name="state.data.overview.data.strategy.label"
+            ><span
+              :data-term-id="
+                state.data.overview.data.strategy.term ?? undefined
+              "
+              :lang="state.data.overview.contentLanguage ?? undefined"
+              >{{ state.data.overview.data.strategy.label }}</span
+            ></TermTrigger
           >
         </template>
       </i18n-t>
@@ -139,7 +152,18 @@ const asOf = computed(() =>
           })
         }}
       </li>
-      <li v-if="asOf !== null">{{ asOf }}</li>
+      <li v-if="asOfDate !== null">
+        <i18n-t keypath="runDetail.asOf" scope="global" tag="span">
+          <template #label
+            ><TermTrigger
+              :term-id="labelTerms.asOf"
+              :name="t('runDetail.asOfLabel')"
+              >{{ t('runDetail.asOfLabel') }}</TermTrigger
+            ></template
+          >
+          <template #date>{{ asOfDate }}</template>
+        </i18n-t>
+      </li>
       <li
         v-if="
           state.data.overview.data.headline !== null &&
@@ -178,7 +202,13 @@ const asOf = computed(() =>
         v-if="state.data.document.result.data.warnings.length > 0"
         aria-labelledby="run-warnings"
       >
-        <h2 id="run-warnings">{{ t('runDetail.warnings') }}</h2>
+        <h2 id="run-warnings">
+          <TermTrigger
+            :term-id="labelTerms.warnings"
+            :name="t('runDetail.warnings')"
+            >{{ t('runDetail.warnings') }}</TermTrigger
+          >
+        </h2>
         <ul :lang="state.data.document.result.contentLanguage ?? undefined">
           <li
             v-for="(warning, index) in state.data.document.result.data.warnings"
@@ -192,7 +222,13 @@ const asOf = computed(() =>
         v-if="state.data.document.result.data.limitations.length > 0"
         aria-labelledby="run-limitations"
       >
-        <h2 id="run-limitations">{{ t('runDetail.limitations') }}</h2>
+        <h2 id="run-limitations">
+          <TermTrigger
+            :term-id="labelTerms.limitations"
+            :name="t('runDetail.limitations')"
+            >{{ t('runDetail.limitations') }}</TermTrigger
+          >
+        </h2>
         <ul :lang="state.data.document.result.contentLanguage ?? undefined">
           <li
             v-for="(limitation, index) in state.data.document.result.data

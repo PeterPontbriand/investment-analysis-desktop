@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import TermName from '../components/TermName.vue';
+import TermTrigger from '../components/TermTrigger.vue';
 import { useMessages } from '../i18n/index.ts';
 import { readStoredValue } from './format.ts';
 import type { Field } from './schema.ts';
@@ -31,13 +32,21 @@ const show = (field: Field) =>
   <dl class="options-list">
     <template v-for="field in fields" :key="field.key">
       <template v-if="field.kind === 'group'">
-        <dt :data-term-id="field.termId ?? undefined">{{ field.label }}</dt>
+        <dt :data-term-id="field.termId ?? undefined">
+          <TermTrigger :term-id="field.termId" :name="field.label">{{
+            field.label
+          }}</TermTrigger>
+        </dt>
         <dd class="nested">
           <OptionsList :fields="field.fields" :selection="selection" />
         </dd>
       </template>
       <template v-else>
-        <dt :data-term-id="field.termId ?? undefined">{{ field.label }}</dt>
+        <dt :data-term-id="field.termId ?? undefined">
+          <TermTrigger :term-id="field.termId" :name="field.label">{{
+            field.label
+          }}</TermTrigger>
+        </dt>
         <dd>
           <template v-if="show(field).kind === 'notSet'">{{
             t('selection.notSet')

@@ -620,6 +620,15 @@ export function textFor(
   return {
     schema_version: 1,
     mode,
-    text: `Run ${id.slice(-4)} in ${mode} mode\n${'A line that is wider than the panel needs. '.repeat(6)}`,
+    // A long line, an indented long line, a deeply indented one and a long unbroken token, in every
+    // mode, so each tab has lines that must wrap (D329).
+    text: [
+      `Run ${id.slice(-4)} in ${mode} mode`,
+      `notes: ${'A line that is wider than the panel needs. '.repeat(6)}`,
+      `  bvps: cache -> miss — ${'Cache returned no usable entry; '.repeat(4)}`,
+      `          deep: ${'Several columns in, and still wrapping; '.repeat(4)}`,
+      '',
+      `token: ${'x'.repeat(200)}`,
+    ].join('\n'),
   };
 }

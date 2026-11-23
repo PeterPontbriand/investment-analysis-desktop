@@ -438,7 +438,7 @@ test.describe('remove entries', () => {
       .getByRole('button', { name: en.watchlist.removeAction })
       .click();
     await expect(dialog.getByRole('alert')).toContainText(
-      en.engine.state.databaseBusy,
+      en.state.databaseBusy,
     );
     await dialog.getByRole('button', { name: en.common.tryAgain }).click();
     await expect(dialog).toHaveCount(0);

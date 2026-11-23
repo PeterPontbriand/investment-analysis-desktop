@@ -31,6 +31,8 @@
   },
   "state": {
     "defect": "Something went wrong in the analysis engine.",
+    "databaseBusy": "The analysis engine's database is busy with another program. Try again in a moment.",
+    "databaseOther": "The analysis engine could not read or write its database.",
     "renderFailed": "Something went wrong in the application. Try another screen, or restart the application."
   },
   "watchlists": {
@@ -157,7 +159,8 @@
     "title": "{name} ({ticker}) — {strategy}",
     "titleNoName": "{ticker} — {strategy}",
     "saved": "Saved {date}",
-    "asOf": "As of {date}",
+    "asOf": "{label} {date}",
+    "asOfLabel": "As of",
     "savedByRefresh": "Saved by refresh",
     "savedByDirect": "Saved by direct analysis",
     "warnings": "Warnings",
@@ -181,6 +184,14 @@
     "lookUp": "Look up",
     "lookingUp": "Looking up…",
     "nameAndTicker": "{name} ({ticker})"
+  },
+  "previewSwitch": {
+    "label": "Show popups"
+  },
+  "termHelp": {
+    "about": "About {name}",
+    "mark": "?",
+    "f1": "Press F1 for details."
   },
   "detailsPanel": {
     "close": "Close details",
@@ -248,6 +259,7 @@
     }
   },
   "refresh": {
+    "viewRun": "View run",
     "now": "Refresh now",
     "running": "A refresh is running.",
     "showProgress": "Show progress",

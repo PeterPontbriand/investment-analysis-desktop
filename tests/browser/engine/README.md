@@ -38,6 +38,7 @@ Provider data changes, so no test names a company, an exchange or a provider. Ea
 - The preview and panel of a watchlist entry: the name, the venue only when the engine serves one, the kind's term name, the currency, and the line naming the provider the engine served (`GET /v1/instrument-profiles/{ticker}`, `GET /v1/info` and the help documents).
 - Adding a ticker no provider knows (`ZZZZQ`): the warning line under `Added 1 entry.`, with the term name from the help index; the preview that says no details are stored; the message of a lookup, which must be the one the engine serves for the same lookup and must follow the engine's own template; and that no profile is stored afterwards.
 - A Saved runs row's ticker: the identity the run kept, from the run overview's `security_identity`, and the run detail title, which starts with the same name.
+- Term popups (GUI.4b, `term-popups.spec.ts`): the engine lists a help term for every label the application names (`src/api/labelTerms.ts`); a run outcome pill's preview shows the definition the engine serves for that term in `/v1/help`, and its panel shows the name and the definition; the "As of" column header does the same with the engine's `as-of-date` term.
 
 Values the engine defines may be asserted: a warning's term name and a failure message's template.
 

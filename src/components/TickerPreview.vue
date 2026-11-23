@@ -9,7 +9,12 @@ import TermName from './TermName.vue';
 
 // The short, read-only preview of a ticker (D284, D290): the name, then the
 // venue, the kind and the currency joined by a separator. It has no controls.
-const props = defineProps<{ source: IdentitySource }>();
+const props = defineProps<{
+  source: IdentitySource;
+  // The screen shows the company name beside the trigger, so the preview
+  // leaves the name out (D331).
+  omitName?: boolean;
+}>();
 
 const { t } = useMessages();
 const { details } = useTickerDetails(() => props.source);
@@ -31,7 +36,7 @@ const failure = computed(() =>
     <p v-else-if="failure">{{ t(failure.key) }}</p>
   </template>
   <template v-else-if="isDescribed(details.lines)">
-    <p v-if="details.lines.name !== null" class="name">
+    <p v-if="details.lines.name !== null && !omitName" class="name">
       {{ details.lines.name }}
     </p>
     <p>
@@ -44,6 +49,7 @@ const failure = computed(() =>
           v-if="'kind' in part"
           code-set="InstrumentKind"
           :code="part.kind"
+          plain
         />
         <template v-else>{{ part.text }}</template>
       </template>

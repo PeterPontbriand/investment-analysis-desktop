@@ -1,4 +1,4 @@
-/* global document -- used inside browser.execute, which runs in the webview */
+/* global document, window -- used inside browser.execute, which runs in the webview */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { browser } from '@wdio/globals';
@@ -63,5 +63,22 @@ describe('desktop shell', () => {
       assert.ok(text.includes(expected), `${expected} is shown`);
     assert.equal(page.listLang, null);
     assert.equal(page.lastLang, 'en');
+  });
+
+  it('delivers F1 to the application and keeps it from the webview (D328)', async () => {
+    // WebDriver's code for the F1 key. The listener sits on the window, after
+    // the application's own, so it sees whether the application kept the key.
+    await browser.execute(() => {
+      window.__f1 = [];
+      window.addEventListener('keydown', (event) => {
+        if (event.key === 'F1') window.__f1.push(event.defaultPrevented);
+      });
+    });
+    await browser.keys('\uE031');
+    await browser.waitUntil(
+      async () => (await browser.execute(() => window.__f1.length)) > 0,
+      { timeout: 20_000, timeoutMsg: 'F1 did not reach the application' },
+    );
+    assert.deepEqual(await browser.execute(() => window.__f1), [true]);
   });
 });

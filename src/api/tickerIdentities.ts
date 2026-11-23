@@ -18,6 +18,9 @@ export type TickerIdentities = {
   lookUp(ticker: string): Promise<InstrumentProfile>;
   // The identity a saved run kept, from its overview. Cached per run id.
   runIdentity(runId: string): Promise<SecurityIdentity>;
+  // Keeps an identity a screen has already read from the run's overview, so
+  // the ticker beside it asks for nothing more (D331).
+  rememberRunIdentity(runId: string, identity: SecurityIdentity): void;
   // Forgets every current profile: a refresh ended or entries were added, and
   // either can store or change one (D294).
   clearProfiles(): void;
@@ -102,6 +105,9 @@ export function createTickerIdentities(
       runs.set(runId, attempt);
       forgetOnFailure(runs, runId, attempt);
       return attempt;
+    },
+    rememberRunIdentity(runId, identity) {
+      if (!runs.has(runId)) runs.set(runId, Promise.resolve(identity));
     },
     clearProfiles() {
       profiles.clear();

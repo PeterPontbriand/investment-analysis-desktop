@@ -280,7 +280,7 @@ test.describe('stored options', () => {
       .getByRole('button', { name: rowName('show', 1, 'ACME, Momentum') })
       .click();
     const row = page.locator('#entry-options-1');
-    await expect(row.getByText(en.engine.state.databaseBusy)).toBeVisible();
+    await expect(row.getByText(en.state.databaseBusy)).toBeVisible();
     broken = false;
     await row.getByRole('button', { name: en.common.tryAgain }).click();
     await expect(row.getByText('Short window')).toBeVisible();

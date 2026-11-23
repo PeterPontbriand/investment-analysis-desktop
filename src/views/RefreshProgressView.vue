@@ -288,13 +288,13 @@ function stop(): void {
                 t('refresh.rowRunning')
               }}</template>
               <template v-else-if="row.outcome !== null">
-                <RouterLink
-                  v-if="row.runId !== null"
-                  :to="runLocation(row.runId)"
-                >
-                  <OutcomePill :code="row.outcome" />
-                </RouterLink>
-                <OutcomePill v-else :code="row.outcome" />
+                <OutcomePill :code="row.outcome" />
+                <template v-if="row.runId !== null">
+                  {{ ' ' }}
+                  <RouterLink :to="runLocation(row.runId)">{{
+                    t('refresh.viewRun')
+                  }}</RouterLink>
+                </template>
               </template>
               <span v-else-if="row.reasonCode !== null" class="problem">
                 <TermName

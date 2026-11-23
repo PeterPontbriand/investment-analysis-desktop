@@ -332,6 +332,58 @@ test.describe('the identity a saved run kept', () => {
       ),
     ).toBe(true);
   });
+
+  test("the heading's ticker previews the venue the engine served for the run's identity (D331)", async ({
+    page,
+    engine,
+  }) => {
+    test.skip(engine.savedRunId === null, noProviders);
+    const overview = (
+      await engine.get<components['schemas']['RunOverviewDocument']>(
+        `/v1/runs/${engine.savedRunId}/overview`,
+      )
+    ).body;
+    const identity = overview.security_identity;
+    // A run of the known ticker saved on this engine must keep a listing
+    // venue (engine API.17); the no-venue case is the mocked tests'.
+    expect(
+      identity.listing_venue,
+      `the engine served no listing venue in the identity of run ${engine.savedRunId}`,
+    ).not.toBeNull();
+    expect(
+      identity.instrument_name,
+      `the engine served no name in the identity of run ${engine.savedRunId}`,
+    ).not.toBeNull();
+    const venue = identity.listing_venue!;
+    const name = identity.instrument_name!;
+
+    await openApp(page, engine);
+    await page
+      .getByRole('navigation', { name: words.nav.label })
+      .getByRole('link', { name: words.nav.runs })
+      .click();
+    await page.locator('tbody tr').first().getByRole('link').first().click();
+    const heading = page.getByRole('heading', { level: 1 });
+    await expect(heading).toContainText(overview.ticker);
+    const trigger = heading.getByRole('button', {
+      name: overview.ticker,
+      exact: true,
+    });
+
+    // The preview is the venue the engine served, and not the name the
+    // heading already shows.
+    await trigger.hover();
+    await expect(popup(page)).toBeVisible();
+    await expect(popup(page)).toHaveText(venue);
+    await expect(popup(page)).not.toContainText(name);
+    await page.mouse.move(0, 0);
+
+    // The panel keeps the name and the venue.
+    await trigger.click();
+    await expect(panel(page)).toBeVisible();
+    await expect(panel(page)).toContainText(name);
+    await expect(panel(page)).toContainText(venue);
+  });
 });
 
 // The template the mocked tests' fixture gives a rule error.

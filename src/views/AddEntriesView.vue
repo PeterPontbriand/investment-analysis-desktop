@@ -18,6 +18,9 @@ import { useMessages } from '../i18n/index.ts';
 import { formatConjunction } from '../selection/format.ts';
 import { asOfTarget, tickersTarget } from '../selection/problems.ts';
 import StrategyChooser from '../selection/StrategyChooser.vue';
+import TermTrigger from '../components/TermTrigger.vue';
+import { termDefinitionId } from '../components/termDefinitionId.ts';
+import { labelTerms } from '../api/labelTerms.ts';
 import { splitTickers } from '../selection/tickers.ts';
 import {
   isFieldFailure,
@@ -235,6 +238,12 @@ function cancel(): void {
       </div>
       <div class="field">
         <label :for="`${base}-as-of`">{{ t('addEntries.asOf') }}</label>
+        <TermTrigger
+          kind="help"
+          :term-id="labelTerms.asOf"
+          :name="t('addEntries.asOf')"
+          :control="`${base}-as-of`"
+        />
         <input
           :id="`${base}-as-of`"
           v-model="asOf"
@@ -243,7 +252,11 @@ function cancel(): void {
           :data-target="asOfTarget"
           :aria-invalid="describe(asOfTarget) ? 'true' : undefined"
           :aria-describedby="
-            [describe(asOfTarget), `${base}-as-of-hint`]
+            [
+              describe(asOfTarget),
+              `${base}-as-of-hint`,
+              termDefinitionId(`${base}-as-of`),
+            ]
               .filter(Boolean)
               .join(' ')
           "

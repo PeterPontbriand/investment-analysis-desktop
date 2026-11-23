@@ -3,6 +3,7 @@ import type { components } from '../api/schema.ts';
 import { formatCellValue } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 import TermName from './TermName.vue';
+import TermTrigger from './TermTrigger.vue';
 
 type Cell = components['schemas']['CompareCellDocument'];
 
@@ -23,9 +24,13 @@ function text(cell: Cell): string | null {
 <template>
   <ul class="cards">
     <li v-for="cell in cells" :key="cell.key" class="card">
-      <span class="label" :data-term-id="cell.term" :lang="lang ?? undefined">{{
-        cell.label
-      }}</span>
+      <span class="label" :lang="lang ?? undefined"
+        ><TermTrigger :term-id="cell.term" :name="cell.label"
+          ><span :data-term-id="cell.term" :lang="lang ?? undefined">{{
+            cell.label
+          }}</span></TermTrigger
+        ></span
+      >
       <span
         v-if="text(cell) !== null"
         class="value"

@@ -23,7 +23,7 @@ const compareRunId = (n: number) =>
 
 async function cells(row: Locator): Promise<string[]> {
   return (await row.locator('th, td').allInnerTexts()).map((text) =>
-    plain(text),
+    plain(text).replace(/\s+/g, ' '),
   );
 }
 
@@ -266,7 +266,7 @@ test.describe('comparison', () => {
         '— Does not apply',
         '— Does not apply',
         'Not Applicable',
-        'No result was stored',
+        '— No result was stored',
         'Unavailable',
       ]);
     const notRun = rows(page).nth(1).locator('td').first();
@@ -304,7 +304,7 @@ test.describe('comparison', () => {
   }) => {
     const engine = await openComparison(page);
     const acme = rows(page).nth(0);
-    await expect(acme.locator('td a')).toHaveCount(9);
+    await expect(acme.locator('td a')).toHaveCount(7);
     await acme.locator('td a').nth(1).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
       en.runDetail.title
@@ -343,7 +343,7 @@ test.describe('comparison', () => {
         'OLD',
         'Bullish',
         '58.2',
-        'Strategy no longer available',
+        '— Strategy no longer available',
         'Failed',
       ]);
     expect(adHocRefreshId).toBeTruthy();
@@ -429,7 +429,9 @@ test.describe('run detail', () => {
       ),
     );
     await expect(meta.nth(2)).toContainText(
-      en.runDetail.asOf.replace('{date}', 'Dec 31, 2025'),
+      en.runDetail.asOf
+        .replace('{label}', en.runDetail.asOfLabel)
+        .replace('{date}', 'Dec 31, 2025'),
     );
     await expect(meta.nth(3)).toContainText('fiscal year-end Dec 31, 2025');
     await expect(meta.nth(4)).toHaveText(en.runDetail.savedByDirect);
@@ -523,7 +525,7 @@ test.describe('run detail', () => {
   }) => {
     await openComparison(page);
     // ZED's quality run has no headline.
-    await rows(page).nth(1).locator('td a').nth(4).click();
+    await rows(page).nth(1).locator('td a').nth(3).click();
     await expect(page.locator('.cards')).toHaveCount(0);
     await expect(
       page.locator('[data-term-id="headline-no-result"]'),
@@ -543,7 +545,9 @@ test.describe('run detail', () => {
       page.getByRole('heading', { level: 1 }).locator('[data-term-id]'),
     ).toHaveCount(0);
     await expect(page.locator('.meta')).not.toContainText(
-      en.runDetail.asOf.replace('{date}', ''),
+      en.runDetail.asOf
+        .replace('{label}', en.runDetail.asOfLabel)
+        .replace('{date}', ''),
     );
     const reason = page.getByText('This run cannot be shown as a document.');
     await expect(reason).toHaveCount(1);
@@ -593,7 +597,10 @@ test.describe('run detail views', () => {
     const pre = page.getByRole('tabpanel').locator('pre');
     await expect(pre).toHaveAttribute('lang', 'en');
     await expect(pre).toHaveAttribute('dir', 'ltr');
-    await expect(pre).toHaveCSS('white-space', 'pre');
+    await expect(pre.locator('.line').first()).toHaveCSS(
+      'white-space',
+      'pre-wrap',
+    );
     await expect(page.getByRole('tabpanel')).toHaveAttribute('tabindex', '0');
     await expect(page.getByRole('button', { name: /copy/i })).toHaveCount(0);
 
@@ -694,15 +701,11 @@ test.describe('run detail views', () => {
         : undefined,
     );
     await page.getByRole('tab', { name: en.runDetail.tabs.details }).click();
-    await expect(page.getByRole('status')).toContainText(
-      en.engine.state.databaseBusy,
-    );
+    await expect(page.getByRole('status')).toContainText(en.state.databaseBusy);
     await page.getByRole('tab', { name: en.runDetail.tabs.summary }).click();
     await expect(page.getByRole('tabpanel')).toContainText('in concise mode');
     await page.getByRole('tab', { name: en.runDetail.tabs.details }).click();
-    await expect(page.getByRole('status')).toContainText(
-      en.engine.state.databaseBusy,
-    );
+    await expect(page.getByRole('status')).toContainText(en.state.databaseBusy);
     await expect(
       page.getByRole('button', { name: en.common.tryAgain }),
     ).toBeVisible();
@@ -848,7 +851,7 @@ test.describe('request failures by reason code group', () => {
             : undefined,
         );
         await expect(page.getByRole('status')).toContainText(
-          en.engine.state.databaseBusy,
+          en.state.databaseBusy,
         );
         busy = false;
         await page.getByRole('button', { name: en.common.tryAgain }).click();
@@ -861,11 +864,11 @@ test.describe('request failures by reason code group', () => {
       }) => {
         await screen.open(page, (url) =>
           screen.match(url)
-            ? failure(503, 'database_io_error', 'Names a path.')
+            ? failure(500, 'database_io_error', 'Names a path.')
             : undefined,
         );
         await expect(page.getByRole('status')).toHaveText(
-          en.engine.state.databaseOther,
+          en.state.databaseOther,
         );
         await expect(
           page.getByRole('button', { name: en.common.tryAgain }),

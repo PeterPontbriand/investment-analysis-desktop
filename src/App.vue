@@ -1,10 +1,11 @@
 <script setup lang="ts">
-/* global console -- the browser's console; src/ configures no browser globals */
-import { onErrorCaptured, ref, watch } from 'vue';
+/* global console, document, KeyboardEvent -- the browser's console and DOM types; src/ configures no browser globals */
+import { onBeforeUnmount, onErrorCaptured, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useEngine } from './api/engine.ts';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import DetailsPanel from './components/DetailsPanel.vue';
+import PreviewSwitch from './components/PreviewSwitch.vue';
 import RefreshMarker from './components/RefreshMarker.vue';
 import { closePanel } from './composables/useDetailsPanel.ts';
 import { useMessages } from './i18n/index.ts';
@@ -31,6 +32,14 @@ watch(
     void engine.platform.closeWindow();
   },
 );
+
+// F1 opens a term's panel from a field (D328). A webview may answer F1 with
+// a help page of its own, so the application keeps the key for itself.
+function keepF1(event: KeyboardEvent): void {
+  if (event.key === 'F1') event.preventDefault();
+}
+onMounted(() => document.addEventListener('keydown', keepF1));
+onBeforeUnmount(() => document.removeEventListener('keydown', keepF1));
 
 // A screen that fails to render is replaced by one message, and the navigation
 // keeps working (D171). Going to another screen clears the message.
@@ -87,6 +96,9 @@ watch(
           </li>
         </ul>
       </nav>
+      <div class="preferences">
+        <PreviewSwitch />
+      </div>
     </header>
     <main class="content">
       <div v-if="renderFailed" role="alert" class="failure">
@@ -118,6 +130,8 @@ watch(
 }
 
 .sidebar {
+  display: flex;
+  flex-direction: column;
   border-inline-end: var(--border-width) solid var(--color-border);
   flex: 0 0 var(--sidebar-size);
   padding: var(--space-4) var(--space-3);
@@ -133,6 +147,12 @@ watch(
   color: var(--color-text-secondary);
   font-size: var(--font-size-small);
   margin-block: 0 var(--space-6);
+}
+
+.preferences {
+  border-block-start: var(--border-width) solid var(--color-border);
+  margin-block-start: auto;
+  padding-block-start: var(--space-3);
 }
 
 .sidebar ul {
