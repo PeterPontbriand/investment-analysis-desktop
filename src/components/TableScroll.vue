@@ -6,8 +6,9 @@ import { onBeforeUnmount, onMounted, ref } from 'vue';
 // sticky first column, the scroll container keeps that column's measured width
 // as scroll padding, so whatever the browser scrolls into view (a focused link
 // or button, a find result) stops clear of the column instead of under it
-// (WCAG 2.4.11). The width is the column's own, measured again when it changes,
-// so the two stay in step in both text directions (D317).
+// (WCAG 2.4.11). The width is the column's own, measured on mount, so the padding
+// is in the first render, and again when the column changes, so the two stay in
+// step in both text directions (D317).
 const props = defineProps<{ sticky?: string }>();
 
 const box = ref<HTMLElement | null>(null);
@@ -20,6 +21,7 @@ onMounted(() => {
       ? null
       : (box.value?.querySelector<HTMLElement>(props.sticky) ?? null);
   if (column === null || typeof ResizeObserver === 'undefined') return;
+  width.value = column.getBoundingClientRect().width;
   observer = new ResizeObserver(() => {
     width.value = column.getBoundingClientRect().width;
   });

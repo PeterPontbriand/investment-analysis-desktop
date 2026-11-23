@@ -75,6 +75,16 @@ async function openComparison(page: Page, handler?: Handler, row = 0) {
   const engine = await openRefreshes(page, handler);
   await rows(page).nth(row).locator('th a').click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .locator('.table-scroll')
+        .evaluate(
+          (box) =>
+            parseFloat(getComputedStyle(box).scrollPaddingInlineStart) || 0,
+        ),
+    )
+    .toBeGreaterThan(0);
   return engine;
 }
 
