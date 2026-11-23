@@ -8,9 +8,61 @@ on:
   workflow_dispatch:
 
 jobs:
+  changes:
+    name: Changes
+    runs-on: ubuntu-latest
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+    steps:
+      # The history is small, and the diff needs the merge base with the target branch.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - id: classify
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
+        run: |
+          # Only a pull request or a push to main with a known previous commit can be
+          # docs-only; a manual run, a new branch or a missing commit takes the full path.
+          range=
+          if [ "$EVENT" = pull_request ]; then
+            range="$BASE_SHA...$HEAD_SHA"
+          elif [ "$EVENT" = push ] && [[ "$BEFORE_SHA" =~ [^0] ]] && git cat-file -e "$BEFORE_SHA^{commit}" 2>/dev/null; then
+            range="$BEFORE_SHA..$AFTER_SHA"
+          fi
+          if [ -z "$range" ]; then
+            echo docs_only=false >> "$GITHUB_OUTPUT"
+          else
+            git diff --name-only -z --no-renames "$range" | node tools/ci/changes.ts >> "$GITHUB_OUTPUT"
+          fi
+          cat "$GITHUB_OUTPUT"
+
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.docs_only == 'true'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - run: pnpm docs:check
+
   windows:
     name: Windows
     runs-on: windows-latest
+    needs: changes
+    if: needs.changes.outputs.docs_only == 'false'
     steps:
       - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
@@ -31,6 +83,8 @@ jobs:
   macos:
     name: macOS
     runs-on: macos-latest
+    needs: changes
+    if: needs.changes.outputs.docs_only == 'false'
     steps:
       - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
@@ -51,6 +105,8 @@ jobs:
   linux:
     name: Linux
     runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.docs_only == 'false'
     steps:
       - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
@@ -75,15 +131,31 @@ jobs:
   quality:
     name: quality
     runs-on: ubuntu-latest
-    needs: [windows, macos, linux]
+    needs: [changes, docs, windows, macos, linux]
     if: always()
     steps:
-      - name: Require all platform jobs to succeed
+      - name: Require the jobs that the change calls for to succeed
         env:
+          CHANGES_RESULT: ${{ needs.changes.result }}
+          DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
+          DOCS_RESULT: ${{ needs.docs.result }}
           WINDOWS_RESULT: ${{ needs.windows.result }}
           MACOS_RESULT: ${{ needs.macos.result }}
           LINUX_RESULT: ${{ needs.linux.result }}
         run: |
-          test "$WINDOWS_RESULT" = success
-          test "$MACOS_RESULT" = success
-          test "$LINUX_RESULT" = success
+          echo "changes=$CHANGES_RESULT docs_only=$DOCS_ONLY docs=$DOCS_RESULT windows=$WINDOWS_RESULT macos=$MACOS_RESULT linux=$LINUX_RESULT"
+          test "$CHANGES_RESULT" = success
+          if [ "$DOCS_ONLY" = true ]; then
+            test "$DOCS_RESULT" = success
+            test "$WINDOWS_RESULT" = skipped
+            test "$MACOS_RESULT" = skipped
+            test "$LINUX_RESULT" = skipped
+          elif [ "$DOCS_ONLY" = false ]; then
+            test "$DOCS_RESULT" = skipped
+            test "$WINDOWS_RESULT" = success
+            test "$MACOS_RESULT" = success
+            test "$LINUX_RESULT" = success
+          else
+            echo "docs_only is neither true nor false" >&2
+            exit 1
+          fi
