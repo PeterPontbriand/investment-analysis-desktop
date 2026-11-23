@@ -69,10 +69,10 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 
 ### GUI.5: First-run and installer
 
-- **Problem:** Users need a guided first launch and a predictable way to install the GUI and its pinned engine.
-- **Decision:** Keep the SEC identity in GUI settings and pass it to ian serve as SEC_USER_AGENT; install the release's pinned IAN version behind the scenes.
-- **Scope:** The first-run SEC identity screen and Windows, macOS and Linux installers, using the technology and signing choices approved in GUI.1.
-- **Branch:** A dedicated GUI.5 branch after the scaffold decisions and API requirements it consumes are available.
+- **Problem:** Users need a guided first launch and a predictable way to install the GUI and its pinned engine. A new user who starts with an empty database also finds every screen empty until they have learned enough to fill it.
+- **Decision:** The first-run screen sends the SEC identity to the engine through IAN's API (D341); install the release's pinned IAN version behind the scenes. The first-run screen offers a sample workspace that the engine builds and controls, and an in-app "Try it" guide walks through it (D332 to D340).
+- **Scope:** The first-run screen (SEC identity and the sample workspace choice), the sample workspace controls and banner, the "Try it" guide, `pnpm sandbox` building on the engine's sample, and Windows, macOS and Linux installers, using the technology and signing choices approved in GUI.1.
+- **Branch:** A dedicated GUI.5 branch after the scaffold decisions and API requirements it consumes are available. The sample workspace needs IAN API.20 and the SEC identity screen needs IAN API.21, both merged first.
 - **Detail:** ⚠ no slice plan yet.
 
 **Decisions to approve before GUI.5**
@@ -84,6 +84,25 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 | Obtaining uv and pinning IAN | Bundle a pinned uv executable with each installer and install the exact IAN version selected for that GUI release. This avoids an extra user setup step and makes the pair reproducible; each release must update and validate its bundled installer tooling. |
 | Update mechanism | Use Tauri's signed updater with explicit user confirmation before installing an update. It gives the application a direct update path; signing keys and release metadata become security-critical operational assets. |
 
+**Sample workspace, "Try it" guide and SEC identity (approved 2026-11-22)**
+
+The engine's side is recorded in [IAN API plan A.18](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/project/milestones/v0.2/api/API_CONTRACT_AND_SLICE_PLAN.md#a18-sample-workspace-and-the-sec-identity-through-the-api-2026-11-22) (W1 to W12) and its interface rules in [IAN Master Plan, Interfaces and separate computers](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/project/MASTER_PLAN.md#interfaces-and-separate-computers).
+
+| # | Decision |
+| :--- | :--- |
+| D332 | A new user can start with a sample workspace that the engine keeps apart from their own data, builds on their computer from its own sample definition, and controls entirely (IAN W1 to W4, W6). The application only asks for it through the API and never stores, copies or deletes a database itself. |
+| D333 | The engine never works on the pristine sample. Opening the sample workspace always makes a fresh copy, and switching back discards it (IAN W4). The application asks for confirmation before each switch and says what is discarded. |
+| D334 | It is unmistakable whenever the sample workspace is in use: a coloured banner on every screen says that anything added there is not kept and has a "Back to my workspace" button, and the window title ends with "(Sample)". The application reads the active workspace from the engine (the `IAN-Workspace` header and `GET /v1/workspace`), so a switch made from the command line shows at once (IAN W8, W9). The banner's term links to IAN's "Sample workspace" glossary entry. |
+| D335 | The first-run screen, after the SEC identity, offers "Start with a sample workspace (recommended; takes a few minutes and uses the internet)", checked by default. The build shows its progress the way a refresh does. Rejected: an installer option, because a macOS disk image has no options and the build needs the SEC identity and the network, which the installer does not have. |
+| D336 | Settings offers "Open sample workspace", "Back to my workspace", "Rebuild sample workspace" and "Remove sample workspace". This is the one addition to settings beyond the first-run SEC identity screen ([charter](../../CHARTER.md#out-of-scope)). |
+| D337 | A failed or partial build shows what failed and offers "Rebuild sample workspace", which the engine starts from nothing (IAN W10). |
+| D338 | The "Try it" guide is an in-app panel shown while the sample workspace is open, with about six steps: open the sample watchlist, read a run, compare the refresh, open a term's help, add a ticker, and run a refresh. Its text is the application's own catalog strings, because it describes the application's screens; every analysis term in it links to IAN's help, so no explanation of IAN's is copied. The repository README gets a short "Try it" section that points to it. |
+| D339 | Tests: mocked-engine Vitest and Playwright tests for the first-run choice, the banner, every switch, rebuild and remove; one real-engine test in `pnpm test:engine` (outside the gate, D308) that builds the sample and checks the banner and the sample watchlist against what the engine serves, naming no company or number. |
+| D340 | `pnpm sandbox` builds its database by asking the engine for the sample workspace, then adds its own `Sandbox Empty` and `Sandbox Scratch` watchlists, so the owner's look shows what a new user sees and the sample has one definition, the engine's. |
+| D341 | The SEC identity is sent to the engine through IAN API.21 (IAN W11, W12) instead of being kept in the application's settings and passed to `ian serve` as `SEC_USER_AGENT`, which works only while both run on one computer. It supersedes the "SEC identity" row of the charter's [Appendix A.1](../../CHARTER.md#a1-a-separate-gui-application-over-a-local-api). |
+| D342 | No new same-computer assumption: every new interaction with the engine goes through IAN's API, never through environment variables, files or command-line calls, apart from starting `ian serve` ([IAN Master Plan](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/project/MASTER_PLAN.md#interfaces-and-separate-computers)). The charter records the rule. |
+| D343 | Sequence: IAN API.20 and API.21 merge before the GUI.5 sub-slices that use them, and the sample workspace and its guide are in the first installer (an entry criterion of GUI.6). |
+
 The product name was decided in GUI.1 ([D13 in Appendix A of the GUI.1 slice plan](gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record)).
 
 Answers to Q4 inform the signing decision, so these decisions are made after the user questions, not before GUI.1.
@@ -92,6 +111,7 @@ Answers to Q4 inform the signing decision, so these decisions are made after the
 
 - **Problem:** The preview needs a controlled release and a way for users to report what they cannot understand or complete.
 - **Decision:** Release the application as a preview and collect feedback against the screens and setup flow.
+- **Entry criterion:** GUI.5's sample workspace and "Try it" guide are complete, so the first installer ships with them (D343).
 - **Scope:** Publish preview builds, explain the pre-release status, and provide a feedback intake route. Before preview builds are published, run and record a human smoke test of the installed application that walks through the preview's screens against a real engine started by the application. It is the human end-to-end check of IAN's local HTTP API, which [IAN's smoke test](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/SMOKE_TESTING.md) does not cover. Quitting on macOS while a refresh runs is tracked in [issue 24](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/24); it waits for a Mac and is run then.
 - **Open decision:** What becomes of [docs/project/SMOKE_TESTING.md](../../SMOKE_TESTING.md) (D310 in the [GUI.4 slice plan](gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#appendix-a-2026-11-20-decision-record)). It is no longer maintained per pull request. The expected answer is a short checklist for the installed application (the installer, the first start, the engine found, and the macOS quit check of [issue 24](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/24)), run once per release, but GUI.6 decides.
 - **Branch:** A dedicated release branch or tag from the accepted GUI implementation.
@@ -99,14 +119,15 @@ Answers to Q4 inform the signing decision, so these decisions are made after the
 
 ## Acceptance criteria
 
-- The preview has screens for ticker analysis with chosen strategies, watchlist creation and editing, refresh progress and stop, refresh comparison, run detail (summary, details, diagnostics, and JSON), first-run SEC identity, and installation.
+- The preview has screens for ticker analysis with chosen strategies, watchlist creation and editing, refresh progress and stop, refresh comparison, run detail (summary, details, diagnostics, and JSON), first-run SEC identity and sample workspace choice, the sample workspace settings, the "Try it" guide, and installation.
+- Whenever the sample workspace is active, every screen shows it and says that anything added there is not kept (D334); the application never stores, copies or deletes a database itself (D332).
 - Every displayed financial number, label, status, code, and unit comes from an IAN API document; display formatting follows that document's unit.
 - No GUI operation reads IAN's database, files, or Python modules.
 - Every displayed analysis term, label, status, acronym, and code explains itself in place from IAN /v1/help. Hover or keyboard focus shows the short definition, and clicking opens the full help entry and guide with in-app links.
 - The GUI contains no financial formula or strategy-specific rendering contract. New IAN strategies use the same generic API-driven presentation.
-- The preview excludes local-model synthesis, general settings editing beyond the first-run SEC identity screen, database maintenance, and charts.
+- The preview excludes local-model synthesis, general settings editing beyond the first-run SEC identity screen and the sample workspace controls (D336), database maintenance, and charts.
 - GUI.2, GUI.3, and GUI.4 begin only after IAN API.2, API.4, and API.6 respectively merge.
-- The first-run screen stores the user's SEC identity in GUI settings and passes it to ian serve as SEC_USER_AGENT.
+- The first-run screen sends the user's SEC identity to the engine through IAN's API (D341).
 - GUI.1 records the approved technology choices and its test and CI gates, including the documentation checks.
 - The application is locale-ready as recorded in [Appendix D of the GUI.1 slice plan](gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-d-localization-readiness-decision-2026-11-08): adding an engine locale needs no application code change, and the application's own strings are catalog data.
 

@@ -5,13 +5,14 @@
 - This charter establishes the governance and staged scope for a separate desktop application that lets investors use IAN without a command line.
 - Its first milestone, the preview release, is planned in the [v0.1 implementation plan](milestones/v0.1/IMPLEMENTATION_PLAN.md), which owns the sequence and status of the work.
 - The GUI uses only IAN's versioned local HTTP API, displays values and explanations supplied by IAN, and keeps financial calculations in IAN.
+- The GUI adds no new same-computer assumption: every new interaction with the engine goes through IAN's API, never through environment variables, files or command-line calls, apart from starting `ian serve` ([D342 in the v0.1 plan](milestones/v0.1/IMPLEMENTATION_PLAN.md#gui5-first-run-and-installer)). The SEC identity row of [Appendix A.1](#a1-a-separate-gui-application-over-a-local-api) is superseded by D341: the identity is sent to the engine through its API.
 - IAD is one application in a suite whose boundaries are recorded in IAN's Master Plan, in the [Product boundaries section](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/project/MASTER_PLAN.md#25-product-boundaries).
 - GUI.1 technology decisions were approved on 2026-10-31 and are recorded in the [GUI.1 slice plan](milestones/v0.1/gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md).
 
 ## Out of scope
 
 - Local-model synthesis; it waits for IAN Step 3.6.
-- General settings editing beyond the first-run SEC identity screen, database maintenance, and charts.
+- General settings editing beyond the first-run SEC identity screen and the sample workspace controls ([D336 in the v0.1 plan](milestones/v0.1/IMPLEMENTATION_PLAN.md#gui5-first-run-and-installer)), database maintenance, and charts.
 - Any financial calculation in the GUI or any data access outside IAN's published /v1 API.
 - Bundling copies of IAN's investor explanations in the GUI.
 - Requiring users to leave the application to understand displayed analysis content.
