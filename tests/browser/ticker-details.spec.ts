@@ -4,7 +4,6 @@
 // runs left to right and right to left, against the engine mock.
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures.ts';
-import { hoverSettled } from './hover.ts';
 import { engineUrl, mockEngine, type Handler } from './engine-mock.ts';
 import { instantDateText, instantText } from './expected-text.ts';
 import { focusByKeyboard } from './keyboard.ts';
@@ -105,7 +104,7 @@ for (const direction of directions) {
       const trigger = tickerButton(page, 'ACME');
       await expect(trigger).toHaveAttribute('aria-expanded', 'false');
       const begun = Date.now();
-      await hoverSettled(page, trigger);
+      await trigger.hover();
       // Nothing opens at once: the pointer must rest first.
       await expect(popup(page)).toHaveCount(0);
       await expect(popup(page)).toBeVisible();
@@ -138,7 +137,7 @@ for (const direction of directions) {
       );
       await openCore(page);
       const trigger = tickerButton(page, 'ACME');
-      await hoverSettled(page, trigger);
+      await trigger.hover();
       await expect(popup(page)).toBeVisible();
       // The name, then the kind and the currency only (D306).
       await expect(popup(page)).toContainText(
@@ -163,7 +162,7 @@ for (const direction of directions) {
     test('does not open when the pointer passes by', async ({ page }) => {
       await start(page, direction);
       await openCore(page);
-      await hoverSettled(page, tickerButton(page, 'ACME'));
+      await tickerButton(page, 'ACME').hover();
       await page.mouse.move(0, 0);
       await page.waitForTimeout(700);
       await expect(popup(page)).toHaveCount(0);
@@ -208,9 +207,9 @@ for (const direction of directions) {
     }) => {
       await start(page, direction);
       await openCore(page);
-      await hoverSettled(page, tickerButton(page, 'ACME'));
+      await tickerButton(page, 'ACME').hover();
       await expect(popup(page)).toBeVisible();
-      await hoverSettled(page, popup(page));
+      await popup(page).hover();
       await page.waitForTimeout(400);
       await expect(popup(page)).toBeVisible();
       await page.mouse.move(2, 2);
@@ -222,7 +221,7 @@ for (const direction of directions) {
     }) => {
       await start(page, direction);
       await openCore(page);
-      await hoverSettled(page, tickerButton(page, 'ACME'));
+      await tickerButton(page, 'ACME').hover();
       await expect(popup(page)).toBeVisible();
       await page.keyboard.press('Escape');
       await expect(popup(page)).toHaveCount(0);
@@ -234,7 +233,7 @@ for (const direction of directions) {
       await start(page, direction);
       await openCore(page);
       const trigger = tickerButton(page, 'ACME');
-      await hoverSettled(page, trigger);
+      await trigger.hover();
       await expect(popup(page)).toBeVisible();
       const anchor = (await trigger.boundingBox())!;
       const shown = (await popup(page).boundingBox())!;
@@ -495,7 +494,7 @@ for (const direction of directions) {
       const engine = await start(page, direction, noProfile());
       await openCore(page);
       const none = fill(words.tickerDetails.noneStored, { ticker: 'ACME' });
-      await hoverSettled(page, tickerButton(page, 'ACME'));
+      await tickerButton(page, 'ACME').hover();
       await expect(popup(page)).toHaveText(none);
       await page.mouse.move(2, 2);
       await expect(popup(page)).toHaveCount(0);
@@ -546,7 +545,7 @@ for (const direction of directions) {
       expect(lookupPaths(engine, 'ACME')).toHaveLength(1);
       // The lookup replaced the cached entry: no profile is asked for again.
       await page.keyboard.press('Escape');
-      await hoverSettled(page, tickerButton(page, 'ACME'));
+      await tickerButton(page, 'ACME').hover();
       await expect(popup(page)).toContainText('Bolt Industries');
       expect(engine.paths(profilePath('ACME'))).toHaveLength(1);
     });
@@ -656,7 +655,7 @@ for (const direction of directions) {
     }) => {
       await start(page, direction);
       await openCore(page);
-      await hoverSettled(page, tickerButton(page, 'ZED'));
+      await tickerButton(page, 'ZED').hover();
       await expect(popup(page)).toContainText('Zedco Group');
       await expect(popup(page)).toContainText('NYSE');
       await page.mouse.move(2, 2);
@@ -667,7 +666,7 @@ for (const direction of directions) {
         .getByRole('link', { name: words.nav.runs })
         .click();
       const trigger = zedRun(page).getByRole('button', { name: 'ZED' });
-      await hoverSettled(page, trigger);
+      await trigger.hover();
       await expect(popup(page)).toContainText('Zed Holdings');
       await expect(popup(page)).not.toContainText('Zedco');
       await expect(popup(page)).not.toContainText('NYSE');
@@ -886,7 +885,7 @@ for (const direction of directions) {
     }) => {
       await openFirstRun(page, withVenue('MSFT', 'Microsoft Corp', msftRun));
       const ticker = h1(page).getByRole('button', { name: 'MSFT' });
-      await hoverSettled(page, ticker);
+      await ticker.hover();
       await expect(popup(page)).toBeVisible();
       await expect(popup(page)).toHaveText('NYSE');
       await expect(popup(page)).not.toContainText('Microsoft Corp');
@@ -901,7 +900,7 @@ for (const direction of directions) {
     }) => {
       await openFirstRun(page);
       const ticker = h1(page).getByRole('button', { name: 'MSFT' });
-      await hoverSettled(page, ticker);
+      await ticker.hover();
       await page.waitForTimeout(800);
       await expect(popup(page)).toHaveCount(0);
       await expect(ticker).not.toHaveAttribute('aria-describedby', /.+/);
@@ -941,7 +940,7 @@ for (const direction of directions) {
         .locator('tbody tr')
         .nth(0)
         .getByRole('button', { name: 'MSFT' });
-      await hoverSettled(page, cell);
+      await cell.hover();
       await expect(popup(page)).toContainText('Microsoft Corp');
     });
 
@@ -950,7 +949,7 @@ for (const direction of directions) {
     }) => {
       await openOneTicker(page, withVenue('ACME', 'Acme Corp', analyzeRun));
       const ticker = h1(page).getByRole('button', { name: 'ACME' });
-      await hoverSettled(page, ticker);
+      await ticker.hover();
       await expect(popup(page)).toHaveText('NYSE');
     });
 
@@ -959,7 +958,7 @@ for (const direction of directions) {
     }) => {
       await openOneTicker(page, () => undefined);
       const ticker = h1(page).getByRole('button', { name: 'ACME' });
-      await hoverSettled(page, ticker);
+      await ticker.hover();
       await page.waitForTimeout(800);
       await expect(popup(page)).toHaveCount(0);
       await ticker.click();
@@ -1001,7 +1000,7 @@ for (const direction of directions) {
           strategy: 'Momentum',
         }),
       );
-      await hoverSettled(page, h1(page).getByRole('button', { name: 'MSFT' }));
+      await h1(page).getByRole('button', { name: 'MSFT' }).hover();
       await expect(popup(page)).toHaveText(
         fill(words.tickerDetails.noneKept, { ticker: 'MSFT' }),
       );
