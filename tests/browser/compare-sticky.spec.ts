@@ -39,6 +39,16 @@ async function openComparison(
     .click();
   await page.locator('tbody tr').nth(0).locator('th a').click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .locator('.table-scroll')
+        .evaluate(
+          (box) =>
+            parseFloat(getComputedStyle(box).scrollPaddingInlineStart) || 0,
+        ),
+    )
+    .toBeGreaterThan(0);
 }
 
 // Where the table is scrolled to: its start (where the sticky column sits) or
