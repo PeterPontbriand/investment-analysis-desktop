@@ -11,6 +11,7 @@ jobs:
   changes:
     name: Changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
       shell: ${{ steps.classify.outputs.shell }}
@@ -50,6 +51,7 @@ jobs:
   docs:
     name: Docs
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.docs_only == 'true'
     steps:
@@ -65,6 +67,7 @@ jobs:
   web:
     name: Web
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: changes
     if: github.event_name == 'pull_request' && needs.changes.outputs.docs_only == 'false'
     steps:
@@ -76,6 +79,7 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - run: sudo apt-get update
       - run: pnpm exec playwright install-deps chromium webkit
       - run: pnpm gate --part web
       - uses: actions/upload-artifact@v7
@@ -88,6 +92,7 @@ jobs:
   shell:
     name: Shell
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: changes
     if: github.event_name == 'pull_request' && needs.changes.outputs.docs_only == 'false' && needs.changes.outputs.shell == 'true'
     steps:
@@ -113,6 +118,7 @@ jobs:
   windows:
     name: Windows
     runs-on: windows-latest
+    timeout-minutes: 45
     needs: changes
     if: github.event_name != 'pull_request' && needs.changes.outputs.docs_only == 'false'
     steps:
@@ -143,6 +149,7 @@ jobs:
   macos:
     name: macOS
     runs-on: macos-latest
+    timeout-minutes: 45
     needs: changes
     if: github.event_name != 'pull_request' && needs.changes.outputs.docs_only == 'false'
     steps:
@@ -173,6 +180,7 @@ jobs:
   linux:
     name: Linux
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs: changes
     if: github.event_name != 'pull_request' && needs.changes.outputs.docs_only == 'false'
     steps:
@@ -207,6 +215,7 @@ jobs:
   quality:
     name: quality
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [changes, docs, web, shell, windows, macos, linux]
     if: always()
     steps:
@@ -259,6 +268,7 @@ jobs:
   main-status:
     name: Main status
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: [changes, docs, web, shell, windows, macos, linux]
     if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     permissions:
