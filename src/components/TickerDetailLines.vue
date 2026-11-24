@@ -5,6 +5,7 @@ import type { DetailLines } from '../composables/tickerDetailLines.ts';
 import { formatInstant, formatInstantDate } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
 import TermName from './TermName.vue';
+import VenueName from './VenueName.vue';
 
 // The lines of a ticker's details, as the panel shows them (D290): the name,
 // the venue, the kind as its term name, the quote currency, and when and by
@@ -33,7 +34,9 @@ const stamp = computed(() => {
 <template>
   <div class="lines">
     <p v-if="lines.name !== null" class="name">{{ lines.name }}</p>
-    <p v-if="lines.venue !== null">{{ lines.venue }}</p>
+    <p v-if="lines.venue !== null">
+      <VenueName :part="lines.venue" plain />
+    </p>
     <p v-if="lines.kind !== null">
       <TermName code-set="InstrumentKind" :code="lines.kind" plain />
     </p>

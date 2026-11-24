@@ -183,7 +183,8 @@
     "identifiedNoProvider": "[ar-XB] Identified for this run {date}",
     "lookUp": "[ar-XB] Look up",
     "lookingUp": "[ar-XB] Looking up…",
-    "nameAndTicker": "[ar-XB] {name} ({ticker})"
+    "nameAndTicker": "[ar-XB] {name} ({ticker})",
+    "venueWithWording": "[ar-XB] {name} ({wording})"
   },
   "previewSwitch": {
     "label": "[ar-XB] Show popups"

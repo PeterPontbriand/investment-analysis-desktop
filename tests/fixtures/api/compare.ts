@@ -379,7 +379,7 @@ export function documentOf(
 export function identityOf(
   ticker: string,
   name: string | null,
-  venue: string | null = null,
+  venue: Schemas['ListingVenuePart'] | null = null,
 ): Schemas['SecurityIdentityPart'] {
   return {
     ticker,
@@ -405,7 +405,7 @@ function overviewOf(
   periodEnd: string | null = null,
 ): Schemas['RunOverviewDocument'] {
   return {
-    schema_version: 3,
+    schema_version: 4,
     security_identity: identityOf(ticker, name),
     analysis_run_id: id,
     ticker,

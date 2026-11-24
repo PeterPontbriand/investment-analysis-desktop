@@ -183,7 +183,8 @@
     "identifiedNoProvider": "Identified for this run {date}",
     "lookUp": "Look up",
     "lookingUp": "Looking up…",
-    "nameAndTicker": "{name} ({ticker})"
+    "nameAndTicker": "{name} ({ticker})",
+    "venueWithWording": "{name} ({wording})"
   },
   "previewSwitch": {
     "label": "Show popups"

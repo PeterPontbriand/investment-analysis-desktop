@@ -35,6 +35,51 @@ const fill = (template: string, values: Record<string, string>) =>
 const present = <T>(value: T | null): value is T => value !== null;
 const squash = (text: string) => text.replace(/\s+/g, ' ').trim();
 
+type VenuePart = components['schemas']['ListingVenuePart'];
+
+// The venue term the engine names for a venue part: its id from the
+// references under ListingVenue and its name from the help index; null for a
+// null code, a code the references do not map, or a term the index does not
+// list (D360).
+async function venueTerm(
+  engine: RealEngine,
+  part: VenuePart,
+): Promise<{ termId: string; name: string } | null> {
+  if (part.code === null) return null;
+  const references = (
+    await engine.get<components['schemas']['HelpReferencesDocument']>(
+      '/v1/help/references',
+    )
+  ).body;
+  const termId = references.code_sets.ListingVenue?.[part.code];
+  if (termId === undefined) return null;
+  const index = (
+    await engine.get<components['schemas']['HelpIndexDocument']>('/v1/help')
+  ).body;
+  const term = index.groups
+    .flatMap((group) => group.terms)
+    .find((item) => item.id === termId);
+  return term === undefined ? null : { termId, name: term.name };
+}
+
+// How the application shows a venue the engine served (D360): the venue
+// term's name, followed by the provider's wording when the two differ, or the
+// wording alone when the engine names no term.
+async function venueShown(
+  engine: RealEngine,
+  part: VenuePart | null,
+): Promise<string | null> {
+  if (part === null) return null;
+  const term = await venueTerm(engine, part);
+  if (term === null) return part.provider_value;
+  return term.name === part.provider_value
+    ? term.name
+    : fill(words.tickerDetails.venueWithWording, {
+        name: term.name,
+        wording: part.provider_value,
+      });
+}
+
 const popup = (page: Page) => page.getByRole('tooltip');
 const panel = (page: Page) => page.locator('#details-panel');
 const tickerButton = (page: Page, ticker: string) =>
@@ -58,9 +103,8 @@ async function expectedDetails(
     profile.kind === null
       ? null
       : await engine.termName('InstrumentKind', profile.kind);
-  const parts = [profile.listing_venue, kind, profile.quote_currency].filter(
-    present,
-  );
+  const venue = await venueShown(engine, profile.listing_venue);
+  const parts = [venue, kind, profile.quote_currency].filter(present);
   const checked = fill(words.tickerDetails.checked, {
     date: await instantText(page, profile.refreshed_at),
     provider: engine.providerName(profile.provider_id) ?? '',
@@ -73,7 +117,7 @@ async function expectedDetails(
     ),
     lines: [
       profile.instrument_name,
-      profile.listing_venue,
+      venue,
       kind,
       profile.quote_currency,
       checked,
@@ -292,8 +336,8 @@ test.describe('the identity a saved run kept', () => {
     await trigger.hover();
     await expect(popup(page)).toBeVisible();
     await expect(popup(page)).toContainText(identity.instrument_name ?? '');
-    if (identity.listing_venue !== null)
-      await expect(popup(page)).toContainText(identity.listing_venue);
+    const venue = await venueShown(engine, identity.listing_venue);
+    if (venue !== null) await expect(popup(page)).toContainText(venue);
     await page.mouse.move(0, 0);
 
     await trigger.click();
@@ -313,9 +357,7 @@ test.describe('the identity a saved run kept', () => {
       await panel(page).locator('.lines > p').allTextContents()
     ).map(squash);
     expect(lines).toEqual(
-      [identity.instrument_name, identity.listing_venue, stamp]
-        .filter(present)
-        .map(squash),
+      [identity.instrument_name, venue, stamp].filter(present).map(squash),
     );
     await page.keyboard.press('Escape');
 
@@ -354,7 +396,7 @@ test.describe('the identity a saved run kept', () => {
       identity.instrument_name,
       `the engine served no name in the identity of run ${engine.savedRunId}`,
     ).not.toBeNull();
-    const venue = identity.listing_venue!;
+    const venue = (await venueShown(engine, identity.listing_venue))!;
     const name = identity.instrument_name!;
 
     await openApp(page, engine);
