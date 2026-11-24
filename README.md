@@ -4,7 +4,7 @@ A desktop application for investors who want to use the [Investment Analysis Eng
 
 This project is pre-release and is not ready for general use.
 
-**Platforms:** Windows, macOS, and Linux. Efforts have been made to keep the application usable on all three: continuous integration runs the full quality gate on each. This is not a claim that every operating system version has been verified, and no installers or release binaries exist yet.
+**Platforms:** Windows, macOS, and Linux. Efforts have been made to keep the application usable on all three: continuous integration runs the full quality gate on each after every merge, and pull requests are checked on Linux. This is not a claim that every operating system version has been verified, and no installers or release binaries exist yet.
 
 ## Development setup
 

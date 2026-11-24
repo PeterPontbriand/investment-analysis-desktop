@@ -43,3 +43,25 @@ export function listChangedPaths(): { paths: string[] } | { error: string } {
     return { error: error instanceof Error ? error.message : String(error) };
   }
 }
+
+export type GateMode = 'full' | 'slice' | 'web' | 'shell';
+
+// Which kinds of step a mode runs: the dependency install, the web steps (everything
+// that is not a shell step), and the Rust and Tauri shell steps.
+export type StepSelection = { install: boolean; web: boolean; shell: boolean };
+
+export function selectSteps(
+  mode: GateMode,
+  shellChanged: boolean,
+): StepSelection {
+  switch (mode) {
+    case 'full':
+      return { install: true, web: true, shell: true };
+    case 'slice':
+      return { install: true, web: true, shell: shellChanged };
+    case 'web':
+      return { install: true, web: true, shell: false };
+    case 'shell':
+      return { install: true, web: false, shell: true };
+  }
+}

@@ -11,8 +11,10 @@ jobs:
   changes:
     name: Changes
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     outputs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
+      shell: ${{ steps.classify.outputs.shell }}
     steps:
       # The history is small, and the diff needs the merge base with the target branch.
       - uses: actions/checkout@v7
@@ -40,6 +42,7 @@ jobs:
           fi
           if [ -z "$range" ]; then
             echo docs_only=false >> "$GITHUB_OUTPUT"
+            echo shell=true >> "$GITHUB_OUTPUT"
           else
             git diff --name-only -z --no-renames "$range" | node tools/ci/changes.ts >> "$GITHUB_OUTPUT"
           fi
@@ -48,6 +51,7 @@ jobs:
   docs:
     name: Docs
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     needs: changes
     if: needs.changes.outputs.docs_only == 'true'
     steps:
@@ -58,11 +62,67 @@ jobs:
           node-version-file: .node-version
       - run: pnpm docs:check
 
+  # Pull requests are checked on Linux only; Windows and macOS run the full gate on
+  # main, after the merge.
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.docs_only == 'false'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: sudo apt-get update
+      - run: sudo apt-get install --yes build-essential curl file libayatana-appindicator3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev patchelf
+      - run: pnpm exec playwright install-deps chromium webkit
+        timeout-minutes: 8
+      - run: pnpm gate --part web
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: gate-output-web
+          path: gate-output.txt
+          if-no-files-found: warn
+
+  shell:
+    name: Shell
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.docs_only == 'false' && needs.changes.outputs.shell == 'true'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Swatinem/rust-cache@v2
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: sudo apt-get update
+      - run: sudo apt-get install --yes build-essential curl file libayatana-appindicator3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev patchelf xvfb
+      - run: pnpm install --frozen-lockfile
+      - run: xvfb-run --auto-servernum pnpm gate --part shell
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: gate-output-shell
+          path: gate-output.txt
+          if-no-files-found: warn
+
   windows:
     name: Windows
     runs-on: windows-latest
+    timeout-minutes: 45
     needs: changes
-    if: needs.changes.outputs.docs_only == 'false'
+    if: github.event_name != 'pull_request' && needs.changes.outputs.docs_only == 'false'
     steps:
       - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
@@ -73,18 +133,27 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm gate
+        env:
+          CI_MAIN: '1'
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: gate-output-windows
           path: gate-output.txt
           if-no-files-found: warn
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-results-windows
+          path: playwright-results.json
+          if-no-files-found: ignore
 
   macos:
     name: macOS
     runs-on: macos-latest
+    timeout-minutes: 45
     needs: changes
-    if: needs.changes.outputs.docs_only == 'false'
+    if: github.event_name != 'pull_request' && needs.changes.outputs.docs_only == 'false'
     steps:
       - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
@@ -95,18 +164,27 @@ jobs:
           cache: pnpm
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm gate
+        env:
+          CI_MAIN: '1'
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: gate-output-macos
           path: gate-output.txt
           if-no-files-found: warn
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-results-macos
+          path: playwright-results.json
+          if-no-files-found: ignore
 
   linux:
     name: Linux
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     needs: changes
-    if: needs.changes.outputs.docs_only == 'false'
+    if: github.event_name != 'pull_request' && needs.changes.outputs.docs_only == 'false'
     steps:
       - uses: actions/checkout@v7
       - uses: Swatinem/rust-cache@v2
@@ -120,42 +198,106 @@ jobs:
       - run: sudo apt-get install --yes build-essential curl file libayatana-appindicator3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev patchelf xvfb
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install-deps chromium webkit
+        timeout-minutes: 8
       - run: xvfb-run --auto-servernum pnpm gate
+        env:
+          CI_MAIN: '1'
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: gate-output-linux
           path: gate-output.txt
           if-no-files-found: warn
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: playwright-results-linux
+          path: playwright-results.json
+          if-no-files-found: ignore
 
   quality:
     name: quality
     runs-on: ubuntu-latest
-    needs: [changes, docs, windows, macos, linux]
+    timeout-minutes: 5
+    needs: [changes, docs, web, shell, windows, macos, linux]
     if: always()
     steps:
-      - name: Require the jobs that the change calls for to succeed
+      - name: Require the jobs that the change and the event call for to succeed
         env:
+          EVENT: ${{ github.event_name }}
           CHANGES_RESULT: ${{ needs.changes.result }}
           DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
+          SHELL_CHANGED: ${{ needs.changes.outputs.shell }}
           DOCS_RESULT: ${{ needs.docs.result }}
+          WEB_RESULT: ${{ needs.web.result }}
+          SHELL_RESULT: ${{ needs.shell.result }}
           WINDOWS_RESULT: ${{ needs.windows.result }}
           MACOS_RESULT: ${{ needs.macos.result }}
           LINUX_RESULT: ${{ needs.linux.result }}
         run: |
-          echo "changes=$CHANGES_RESULT docs_only=$DOCS_ONLY docs=$DOCS_RESULT windows=$WINDOWS_RESULT macos=$MACOS_RESULT linux=$LINUX_RESULT"
+          echo "event=$EVENT changes=$CHANGES_RESULT docs_only=$DOCS_ONLY shell=$SHELL_CHANGED docs=$DOCS_RESULT web=$WEB_RESULT shell_job=$SHELL_RESULT windows=$WINDOWS_RESULT macos=$MACOS_RESULT linux=$LINUX_RESULT"
           test "$CHANGES_RESULT" = success
           if [ "$DOCS_ONLY" = true ]; then
             test "$DOCS_RESULT" = success
+            test "$WEB_RESULT" = skipped
+            test "$SHELL_RESULT" = skipped
             test "$WINDOWS_RESULT" = skipped
             test "$MACOS_RESULT" = skipped
             test "$LINUX_RESULT" = skipped
           elif [ "$DOCS_ONLY" = false ]; then
             test "$DOCS_RESULT" = skipped
-            test "$WINDOWS_RESULT" = success
-            test "$MACOS_RESULT" = success
-            test "$LINUX_RESULT" = success
+            if [ "$EVENT" = pull_request ]; then
+              test "$WEB_RESULT" = success
+              if [ "$SHELL_CHANGED" = true ]; then
+                test "$SHELL_RESULT" = success
+              else
+                test "$SHELL_RESULT" = skipped
+              fi
+              test "$WINDOWS_RESULT" = skipped
+              test "$MACOS_RESULT" = skipped
+              test "$LINUX_RESULT" = skipped
+            else
+              test "$WEB_RESULT" = skipped
+              test "$SHELL_RESULT" = skipped
+              test "$WINDOWS_RESULT" = success
+              test "$MACOS_RESULT" = success
+              test "$LINUX_RESULT" = success
+            fi
           else
             echo "docs_only is neither true nor false" >&2
             exit 1
           fi
+
+  main-status:
+    name: Main status
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [changes, docs, web, shell, windows, macos, linux]
+    if: always() && github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          pattern: playwright-results-*
+          path: playwright-results
+      - name: Report a failure or a flaky test on main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_RESULTS: changes=${{ needs.changes.result }} docs=${{ needs.docs.result }} web=${{ needs.web.result }} shell=${{ needs.shell.result }} windows=${{ needs.windows.result }} macos=${{ needs.macos.result }} linux=${{ needs.linux.result }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          COMMIT_SHA: ${{ github.sha }}
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          # The first line of the commit message; a manual run has none, so ask git.
+          COMMIT_TITLE="${COMMIT_MESSAGE%%$'\n'*}"
+          if [ -z "$COMMIT_TITLE" ]; then COMMIT_TITLE="$(git log -1 --format=%s)"; fi
+          export COMMIT_TITLE
+          node tools/ci/main-status.ts

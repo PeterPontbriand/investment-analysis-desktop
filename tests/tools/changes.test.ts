@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isDocsOnly, parsePaths } from '../../tools/ci/changes.ts';
+import { classify, isDocsOnly, parsePaths } from '../../tools/ci/changes.ts';
 
 describe('isDocsOnly', () => {
   it('is docs-only for Markdown files only', () => {
@@ -63,5 +63,32 @@ describe('parsePaths', () => {
       'docs/a b.md',
       'docs/c\nd.md',
     ]);
+  });
+});
+
+describe('classify', () => {
+  it('reports a docs-only change with no shell path', () => {
+    expect(classify(['README.md', 'docs/a.md'])).toBe(
+      'docs_only=true\nshell=false\n',
+    );
+  });
+
+  it('reports a web change with no shell path', () => {
+    expect(classify(['src/App.vue', 'tools/gate.ts'])).toBe(
+      'docs_only=false\nshell=false\n',
+    );
+  });
+
+  it.each(['src-tauri/src/lib.rs', 'src/platform/index.ts', 'pnpm-lock.yaml'])(
+    'reports a shell path: %s',
+    (path) => {
+      expect(classify(['src/App.vue', path])).toBe(
+        'docs_only=false\nshell=true\n',
+      );
+    },
+  );
+
+  it('takes the full path for an empty list', () => {
+    expect(classify([])).toBe('docs_only=false\nshell=true\n');
   });
 });
