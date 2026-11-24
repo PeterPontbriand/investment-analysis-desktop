@@ -215,6 +215,71 @@ test.describe('the details of a watchlist entry', () => {
   });
 });
 
+test.describe('venue help', () => {
+  test("a looked-up ticker's venue line opens its term with a Back step, or there is no venue line when the engine serves no venue", async ({
+    page,
+    engine,
+  }) => {
+    test.skip(!engine.providers, noProviders);
+    const stored = await engine.get<Profile>(
+      `/v1/instrument-profiles/${knownTicker}`,
+    );
+    await openWatchlist(page, engine, watchlistName);
+    const trigger = tickerButton(page, knownTicker);
+    await trigger.click();
+    await expect(panel(page)).toBeVisible();
+    let profile: Profile;
+    if (stored.status === 200) profile = stored.body;
+    else {
+      // Without an SEC identity the engine stores nothing, and the user looks
+      // the ticker up.
+      const answer = page.waitForResponse(
+        (response) =>
+          response.request().method() === 'POST' &&
+          response
+            .url()
+            .endsWith(`/v1/instrument-profiles/${knownTicker}/lookup`),
+      );
+      await panel(page)
+        .getByRole('button', { name: words.tickerDetails.lookUp, exact: true })
+        .click();
+      profile = (await (await answer).json()) as Profile;
+    }
+    const expected = await expectedDetails(page, engine, profile);
+    await expect.poll(() => panelLines(page)).toEqual(expected.lines);
+
+    const part = profile.listing_venue;
+    if (part === null) {
+      // The SEC EDGAR case: the lines checked above have no venue line, so
+      // there is no venue to open.
+      return;
+    }
+    const text = (await venueShown(engine, part))!;
+    const term = await venueTerm(engine, part);
+    // A venue with no term opens the term that explains the field (D361).
+    const heading = term?.name ?? (await engine.termById('listing-venue'));
+    const venue = panel(page).getByRole('button', { name: text, exact: true });
+    await expect(venue).toBeVisible();
+    await venue.click();
+    const panelHeading = panel(page).getByRole('heading', { level: 2 });
+    await expect(panelHeading).toHaveText(heading);
+    await expect(panelHeading).toBeFocused();
+    const back = panel(page).getByRole('button', {
+      name: fill(words.detailsPanel.back, {
+        title: fill(words.tickerDetails.panelTitle, { ticker: knownTicker }),
+      }),
+    });
+    await back.click();
+    await expect(panelHeading).toHaveText(
+      fill(words.tickerDetails.panelTitle, { ticker: knownTicker }),
+    );
+    await expect(panelHeading).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(panel(page)).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+  });
+});
+
 test.describe('a ticker no provider knows', () => {
   test("is added with the not-recognized warning, has no stored details, and shows the engine's message on a lookup", async ({
     page,
