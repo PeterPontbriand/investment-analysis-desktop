@@ -196,7 +196,8 @@
   },
   "detailsPanel": {
     "close": "[ar-XB] Close details",
-    "closeMark": "[ar-XB] ×"
+    "closeMark": "[ar-XB] ×",
+    "back": "[ar-XB] Back to {title}"
   },
   "actions": {
     "cancel": "[ar-XB] Cancel",

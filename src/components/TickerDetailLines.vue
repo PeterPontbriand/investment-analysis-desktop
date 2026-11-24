@@ -8,8 +8,8 @@ import TermName from './TermName.vue';
 import VenueName from './VenueName.vue';
 
 // The lines of a ticker's details, as the panel shows them (D290): the name,
-// the venue, the kind as its term name, the quote currency, and when and by
-// which provider they were taken. A null field has no line.
+// the venue and the kind as term triggers (D361), the quote currency, and when
+// and by which provider they were taken. A null field has no line.
 const props = defineProps<{ lines: DetailLines }>();
 
 const { t, locale } = useMessages();
@@ -35,10 +35,10 @@ const stamp = computed(() => {
   <div class="lines">
     <p v-if="lines.name !== null" class="name">{{ lines.name }}</p>
     <p v-if="lines.venue !== null">
-      <VenueName :part="lines.venue" plain />
+      <VenueName :part="lines.venue" />
     </p>
     <p v-if="lines.kind !== null">
-      <TermName code-set="InstrumentKind" :code="lines.kind" plain />
+      <TermName code-set="InstrumentKind" :code="lines.kind" />
     </p>
     <p v-if="lines.currency !== null">{{ lines.currency }}</p>
     <p v-if="stamp !== null" class="stamp">{{ stamp }}</p>

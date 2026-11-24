@@ -196,7 +196,8 @@
   },
   "detailsPanel": {
     "close": "Close details",
-    "closeMark": "×"
+    "closeMark": "×",
+    "back": "Back to {title}"
   },
   "actions": {
     "cancel": "Cancel",

@@ -478,6 +478,153 @@ for (const direction of directions) {
     });
   });
 
+  test.describe(`venue and kind help (${direction.name})`, () => {
+    const termName = (termId: string) => termNames.get(termId) ?? '';
+    const kindTermId = references.code_sets.InstrumentKind!.equity!;
+    const panelHeading = (page: Page) =>
+      panel(page).getByRole('heading', { level: 2 });
+    const backButton = (page: Page, ticker: string) =>
+      panel(page).getByRole('button', {
+        name: fill(words.detailsPanel.back, {
+          title: fill(words.tickerDetails.panelTitle, { ticker }),
+        }),
+      });
+
+    async function openDividends(page: Page) {
+      await page.getByRole('link', { name: 'Dividends' }).click();
+      await expect(h1(page)).toHaveText('Dividends');
+    }
+
+    test('the preview shows each venue as it reads, with no trigger', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      // A wording that differs from the term's name, and one equal to it.
+      await tickerButton(page, 'ACME').hover();
+      await expect(popup(page)).toContainText(venueShown(words, venues.nasdaq));
+      await expect(popup(page).getByRole('button')).toHaveCount(0);
+      await page.mouse.move(2, 2);
+      await expect(popup(page)).toHaveCount(0);
+      await tickerButton(page, 'ZED').hover();
+      await expect(popup(page)).toContainText(venueShown(words, venues.nyse));
+      await expect(popup(page)).not.toContainText(
+        fill(words.tickerDetails.venueWithWording, {
+          name: venues.nyse.provider_value,
+          wording: venues.nyse.provider_value,
+        }),
+      );
+    });
+
+    test('the preview shows the wording alone for a venue with no code', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openDividends(page);
+      await tickerButton(page, 'DIVI').hover();
+      await expect(popup(page)).toContainText(
+        `${venues.unmapped.provider_value} ${words.common.separator}`,
+      );
+    });
+
+    test('the venue in the panel opens its term, and Back returns to the ticker with focus on its heading', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      await tickerButton(page, 'ACME').click();
+      const venueTermId = references.code_sets.ListingVenue!.nasdaq!;
+      const venue = panel(page).getByRole('button', {
+        name: venueShown(words, venues.nasdaq),
+        exact: true,
+      });
+      await expect(venue).toHaveAttribute('aria-expanded', 'false');
+      await expect(backButton(page, 'ACME')).toHaveCount(0);
+      await venue.click();
+      await expect(panelHeading(page)).toHaveText(termName(venueTermId));
+      await expect(panelHeading(page)).toBeFocused();
+      await expect(panel(page)).toContainText(
+        helpIndex.groups
+          .flatMap((group) => group.terms)
+          .find((term) => term.id === venueTermId)!.definition,
+      );
+      await backButton(page, 'ACME').click();
+      await expect(panelHeading(page)).toHaveText(
+        fill(words.tickerDetails.panelTitle, { ticker: 'ACME' }),
+      );
+      await expect(panelHeading(page)).toBeFocused();
+      await expect(backButton(page, 'ACME')).toHaveCount(0);
+    });
+
+    test('the kind in the panel opens its term', async ({ page }) => {
+      await start(page, direction);
+      await openCore(page);
+      await tickerButton(page, 'ACME').click();
+      await panel(page)
+        .getByRole('button', { name: termName(kindTermId), exact: true })
+        .click();
+      await expect(panelHeading(page)).toHaveText(termName(kindTermId));
+      await expect(panelHeading(page)).toBeFocused();
+      await expect(backButton(page, 'ACME')).toBeVisible();
+    });
+
+    test('a venue with no term opens the term that explains the field', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openDividends(page);
+      await tickerButton(page, 'DIVI').click();
+      await panel(page)
+        .getByRole('button', {
+          name: venues.unmapped.provider_value,
+          exact: true,
+        })
+        .click();
+      await expect(panelHeading(page)).toHaveText(termName('listing-venue'));
+      await expect(backButton(page, 'DIVI')).toBeVisible();
+    });
+
+    test('Escape after a step closes the panel and returns focus to the ticker', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      const trigger = tickerButton(page, 'ACME');
+      await trigger.click();
+      await panel(page)
+        .getByRole('button', {
+          name: venueShown(words, venues.nasdaq),
+          exact: true,
+        })
+        .click();
+      await expect(backButton(page, 'ACME')).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(panel(page)).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+      // Opened again, the panel has no history.
+      await trigger.click();
+      await expect(backButton(page, 'ACME')).toHaveCount(0);
+    });
+
+    test('the close button after a step closes the panel and returns focus to the ticker', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      const trigger = tickerButton(page, 'ACME');
+      await trigger.click();
+      await panel(page)
+        .getByRole('button', { name: termName(kindTermId), exact: true })
+        .click();
+      await expect(backButton(page, 'ACME')).toBeVisible();
+      await panel(page)
+        .getByRole('button', { name: words.detailsPanel.close })
+        .click();
+      await expect(panel(page)).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+    });
+  });
+
   test.describe(`tap (${direction.name})`, () => {
     test.use({ hasTouch: true });
 
