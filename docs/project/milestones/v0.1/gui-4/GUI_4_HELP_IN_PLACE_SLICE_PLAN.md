@@ -13,8 +13,8 @@
 | :--- | :--- | :--- | :--- |
 | GUI.4a | [Ticker details](#gui4a--ticker-details) | Complete | 2026-11-21 |
 | GUI.4b | [Term popups](#gui4b--term-popups) | Complete | 2026-11-22 |
-| GUI.4c1 | [Venue help](#gui4c1--venue-help) | Next | |
-| GUI.4c2 | [Help content and Getting started](#gui4c2--help-content-and-getting-started) | Planned | |
+| GUI.4c1 | [Venue help](#gui4c1--venue-help) | Complete | 2026-11-24 |
+| GUI.4c2 | [Help content and Getting started](#gui4c2--help-content-and-getting-started) | Next | |
 
 ## Sub-slices
 
