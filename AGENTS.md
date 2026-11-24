@@ -24,8 +24,8 @@ These rules apply to contributors and agents writing, reviewing, testing, or doc
 - User-facing messages never name internal shorthand (such as `ian` or `iad`), an environment variable, a command-line option or a command. Such detail belongs in developer output such as standard error or logs.
 - Re-vendor IAN's API description (`vendor/ian/`) only in a slice that needs a newer engine (an API change, or a command the tools use), or before a release. Do it as that slice's first commit with `pnpm vendor-ian <commit>`, record a decision row naming the commit in the slice plan, and never re-vendor as a drive-by.
 - Dependabot pull requests are never merged; reapply dependency bumps on a project branch.
-- `pnpm gate:slice` must pass after each sub-slice, and `pnpm gate` must pass before pushing.
-- The required CI check is `quality`, fed by Windows, macOS, and Linux jobs. A change is docs-only when every changed path is a Markdown file or under `docs/` (never under `vendor/`); CI then runs only `pnpm docs:check` on Linux, and `quality` passes on that job alone.
+- `pnpm gate:slice` must pass after each step; pull-request CI and the after-merge runs are the full check, and `pnpm gate` is for reproducing a CI failure.
+- The required CI check is `quality`, which requires the jobs that the change and the event call for: Linux on a pull request, and Windows, macOS and Linux on `main` ([Verification](#verification)). A change is docs-only when every changed path is a Markdown file or under `docs/` (never under `vendor/`); CI then runs only `pnpm docs:check` on Linux, and `quality` passes on that job alone.
 - CI runner labels stay `-latest` (`windows-latest`, `macos-latest`, `ubuntu-latest`); do not pin them. When GitHub moves a label to a new image and CI breaks, fix it in the pull request it breaks, with a decision row in the slice plan.
 - This repository contains no Python. Its tooling, including documentation checks, is written in the repository's own language.
 
