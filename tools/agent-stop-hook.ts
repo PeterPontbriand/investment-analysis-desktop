@@ -93,11 +93,19 @@ function run(
   args: readonly string[],
   cwd: string,
 ): { status: number; stdout: Buffer; stderr: Buffer } {
-  const result = spawnSync(file, [...args], {
-    cwd,
-    shell: file === 'pnpm' && process.platform === 'win32',
-    maxBuffer: 256 * 1024 * 1024,
-  });
+  // On Windows pnpm is a .cmd shim, which needs a shell. The arguments are the fixed
+  // script names chosen above, so one command string is safe.
+  const viaShell = file === 'pnpm' && process.platform === 'win32';
+  const result = viaShell
+    ? spawnSync([file, ...args].join(' '), {
+        cwd,
+        shell: true,
+        maxBuffer: 256 * 1024 * 1024,
+      })
+    : spawnSync(file, [...args], {
+        cwd,
+        maxBuffer: 256 * 1024 * 1024,
+      });
   if (result.error) throw result.error;
   return {
     status: result.status ?? 1,
