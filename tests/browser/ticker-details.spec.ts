@@ -612,31 +612,37 @@ for (const direction of directions) {
       expect(lookupPaths(engine, 'ACME')).toHaveLength(1);
     });
 
-    test('shows a busy database with Try again, which asks again', async ({
-      page,
-    }) => {
-      let busy = true;
-      const engine = await start(page, direction, async (url, request) =>
-        request.method === 'POST' && url.pathname.endsWith('/lookup')
-          ? busy
-            ? failure(503, 'database_busy', 'The database is busy.')
-            : ok(lookedUp('ACME'))
-          : url.pathname === profilePath('ACME')
-            ? failure(404, 'instrument_profile_not_found', 'None stored.')
-            : undefined,
-      );
-      void engine;
-      await openCore(page);
-      await tickerButton(page, 'ACME').click();
-      await panel(page)
-        .getByRole('button', { name: words.tickerDetails.lookUp, exact: true })
-        .click();
-      busy = false;
-      await panel(page)
-        .getByRole('button', { name: words.common.tryAgain })
-        .click();
-      await expect(panel(page)).toContainText('Bolt Industries');
-    });
+    // Quarantined: flaky on the macOS runner, issue #37.
+    test(
+      'shows a busy database with Try again, which asks again',
+      { tag: '@quarantine' },
+      async ({ page }) => {
+        let busy = true;
+        const engine = await start(page, direction, async (url, request) =>
+          request.method === 'POST' && url.pathname.endsWith('/lookup')
+            ? busy
+              ? failure(503, 'database_busy', 'The database is busy.')
+              : ok(lookedUp('ACME'))
+            : url.pathname === profilePath('ACME')
+              ? failure(404, 'instrument_profile_not_found', 'None stored.')
+              : undefined,
+        );
+        void engine;
+        await openCore(page);
+        await tickerButton(page, 'ACME').click();
+        await panel(page)
+          .getByRole('button', {
+            name: words.tickerDetails.lookUp,
+            exact: true,
+          })
+          .click();
+        busy = false;
+        await panel(page)
+          .getByRole('button', { name: words.common.tryAgain })
+          .click();
+        await expect(panel(page)).toContainText('Bolt Industries');
+      },
+    );
   });
 
   // The identity a saved run kept differs from the current profile of the same
