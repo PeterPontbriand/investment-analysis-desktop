@@ -8,6 +8,7 @@
 - The GUI adds no new same-computer assumption: every new interaction with the engine goes through IAN's API, never through environment variables, files or command-line calls, apart from starting `ian serve` ([D342 in the v0.1 plan](milestones/v0.1/IMPLEMENTATION_PLAN.md#gui5-first-run-and-installer)). The SEC identity row of [Appendix A.1](#a1-a-separate-gui-application-over-a-local-api) is superseded by D341: the identity is sent to the engine through its API.
 - IAD is one application in a suite whose boundaries are recorded in IAN's Master Plan, in the [Product boundaries section](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/project/MASTER_PLAN.md#25-product-boundaries).
 - GUI.1 technology decisions were approved on 2026-10-31 and are recorded in the [GUI.1 slice plan](milestones/v0.1/gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md).
+- Units are handed off through a spec, checked locally by the slice check, and merged after pull-request CI; the decisions are recorded in [Appendix B](#appendix-b-2026-11-23-development-workflow-decisions) and the process is in the [spec workflow](SPEC_WORKFLOW.md).
 
 ## Out of scope
 
@@ -73,3 +74,21 @@ Approved by the project owner on 2026-10-30.
 | Sequence | API.5 and API.6, after API.4 and before 3.5.4; API.5 waits for 3.5.3e because 3.5.3d adds Piotroski's glossary entries |
 | GUI behavior | A popup on hover or focus with the short definition, and a help panel on click with the full entry, linked terms and the longer guide. A run's own derivation stays in its Details view. The GUI repository decides the interaction details |
 
+## Appendix B: 2026-11-23 development workflow decisions
+
+Approved by the project owner on 2026-11-23. D344 to D347 were implemented in pull request #41 and are recorded here with their identifiers; D348 to D355 are implemented by the [spec workflow](SPEC_WORKFLOW.md), the escalation table in [AGENTS.md](../../AGENTS.md#escalation-in-a-spec-driven-unit) and the Stop hook in `.claude/settings.json`.
+
+| Id | Decision |
+| :--- | :--- |
+| D344 | Pull requests run Linux only: a web job always, a shell job only when a shell path changed; Windows and macOS (and Linux) run the full gate on pushes to `main` and manual runs (P1, done in #41) |
+| D345 | The pull-request web job runs Playwright with Chromium and WebKit, both text directions (P2, done in #41) |
+| D346 | A failure or flaky test on `main` opens or updates one `main-red` issue automatically, and a red `main` is fixed before any new unit starts, in the fast lane (P4, done in #41) |
+| D347 | Flaky tests: issue the same day, `@quarantine` tag, still run on `main`, one Playwright retry on `main` only (P5, done in #41) |
+| D348 | No local full gate: the slice check after each step is the local check; pull-request CI and the after-merge runs are the full check; `pnpm gate` stays for reproducing a CI failure or when asked (P6) |
+| D349 | A Claude Code Stop hook runs the slice check, or the docs checks for a docs-only change, when the implementer ends a turn with files changed since the last pass; it never loops and sends failures back (P7) |
+| D350 | The implementer is a coding agent on the project owner's development machine, started by the spec author through Remote Control in the owner's checkout (P8) |
+| D351 | The spec author writes the spec into the owner's checkout; the implementer commits it as the branch's first commit (P9) |
+| D352 | Approving a unit's decision list also approves opening its pull request after the spec author's clean review; the implementer opens it, starts CI runs on its branch and files flake issues; the owner merges (P10) |
+| D353 | Fast lane: a change with no decision in it skips the decision list (P11) |
+| D354 | One decision list per slice; the next is drafted while the current pull request waits; one implementer per repository at a time (P12) |
+| D355 | The spec workflow is piloted on every unit in both repositories from issue #39 on, and judged after the first three spec-driven units merge, as the engine's spec workflow §7 says (P13) |

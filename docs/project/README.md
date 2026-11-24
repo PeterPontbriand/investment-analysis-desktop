@@ -9,6 +9,8 @@ The [v0.1 implementation plan](milestones/v0.1/IMPLEMENTATION_PLAN.md#sequence-a
 ## Project-wide documents
 
 - [Charter](CHARTER.md): what the application is for, its boundaries with the engine, and what is out of scope.
+- [Spec workflow](SPEC_WORKFLOW.md): how a unit goes from an approved decision list to a merged pull request through a committed spec.
+- [Spec template](SPEC_TEMPLATE.md): the fixed shape of a unit spec.
 - [Smoke test](SMOKE_TESTING.md): the human check of the application against a real engine. It is no longer maintained per pull request (D310); GUI.6 decides its future.
 - [Milestones](milestones/README.md): each milestone's implementation plan, with one folder per unit of work.
 
