@@ -80,7 +80,9 @@ jobs:
           cache-dependency-path: pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
       - run: sudo apt-get update
+      - run: sudo apt-get install --yes build-essential curl file libayatana-appindicator3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev patchelf
       - run: pnpm exec playwright install-deps chromium webkit
+        timeout-minutes: 8
       - run: pnpm gate --part web
       - uses: actions/upload-artifact@v7
         if: always()
@@ -196,6 +198,7 @@ jobs:
       - run: sudo apt-get install --yes build-essential curl file libayatana-appindicator3-dev libssl-dev libwebkit2gtk-4.1-dev libxdo-dev librsvg2-dev patchelf xvfb
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install-deps chromium webkit
+        timeout-minutes: 8
       - run: xvfb-run --auto-servernum pnpm gate
         env:
           CI_MAIN: '1'
