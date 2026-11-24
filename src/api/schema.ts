@@ -1929,11 +1929,8 @@ export interface components {
             issuer_identifier: string | null;
             /** @description The kind of instrument, from the reviewed list; null when the provider's value is not on it. */
             kind: components["schemas"]["InstrumentKind"] | null;
-            /**
-             * Listing Venue
-             * @description The exchange or venue the instrument is listed on; null when unknown.
-             */
-            listing_venue: string | null;
+            /** @description The exchange or venue the instrument is listed on, as the data provider reports it, with the reviewed code it maps to; null when the provider gave none. */
+            listing_venue: components["schemas"]["ListingVenuePart"] | null;
             /**
              * Provider Id
              * @description The data provider that gave the identity; /v1/info lists the providers with their names.
@@ -1952,10 +1949,10 @@ export interface components {
             refreshed_at: string;
             /**
              * Schema Version
-             * @default 1
+             * @default 2
              * @constant
              */
-            schema_version: 1;
+            schema_version: 2;
             /**
              * Ticker
              * @description The ticker the profile describes, trimmed and upper-cased.
@@ -1990,6 +1987,23 @@ export interface components {
             components: components["schemas"]["ResolvedInputPart"][];
             /** Transformation */
             transformation: string;
+        };
+        /**
+         * ListingVenue
+         * @description A reviewed listing venue: one exchange, a group of exchanges or the over-the-counter market.
+         * @enum {string}
+         */
+        ListingVenue: "nasdaq" | "nyse" | "nyse_group" | "nyse_arca" | "nyse_american" | "cboe" | "cboe_bzx" | "txse" | "otc";
+        /**
+         * ListingVenuePart
+         * @description A listing venue: the provider's own wording and the reviewed code it maps to.
+         *
+         *     The code is null when no reviewed table lists the provider's wording; the wording is always served.
+         */
+        ListingVenuePart: {
+            code: components["schemas"]["ListingVenue"] | null;
+            /** Provider Value */
+            provider_value: string;
         };
         /**
          * LocaleItem
@@ -2963,10 +2977,10 @@ export interface components {
             requested_as_of: (string) | null;
             /**
              * Schema Version
-             * @default 3
+             * @default 4
              * @constant
              */
-            schema_version: 3;
+            schema_version: 4;
             /** @description The identity snapshot the run retained when it ran. Show a ticker tied to this run with it, never with the ticker's current profile, which can describe a different company after a ticker reuse. Every descriptive field is null when no provider gave one. */
             security_identity: components["schemas"]["SecurityIdentityPart"];
             /** @description The strategy that produced the run. */
@@ -3088,8 +3102,7 @@ export interface components {
             instrument_name: string | null;
             /** Issuer Identifier */
             issuer_identifier: string | null;
-            /** Listing Venue */
-            listing_venue: string | null;
+            listing_venue: components["schemas"]["ListingVenuePart"] | null;
             /** Provider Id */
             provider_id: string | null;
             /** Resolved At */
@@ -3112,8 +3125,7 @@ export interface components {
             available_at: string;
             /** Context Ids */
             context_ids: string[];
-            /** Listing Venue */
-            listing_venue: string | null;
+            listing_venue: components["schemas"]["ListingVenuePart"] | null;
             /**
              * Retrieved At
              * Format: date-time
