@@ -1,7 +1,12 @@
 import { spawn } from 'node:child_process';
 import { createWriteStream } from 'node:fs';
 import { once } from 'node:events';
-import { listChangedPaths, shellPathsChanged } from './gate-scope.ts';
+import {
+  listChangedPaths,
+  selectSteps,
+  shellPathsChanged,
+  type GateMode,
+} from './gate-scope.ts';
 
 type Step = {
   name: string;
@@ -124,18 +129,29 @@ const steps: Step[] = [
   },
 ];
 
-const args = process.argv.slice(2);
-if (args.length > 1 || (args.length === 1 && args[0] !== '--slice')) {
-  process.stderr.write('Usage: pnpm gate | pnpm gate:slice\n');
+const usage =
+  'Usage: pnpm gate | pnpm gate:slice | pnpm gate --part web|shell\n';
+function parseMode(args: string[]): GateMode | undefined {
+  if (args.length === 0) return 'full';
+  if (args.length === 1 && args[0] === '--slice') return 'slice';
+  if (args.length === 2 && args[0] === '--part') {
+    if (args[1] === 'web') return 'web';
+    if (args[1] === 'shell') return 'shell';
+  }
+  return undefined;
+}
+const parsedMode = parseMode(process.argv.slice(2));
+if (parsedMode === undefined) {
+  process.stderr.write(usage);
   process.exit(2);
 }
+const mode: GateMode = parsedMode;
 if (!process.env.npm_execpath) {
   process.stderr.write(
     'Run the gate with `pnpm gate`; npm_execpath is not set.\n',
   );
   process.exit(1);
 }
-const sliceMode = args.length === 1;
 
 const output = createWriteStream('gate-output.txt', { flags: 'w' });
 function log(message: string): void {
@@ -190,8 +206,19 @@ function run(step: Step): Promise<{ passed: boolean; duration: number }> {
   });
 }
 
-function describeScope(slice: boolean): { runShell: boolean; line: string } {
-  if (!slice) return { runShell: true, line: 'Full gate: every step runs.' };
+function describeScope(gateMode: GateMode): {
+  runShell: boolean;
+  line: string;
+} {
+  if (gateMode === 'full')
+    return { runShell: true, line: 'Full gate: every step runs.' };
+  if (gateMode === 'web')
+    return { runShell: false, line: 'Part web: shell steps skipped.' };
+  if (gateMode === 'shell')
+    return {
+      runShell: true,
+      line: 'Part shell: only the dependency install and the shell steps run.',
+    };
   const listed = listChangedPaths();
   if ('error' in listed)
     return {
@@ -213,17 +240,24 @@ function describeScope(slice: boolean): { runShell: boolean; line: string } {
 }
 
 async function main(): Promise<void> {
-  const scope = describeScope(sliceMode);
+  const scope = describeScope(mode);
+  const selection = selectSteps(mode, scope.runShell);
+  const runs = (step: Step, index: number): boolean =>
+    index === 0
+      ? selection.install
+      : step.shell
+        ? selection.shell
+        : selection.web;
   log(`${scope.line}\n`);
   const results: Result[] = [];
   const totalStarted = Date.now();
-  const expectedRuns = steps.filter(
-    (step) => scope.runShell || !step.shell,
-  ).length;
+  const expectedRuns = steps.filter((step, index) => runs(step, index)).length;
   for (const [index, step] of steps.entries()) {
     const header = `\n[${index + 1}/${steps.length}] ${step.name}\n`;
-    if (step.shell && !scope.runShell) {
-      log(`${header}SKIP: shell paths unchanged\n`);
+    if (!runs(step, index)) {
+      log(
+        `${header}SKIP: ${step.shell ? (mode === 'slice' ? 'shell paths unchanged' : 'shell steps not part of this run') : 'not part of this run'}\n`,
+      );
       results.push({
         name: step.name,
         passed: true,
