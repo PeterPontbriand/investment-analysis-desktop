@@ -2,6 +2,9 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 import AddEntriesView from './views/AddEntriesView.vue';
 import AnalyzeView from './views/AnalyzeView.vue';
 import AboutView from './views/AboutView.vue';
+import GettingStartedView from './views/GettingStartedView.vue';
+import HelpDocumentView from './views/HelpDocumentView.vue';
+import HelpView from './views/HelpView.vue';
 import RefreshesView from './views/RefreshesView.vue';
 import RefreshProgressView from './views/RefreshProgressView.vue';
 import RefreshCompareView from './views/RefreshCompareView.vue';
@@ -15,6 +18,11 @@ export function createAppRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', redirect: { name: 'watchlists' } },
+      {
+        path: '/getting-started',
+        name: 'getting-started',
+        component: GettingStartedView,
+      },
       { path: '/analyze', name: 'analyze', component: AnalyzeView },
       { path: '/watchlists', name: 'watchlists', component: WatchlistsView },
       {
@@ -40,6 +48,12 @@ export function createAppRouter() {
       },
       { path: '/runs', name: 'runs', component: RunsView },
       { path: '/runs/:runId', name: 'run', component: RunDetailView },
+      { path: '/help', name: 'help', component: HelpView },
+      {
+        path: '/help/documents/:documentId',
+        name: 'help-document',
+        component: HelpDocumentView,
+      },
       { path: '/about', name: 'about', component: AboutView },
     ],
   });

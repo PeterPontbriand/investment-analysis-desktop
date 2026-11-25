@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import type { EngineConnection, EngineStatus, Platform } from './types.ts';
 
 type RawConnection =
@@ -29,5 +30,6 @@ export function createTauriPlatform(): Platform {
       });
     },
     closeWindow: () => getCurrentWindow().destroy(),
+    openExternal: (url) => openUrl(url),
   };
 }

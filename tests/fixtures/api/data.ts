@@ -47,7 +47,14 @@ export const strategies: Schemas['StrategiesDocument'] = {
 
 export const helpIndex: Schemas['HelpIndexDocument'] = {
   schema_version: 1,
-  documents: [],
+  // The guides of help.ts, in the engine's order.
+  documents: [
+    {
+      id: 'beginner-guide',
+      title: "A Beginner's Guide to Investment Analysis in This Project",
+    },
+    { id: 'finance-math', title: 'Financial Math & Data Conventions' },
+  ],
   groups: [
     {
       id: 'outcomes',
@@ -306,6 +313,31 @@ export const helpIndex: Schemas['HelpIndexDocument'] = {
           id: 'as-of-date',
           name: 'As-of Date',
           definition: 'The day the data is read as of.',
+        },
+        {
+          id: 'ticker',
+          name: 'Ticker',
+          definition: 'The short symbol that identifies a security.',
+        },
+        {
+          id: 'analysis-strategy',
+          name: 'Analysis Strategy',
+          definition: 'A rule-based way of analyzing a security.',
+        },
+        {
+          id: 'watchlist',
+          name: 'Watchlist',
+          definition: 'A named, ordered list of entries.',
+        },
+        {
+          id: 'entry',
+          name: 'Entry',
+          definition: 'One ticker paired with one selection.',
+        },
+        {
+          id: 'analysis-run',
+          name: 'Analysis Run',
+          definition: 'One saved record of a single analysis attempt.',
         },
         {
           id: 'refresh',

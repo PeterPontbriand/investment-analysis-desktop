@@ -16,10 +16,11 @@ import { insidePanel } from './panelScope.ts';
 import { termDefinitionId } from './termDefinitionId.ts';
 import PreviewPopup from './PreviewPopup.vue';
 import TermDefinition from './TermDefinition.vue';
+import TermEntryBody from './TermEntryBody.vue';
 
 // A term that explains itself (D283, D313 to D327): a button with the shared
 // preview and details panel of GUI.4a. The preview shows the definition; the
-// panel shows the term's name, then the definition (B8).
+// panel shows the term's name, then its full entry (B8, D364).
 //
 // `text` is the trigger as running text or a column header, `pill` stays a
 // pill, and `help` is the small separate button after a form label (B4).
@@ -67,8 +68,12 @@ function open(from: HTMLElement | null = button.value): void {
     trigger,
     title: term.name,
     lang: term.lang,
-    body: TermDefinition,
-    props: { definition: term.definition, lang: term.lang },
+    body: TermEntryBody,
+    props: {
+      termId: term.termId,
+      definition: term.definition,
+      lang: term.lang,
+    },
   });
 }
 
@@ -163,6 +168,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
 }
 
 .kind-text {
+  text-align: start;
   text-decoration: underline dotted currentcolor;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;

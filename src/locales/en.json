@@ -8,10 +8,12 @@
   },
   "nav": {
     "label": "Main",
+    "gettingStarted": "Getting started",
     "analyze": "Analyze a ticker",
     "watchlists": "Watchlists",
     "refreshes": "Refreshes",
     "runs": "Saved runs",
+    "help": "Help",
     "about": "About",
     "refreshRunning": "Refresh running · {finished} of {total}",
     "refreshFinished": "Refresh finished",
@@ -193,6 +195,34 @@
     "about": "About {name}",
     "mark": "?",
     "f1": "Press F1 for details."
+  },
+  "gettingStarted": {
+    "intro": "This application runs the analysis engine's {strategies} on the {tickers} you choose, and explains every result and term it shows. It explains; it does not recommend buying or selling anything.",
+    "analyze": "{screen}: run one or more strategies on a single {ticker} and read the results.",
+    "watchlists": "{screen}: build {watchlists} of {entries} and run them again whenever you like.",
+    "refreshes": "{screen}: see each {refresh}, follow one while it runs, and compare its results.",
+    "runs": "{screen}: find any saved {run}, filter the list and open its details.",
+    "help": "{screen}: the analysis engine's glossary and guides.",
+    "about": "{screen}: which analysis engine the application uses.",
+    "guide": "New to investing? Start with this guide: {guide}",
+    "terms": {
+      "strategies": "analysis strategies",
+      "tickers": "tickers",
+      "ticker": "ticker",
+      "watchlists": "watchlists",
+      "entries": "entries",
+      "refresh": "refresh",
+      "run": "analysis run"
+    }
+  },
+  "help": {
+    "guides": "Guides",
+    "documentNotFound": "The analysis engine has no guide with this name.",
+    "termNotFound": "The analysis engine has no help entry for this term.",
+    "listedUnder": "Listed under",
+    "codeBlock": "Code",
+    "opensInBrowser": "(opens in your browser)",
+    "externalMark": "↗"
   },
   "detailsPanel": {
     "close": "Close details",

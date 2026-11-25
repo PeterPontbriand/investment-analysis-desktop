@@ -29,6 +29,7 @@ const host: Platform = {
   setWindowTitle: () => Promise.resolve(),
   onCloseRequested: () => {},
   closeWindow: () => Promise.resolve(),
+  openExternal: () => Promise.resolve(),
 };
 
 async function mountAt(path: string) {

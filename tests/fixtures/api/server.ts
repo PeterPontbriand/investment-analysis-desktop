@@ -3,6 +3,7 @@
 import type { components } from '../../../src/api/schema.ts';
 import * as compare from './compare.ts';
 import * as data from './data.ts';
+import { guides, termDocument } from './help.ts';
 import { lookedUp, profiles } from './profiles.ts';
 
 export type Reply = {
@@ -123,6 +124,20 @@ export function respond(url: URL, method = 'GET'): Reply {
         ),
       );
     }
+  }
+  const helpTerm = /^\/v1\/help\/terms\/([^/]+)$/.exec(path);
+  if (helpTerm) {
+    const document = termDocument(decodeURIComponent(helpTerm[1] ?? ''));
+    return document
+      ? ok(document)
+      : failure(404, 'help_term_not_found', 'No such help term.');
+  }
+  const guide = /^\/v1\/help\/documents\/([^/]+)$/.exec(path);
+  if (guide) {
+    const document = guides[decodeURIComponent(guide[1] ?? '')];
+    return document
+      ? ok(document)
+      : failure(404, 'help_document_not_found', 'No such guide.');
   }
   const watchlist = /^\/v1\/watchlists\/([^/]+)$/.exec(path);
   if (watchlist) {

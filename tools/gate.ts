@@ -14,6 +14,8 @@ type Step = {
   args: string[];
   forbidOutput?: string;
   shell?: true;
+  // Not a shell step, but the shell part on its own needs its result.
+  neededByShell?: true;
 };
 type Program = { file: string; args: string[] };
 type Result = {
@@ -69,7 +71,13 @@ const steps: Step[] = [
     args: ['tools/check-openapi-types.ts'],
   },
   { name: 'Vitest', command: packageManager, args: ['test'] },
-  { name: 'Vite production build', command: packageManager, args: ['build'] },
+  {
+    // The Tauri crate embeds the built frontend, so its Rust steps need it.
+    name: 'Vite production build',
+    neededByShell: true,
+    command: packageManager,
+    args: ['build'],
+  },
   {
     name: 'Production build excludes test locales',
     command: node,
@@ -217,7 +225,7 @@ function describeScope(gateMode: GateMode): {
   if (gateMode === 'shell')
     return {
       runShell: true,
-      line: 'Part shell: only the dependency install and the shell steps run.',
+      line: 'Part shell: only the dependency install, the Vite production build and the shell steps run.',
     };
   const listed = listChangedPaths();
   if ('error' in listed)
@@ -247,7 +255,7 @@ async function main(): Promise<void> {
       ? selection.install
       : step.shell
         ? selection.shell
-        : selection.web;
+        : selection.web || (mode === 'shell' && step.neededByShell === true);
   log(`${scope.line}\n`);
   const results: Result[] = [];
   const totalStarted = Date.now();

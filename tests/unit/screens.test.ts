@@ -19,6 +19,7 @@ function platform(
     setWindowTitle: () => Promise.resolve(),
     onCloseRequested: () => {},
     closeWindow: () => Promise.resolve(),
+    openExternal: () => Promise.resolve(),
   };
 }
 
@@ -72,10 +73,12 @@ describe('app shell', () => {
     expect(wrapper.get('.product').text()).toBe(en.app.name);
     expect(wrapper.get('.notice').text()).toBe(en.app.preReleaseNotice);
     expect(wrapper.findAll('nav a').map((link) => link.text())).toEqual([
+      en.nav.gettingStarted,
       en.nav.analyze,
       en.nav.watchlists,
       en.nav.refreshes,
       en.nav.runs,
+      en.nav.help,
       en.nav.about,
     ]);
     expect(document.documentElement.lang).toBe('en');
@@ -103,7 +106,15 @@ describe('app shell', () => {
     const { wrapper, router } = await mountApp(
       platform(Promise.resolve({ state: 'no_engine' })),
     );
-    for (const path of ['/watchlists', '/refreshes', '/runs', '/about']) {
+    for (const path of [
+      '/getting-started',
+      '/watchlists',
+      '/refreshes',
+      '/runs',
+      '/help',
+      '/help/documents/beginner-guide',
+      '/about',
+    ]) {
       await router.push(path);
       await flushPromises();
       expect(wrapper.get('[role="status"]').text()).toBe(en.engine.noEngine);

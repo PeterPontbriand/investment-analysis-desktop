@@ -4,6 +4,8 @@ type Host = {
   location: Pick<Location, 'hash' | 'pathname' | 'search'>;
   history: Pick<History, 'replaceState'>;
   document: Pick<Document, 'title'>;
+  // The addresses the application asked to open, which the browser tests read.
+  openedExternalUrls?: string[];
 };
 
 // The fragment is #engine=<base URL>&token=<token> (D58).
@@ -37,6 +39,8 @@ export function createBrowserPlatform(host: Host = window): Platform {
   const connection: EngineConnection = parsed
     ? { state: 'ready', ...parsed }
     : { state: 'no_engine' };
+  const openedExternalUrls: string[] = [];
+  host.openedExternalUrls = openedExternalUrls;
   return {
     engineConnection: () => Promise.resolve(connection),
     // A browser cannot see the engine's process.
@@ -48,5 +52,10 @@ export function createBrowserPlatform(host: Host = window): Platform {
     // A browser tab is closed by the browser, not by the application.
     onCloseRequested: () => {},
     closeWindow: () => Promise.resolve(),
+    // A browser build records the address and opens nothing (D368).
+    openExternal: (url) => {
+      openedExternalUrls.push(url);
+      return Promise.resolve();
+    },
   };
 }
