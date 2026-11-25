@@ -90,6 +90,9 @@ watch(
             <RouterLink :to="{ name: 'runs' }">{{ t('nav.runs') }}</RouterLink>
           </li>
           <li>
+            <RouterLink :to="{ name: 'help' }">{{ t('nav.help') }}</RouterLink>
+          </li>
+          <li>
             <RouterLink :to="{ name: 'about' }">{{
               t('nav.about')
             }}</RouterLink>

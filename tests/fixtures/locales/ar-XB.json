@@ -12,6 +12,7 @@
     "watchlists": "[ar-XB] Watchlists",
     "refreshes": "[ar-XB] Refreshes",
     "runs": "[ar-XB] Saved runs",
+    "help": "[ar-XB] Help",
     "about": "[ar-XB] About",
     "refreshRunning": "[ar-XB] Refresh running · {finished} of {total}",
     "refreshFinished": "[ar-XB] Refresh finished",
@@ -195,6 +196,8 @@
     "f1": "[ar-XB] Press F1 for details."
   },
   "help": {
+    "guides": "[ar-XB] Guides",
+    "documentNotFound": "[ar-XB] The analysis engine has no guide with this name.",
     "codeBlock": "[ar-XB] Code",
     "opensInBrowser": "[ar-XB] (opens in your browser)",
     "externalMark": "[ar-XB] ↗"

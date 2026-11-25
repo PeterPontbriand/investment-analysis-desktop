@@ -33,6 +33,7 @@ test.describe('shell and navigation', () => {
       en.nav.watchlists,
       en.nav.refreshes,
       en.nav.runs,
+      en.nav.help,
       en.nav.about,
     ]);
     await expect(
