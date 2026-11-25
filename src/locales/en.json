@@ -194,6 +194,10 @@
     "mark": "?",
     "f1": "Press F1 for details."
   },
+  "help": {
+    "opensInBrowser": "(opens in your browser)",
+    "externalMark": "↗"
+  },
   "detailsPanel": {
     "close": "Close details",
     "closeMark": "×",

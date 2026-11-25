@@ -19,6 +19,7 @@ function platform(
     setWindowTitle: () => Promise.resolve(),
     onCloseRequested: () => {},
     closeWindow: () => Promise.resolve(),
+    openExternal: () => Promise.resolve(),
   };
 }
 

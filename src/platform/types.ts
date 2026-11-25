@@ -20,4 +20,6 @@ export interface Platform {
   // closeWindow (D255). A browser has no such request.
   onCloseRequested(handler: () => boolean): void;
   closeWindow(): Promise<void>;
+  // Opens an https: address in the user's browser (D368).
+  openExternal(url: string): Promise<void>;
 }

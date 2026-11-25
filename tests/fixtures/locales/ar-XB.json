@@ -194,6 +194,10 @@
     "mark": "[ar-XB] ?",
     "f1": "[ar-XB] Press F1 for details."
   },
+  "help": {
+    "opensInBrowser": "[ar-XB] (opens in your browser)",
+    "externalMark": "[ar-XB] ↗"
+  },
   "detailsPanel": {
     "close": "[ar-XB] Close details",
     "closeMark": "[ar-XB] ×",

@@ -7,6 +7,7 @@
     "core:window:allow-set-title",
     "core:window:allow-destroy",
     "core:event:allow-listen",
-    "core:event:allow-unlisten"
+    "core:event:allow-unlisten",
+    { "identifier": "opener:allow-open-url", "allow": [{ "url": "https://*" }] }
   ]
 }

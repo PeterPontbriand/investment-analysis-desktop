@@ -26,6 +26,7 @@ function host() {
     onCloseRequested: (handler) => {
       state.handler = handler;
     },
+    openExternal: () => Promise.resolve(),
     closeWindow: () => {
       state.closed += 1;
       return Promise.resolve();

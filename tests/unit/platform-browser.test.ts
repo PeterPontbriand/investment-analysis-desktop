@@ -9,6 +9,7 @@ function host(hash: string) {
     location: { hash, pathname: '/app', search: '?a=1' },
     history: { replaceState: vi.fn() },
     document: { title: '' },
+    openedExternalUrls: undefined as string[] | undefined,
   };
 }
 
@@ -59,5 +60,22 @@ describe('browser platform', () => {
     await createBrowserPlatform(page).setWindowTitle('Title');
 
     expect(page.document.title).toBe('Title');
+  });
+
+  it('records an external address and opens nothing', async () => {
+    const page = host('');
+    const open = vi.spyOn(window, 'open').mockReturnValue(null);
+
+    const platform = createBrowserPlatform(page);
+    expect(page.openedExternalUrls).toEqual([]);
+    await platform.openExternal('https://example.com/a');
+    await platform.openExternal('https://example.com/b');
+
+    expect(page.openedExternalUrls).toEqual([
+      'https://example.com/a',
+      'https://example.com/b',
+    ]);
+    expect(open).not.toHaveBeenCalled();
+    open.mockRestore();
   });
 });
