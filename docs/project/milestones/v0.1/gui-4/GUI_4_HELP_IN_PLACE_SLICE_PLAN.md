@@ -14,7 +14,7 @@
 | GUI.4a | [Ticker details](#gui4a--ticker-details) | Complete | 2026-11-21 |
 | GUI.4b | [Term popups](#gui4b--term-popups) | Complete | 2026-11-22 |
 | GUI.4c1 | [Venue help](#gui4c1--venue-help) | Complete | 2026-11-24 |
-| GUI.4c2 | [Help content and Getting started](#gui4c2--help-content-and-getting-started) | Next | |
+| GUI.4c2 | [Help content and Getting started](#gui4c2--help-content-and-getting-started) | Complete | 2026-11-25 |
 
 ## Sub-slices
 
@@ -48,7 +48,7 @@
 - **Decision:** Show a term's full entry with working links in the details panel, open the guides on a Help screen, and put a "Getting started" screen first in the sidebar (D364 to D376).
 - **Scope:** the full entry and the group line in the panel (D364, D365); the Markdown renderer and its links (D366, D367); further-reading links that open in the browser (D368); the Help screen (D369, D370); the "Getting started" screen and its GUI.5 coordination (D371 to D374); tests (D375).
 - **Branch:** `feat/gui-4c2-help-content`, from main after GUI.4c1 merges; its own pull request, which closes IAD issue #32.
-- **Detail:** [GUI.4c decisions](#gui4c-venue-help-help-content-and-getting-started) in Appendix A of this plan; its spec is written when GUI.4c1 has merged.
+- **Detail:** [GUI.4c decisions](#gui4c-venue-help-help-content-and-getting-started) in Appendix A of this plan, and the [GUI.4c2 spec](specs/gui-4c2.md).
 
 ### Application labels and help (settled)
 

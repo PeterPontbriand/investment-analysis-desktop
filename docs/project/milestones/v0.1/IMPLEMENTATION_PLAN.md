@@ -14,8 +14,8 @@
 | GUI.1 | [Technology decision and scaffold](#gui1-technology-decision-and-scaffold) | Complete | 2026-11-02 |
 | GUI.2 | [Read-only screens against IAN API.2](#gui2-read-only-screens) | Complete | 2026-11-15 |
 | GUI.3 | [Actions and refresh progress against IAN API.4](#gui3-actions-and-refresh-progress) | Complete | 2026-11-20 |
-| GUI.4 | [Help in place against IAN API.6](#gui4-help-in-place) | Next | |
-| GUI.5 | [First-run screen and installer](#gui5-first-run-and-installer) | Planned | |
+| GUI.4 | [Help in place against IAN API.6](#gui4-help-in-place) | Complete | 2026-11-25 |
+| GUI.5 | [First-run screen and installer](#gui5-first-run-and-installer) | Next | |
 | GUI.6 | [Preview release and feedback intake](#gui6-preview-release-and-feedback) | Planned | |
 
 GUI.2, GUI.3, and GUI.4 cannot start until IAN API.2, API.4, and API.6 respectively have merged.
