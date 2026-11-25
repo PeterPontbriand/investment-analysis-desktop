@@ -137,4 +137,4 @@ Closes #39
 
 ## Change log
 
-None yet.
+- 2026-11-24: D378 recorded in the slice plan after the owner's look (engine issues #302 and #301); no change to the unit's code.
