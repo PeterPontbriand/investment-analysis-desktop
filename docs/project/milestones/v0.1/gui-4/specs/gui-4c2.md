@@ -174,4 +174,4 @@ Closes #32
 
 ## Change log
 
-None yet.
+- 2026-11-25, escalation 1 (steps 6 and 8): App.vue closes the panel only when the route's path changes, so a hash-only link kept it open. A group or document link inside the panel now also closes it (`closePanel({ returnFocus: false })`); the Help screen focuses the group heading on load and on every hash change; and a link to the address already shown focuses its target again. Mocked failure states use HTTP 500 with `database_busy`, the one failure that offers "Try again". The renderer's `validateLink` accepts every link so that `classifyHelpLink` alone decides how it shows.
