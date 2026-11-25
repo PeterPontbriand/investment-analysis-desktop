@@ -64,6 +64,8 @@ The approved technology decisions and their record are in [Appendix A of the GUI
   - **Term help:** Show a short definition popup on hover or keyboard focus; open a help panel on click with the full entry, linked terms, and longer guide. Make the same help available through explicit controls on touch screens. Keep help links inside the application; optional further-reading links may open externally. A run's own derivation stays in its Details view.
   - **The application's own labels:** GUI.4 also decides whether the application's own labels that the comparison and run detail show with no term id ("Saved", "As of", "Saved by", "Warnings", "Limitations", "Not run", "Refresh comparison" and "Ad hoc entries") get help; IAN's glossary has an "As-of Date" term, for example (D165 in the [GUI.2 read-only screens slice plan](gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record)). The project owner decides it before GUI.4b.
   - **Ticker details:** GUI.4a gives any ticker cell, and the headings that name a ticker, a preview and a details panel from the engine's instrument profiles (IAD issue #19).
+  - **Help screen:** the engine's guides and glossary on a Help screen, with in-application links (D369 in the [GUI.4 slice plan](gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#gui4c-venue-help-help-content-and-getting-started)).
+  - **Getting started:** a screen first in the sidebar that says what the application does and does not do and what each screen is for, and links the engine's Beginner's Guide (IAD issue #32, D371 to D373).
 - **Branch:** `feat/gui-4a-ticker-details`, then `feat/gui-4b-term-popups`, then `feat/gui-4c1-venue-help`, then `feat/gui-4c2-help-content`.
 - **Detail:** [GUI.4 help in place slice plan](gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md).
 
@@ -83,6 +85,7 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 | Linux package format | No recommendation yet. Linux became a supported platform in GUI.1 ([D22 in Appendix A of the GUI.1 slice plan](gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record)). Candidates include AppImage, .deb and Flatpak, which differ in distribution reach, sandboxing and update handling. |
 | Obtaining uv and pinning IAN | Bundle a pinned uv executable with each installer and install the exact IAN version selected for that GUI release. This avoids an extra user setup step and makes the pair reproducible; each release must update and validate its bundled installer tooling. |
 | Update mechanism | Use Tauri's signed updater with explicit user confirmation before installing an update. It gives the application a direct update path; signing keys and release metadata become security-critical operational assets. |
+| Where a new user lands | After the first-run screen a new user lands on Getting started, which offers Open sample workspace and, while the sample is open, a link to the Try it guide ([issue 36](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/36)'s comment). The rule replaces Watchlists as the start screen for a new user only (D374 in the [GUI.4 slice plan](gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#gui4c-venue-help-help-content-and-getting-started)). |
 
 **Sample workspace, "Try it" guide and SEC identity (approved 2026-11-22)**
 
