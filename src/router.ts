@@ -2,6 +2,7 @@ import { createMemoryHistory, createRouter } from 'vue-router';
 import AddEntriesView from './views/AddEntriesView.vue';
 import AnalyzeView from './views/AnalyzeView.vue';
 import AboutView from './views/AboutView.vue';
+import GettingStartedView from './views/GettingStartedView.vue';
 import HelpDocumentView from './views/HelpDocumentView.vue';
 import HelpView from './views/HelpView.vue';
 import RefreshesView from './views/RefreshesView.vue';
@@ -17,6 +18,11 @@ export function createAppRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', redirect: { name: 'watchlists' } },
+      {
+        path: '/getting-started',
+        name: 'getting-started',
+        component: GettingStartedView,
+      },
       { path: '/analyze', name: 'analyze', component: AnalyzeView },
       { path: '/watchlists', name: 'watchlists', component: WatchlistsView },
       {

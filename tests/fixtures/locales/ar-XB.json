@@ -8,6 +8,7 @@
   },
   "nav": {
     "label": "[ar-XB] Main",
+    "gettingStarted": "[ar-XB] Getting started",
     "analyze": "[ar-XB] Analyze a ticker",
     "watchlists": "[ar-XB] Watchlists",
     "refreshes": "[ar-XB] Refreshes",
@@ -194,6 +195,25 @@
     "about": "[ar-XB] About {name}",
     "mark": "[ar-XB] ?",
     "f1": "[ar-XB] Press F1 for details."
+  },
+  "gettingStarted": {
+    "intro": "[ar-XB] This application runs the analysis engine's {strategies} on the {tickers} you choose, and explains every result and term it shows. It explains; it does not recommend buying or selling anything.",
+    "analyze": "[ar-XB] {screen}: run one or more strategies on a single {ticker} and read the results.",
+    "watchlists": "[ar-XB] {screen}: build {watchlists} of {entries} and run them again whenever you like.",
+    "refreshes": "[ar-XB] {screen}: see each {refresh}, follow one while it runs, and compare its results.",
+    "runs": "[ar-XB] {screen}: find any saved {run}, filter the list and open its details.",
+    "help": "[ar-XB] {screen}: the analysis engine's glossary and guides.",
+    "about": "[ar-XB] {screen}: which analysis engine the application uses.",
+    "guide": "[ar-XB] New to investing? Start with this guide: {guide}",
+    "terms": {
+      "strategies": "[ar-XB] analysis strategies",
+      "tickers": "[ar-XB] tickers",
+      "ticker": "[ar-XB] ticker",
+      "watchlists": "[ar-XB] watchlists",
+      "entries": "[ar-XB] entries",
+      "refresh": "[ar-XB] refresh",
+      "run": "[ar-XB] analysis run"
+    }
   },
   "help": {
     "guides": "[ar-XB] Guides",

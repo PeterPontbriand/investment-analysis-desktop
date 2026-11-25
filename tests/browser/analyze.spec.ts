@@ -54,7 +54,7 @@ const momentum = 'sma_crossover';
 const grahamNumber = 'graham_number';
 
 test.describe('analyzing', () => {
-  test('is the first navigation item, and starts one refresh of entries from the keyboard', async ({
+  test('is the navigation item after Getting started, and starts one refresh of entries from the keyboard', async ({
     page,
   }) => {
     const engine = await openAnalyze(page);
@@ -62,7 +62,7 @@ test.describe('analyzing', () => {
       page
         .getByRole('navigation', { name: en.nav.label })
         .getByRole('link')
-        .first(),
+        .nth(1),
     ).toHaveText(en.nav.analyze);
     // Each visit opens an empty form with nothing chosen (D267, D269).
     await expect(ticker(page)).toHaveValue('');

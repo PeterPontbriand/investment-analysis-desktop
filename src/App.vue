@@ -71,6 +71,11 @@ watch(
       <nav :aria-label="t('nav.label')">
         <ul>
           <li>
+            <RouterLink :to="{ name: 'getting-started' }">{{
+              t('nav.gettingStarted')
+            }}</RouterLink>
+          </li>
+          <li>
             <RouterLink :to="{ name: 'analyze' }">{{
               t('nav.analyze')
             }}</RouterLink>
