@@ -18,11 +18,21 @@ export const guideSectionId = 'words-youll-meet-first';
 export const wideSectionId = 'a-wide-table';
 export const codeSectionId = 'a-calculation';
 
+// The texts of the links the tests follow, as the served Markdown writes them.
+export const linkTexts = {
+  venueInTicker: 'the venue of a ticker',
+  nasdaqInVenue: 'the venue named Nasdaq',
+  sectionInVenue: 'the words you meet first',
+  wholeGuide: 'the whole guide',
+  guideSection: 'one section',
+  furtherReading: 'more to read elsewhere',
+  venueInGuide: 'where it is listed',
+  notLinks: ['a plain address', 'a script', 'a term with no id'],
+};
+
 const bodies: Record<string, string> = {
-  ticker:
-    'A ticker is not permanent identity (see [Listing Venue](help:terms/listing-venue)).',
-  'listing-venue':
-    'The provider words it. See [the venue named Nasdaq](help:terms/listing-venue-nasdaq) and [the words you meet first](help:documents/beginner-guide#words-youll-meet-first).',
+  ticker: `A ticker is not permanent identity (see [${linkTexts.venueInTicker}](help:terms/listing-venue)).`,
+  'listing-venue': `The provider words it. See [${linkTexts.nasdaqInVenue}](help:terms/listing-venue-nasdaq) and [${linkTexts.sectionInVenue}](help:documents/beginner-guide#words-youll-meet-first).`,
   'provider-no-data':
     'A run it stops is [unavailable](help:terms/outcome-unavailable), with the reason code `provider_no_data`.',
   [everyConstructId]: [
@@ -46,9 +56,9 @@ const bodies: Record<string, string> = {
     '        second line',
     '```',
     '',
-    'Read [the whole guide](help:documents/finance-math), [one section](help:documents/finance-math#graham-number-strategy) or [further reading](https://example.com/further-reading).',
+    `Read [${linkTexts.wholeGuide}](help:documents/${mathGuideId}), [${linkTexts.guideSection}](help:documents/${mathGuideId}#${mathSectionId}) or [${linkTexts.furtherReading}](${externalUrl}).`,
     '',
-    'Not links: [plain](http://example.com/), [script](javascript:alert(1)), [no id](help:terms/) and <b>raw</b>.',
+    `Not links: [${linkTexts.notLinks[0]}](http://example.com/), [${linkTexts.notLinks[1]}](javascript:alert(1)), [${linkTexts.notLinks[2]}](help:terms/) and <b>raw</b>.`,
   ].join('\n'),
 };
 
@@ -88,7 +98,7 @@ export const guides: Record<string, Schemas['HelpDocumentDocument']> = {
         id: guideSectionId,
         level: 2,
         heading: "Words you'll meet first",
-        markdown: 'Start with the [Listing Venue](help:terms/listing-venue).',
+        markdown: `Start with [${linkTexts.venueInGuide}](help:terms/listing-venue).`,
       },
       {
         id: 'prices-and-yields',
