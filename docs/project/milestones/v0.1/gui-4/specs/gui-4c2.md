@@ -51,7 +51,7 @@ Each is recorded in [Appendix A, GUI.4c](../GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#gu
 - `src/api/helpLinks.ts` (new)
 - `src/components/HelpMarkdown.vue` (new)
 - `src/components/TermEntryBody.vue` (new)
-- `src/components/TermTrigger.vue` (the panel body it opens)
+- `src/components/TermTrigger.vue` (the panel body it opens, and start-aligned text for a wrapped text trigger)
 - `src/components/ExternalLink.vue` (new)
 - `src/views/HelpView.vue`, `src/views/HelpDocumentView.vue`, `src/views/GettingStartedView.vue` (new)
 - `src/router.ts`, `src/App.vue` (the routes and the two sidebar items only)
@@ -184,3 +184,4 @@ Closes #32
 - 2026-11-25, escalation 5 (step 9): one more browser test asserts that Analyze is the first navigation item; it now expects Analyze after Getting started.
 - 2026-11-25, review: the real-engine tests' README lists the new help-content comparisons; added to the allowed files for that change only.
 - 2026-11-25, CI: the pull request's Shell job, run for the first time, failed because `pnpm gate --part shell` skipped the Vite build that `tauri::generate_context!()` needs; the shell part now runs the Vite production build before the Rust steps.
+- 2026-11-25, owner's Try it: a glossary term whose name wraps on the Help screen showed centred, with its bullet on the last line; a text trigger's text now starts at the start edge, and the Help screen's term lists align each trigger to the top; each item of those lists carries its own indent, so a later column's bullets no longer sit in the column gap.
