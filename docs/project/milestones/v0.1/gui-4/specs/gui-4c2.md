@@ -62,6 +62,7 @@ Each is recorded in [Appendix A, GUI.4c](../GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#gu
 - `tests/unit/help-markdown.test.ts`, `tests/unit/help-links.test.ts` (new), `tests/unit/terms.test.ts`, `tests/unit/platform-browser.test.ts`, `tests/unit/screens.test.ts` (only for the new routes)
 - `tests/unit/close-request.test.ts`, `tests/unit/compare-detail.test.ts`, `tests/unit/use-screen-data.test.ts` (each test Platform gains `openExternal: () => Promise.resolve()` only), `tests/browser/screens.spec.ts` (the sidebar list gains Getting started first and Help before About only), `tests/browser/analyze.spec.ts` (Analyze becomes the navigation item after Getting started only)
 - `tests/browser/engine/README.md` (its list of what the real-engine tests compare gains the help-content tests only)
+- `tools/gate.ts` (the shell part also runs the Vite production build only)
 
 ## Steps
 
@@ -182,3 +183,4 @@ Closes #32
 - 2026-11-25, escalation 4 (step 8): the engine serves one section heading with Markdown in it (guide `finance-math`, section `as_of-and-publication-timing`), while the API describes a heading as text; the application shows headings as text, and the engine is asked to serve plain text. Served table cells wrap, and an overflowing code block is a `group` named by `help.codeBlock`.
 - 2026-11-25, escalation 5 (step 9): one more browser test asserts that Analyze is the first navigation item; it now expects Analyze after Getting started.
 - 2026-11-25, review: the real-engine tests' README lists the new help-content comparisons; added to the allowed files for that change only.
+- 2026-11-25, CI: the pull request's Shell job, run for the first time, failed because `pnpm gate --part shell` skipped the Vite build that `tauri::generate_context!()` needs; the shell part now runs the Vite production build before the Rust steps.
