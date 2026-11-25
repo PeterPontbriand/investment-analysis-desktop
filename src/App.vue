@@ -137,12 +137,19 @@ watch(
   min-block-size: 100vh;
 }
 
+/* The sidebar stays in place while the content scrolls, and scrolls by itself
+   when the window is shorter than it (D379). */
 .sidebar {
+  align-self: flex-start;
+  block-size: calc(100vh - 2 * var(--space-4));
   display: flex;
   flex-direction: column;
   border-inline-end: var(--border-width) solid var(--color-border);
   flex: 0 0 var(--sidebar-size);
+  inset-block-start: 0;
+  overflow-y: auto;
   padding: var(--space-4) var(--space-3);
+  position: sticky;
 }
 
 .product {
