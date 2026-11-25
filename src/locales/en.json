@@ -198,6 +198,8 @@
   "help": {
     "guides": "Guides",
     "documentNotFound": "The analysis engine has no guide with this name.",
+    "termNotFound": "The analysis engine has no help entry for this term.",
+    "listedUnder": "Listed under",
     "codeBlock": "Code",
     "opensInBrowser": "(opens in your browser)",
     "externalMark": "↗"

@@ -198,6 +198,8 @@
   "help": {
     "guides": "[ar-XB] Guides",
     "documentNotFound": "[ar-XB] The analysis engine has no guide with this name.",
+    "termNotFound": "[ar-XB] The analysis engine has no help entry for this term.",
+    "listedUnder": "[ar-XB] Listed under",
     "codeBlock": "[ar-XB] Code",
     "opensInBrowser": "[ar-XB] (opens in your browser)",
     "externalMark": "[ar-XB] ↗"
