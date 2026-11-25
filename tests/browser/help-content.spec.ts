@@ -445,6 +445,87 @@ for (const direction of directions) {
       expect(engine.paths('/v1/help')).toHaveLength(1);
     });
 
+    test('a listed term that wraps starts beside its bullet, with its lines at the start', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openHelp(page, direction);
+      // Narrow enough that the longer names wrap.
+      await page.setViewportSize({ width: 480, height: 800 });
+      const wrapped = await main(page)
+        .locator('.terms li')
+        .evaluateAll(
+          (items, rtl) =>
+            items.flatMap((item) => {
+              const button = item.querySelector('button')!;
+              const range = document.createRange();
+              range.selectNodeContents(button);
+              const lines = [...range.getClientRects()];
+              if (lines.length < 2) return [];
+              const edges = lines.map((line) => (rtl ? line.right : line.left));
+              return {
+                textAlign: getComputedStyle(button).textAlign,
+                spread: Math.max(...edges) - Math.min(...edges),
+                offset:
+                  button.getBoundingClientRect().top -
+                  item.getBoundingClientRect().top,
+                // A space with no width, on the line the bullet is on.
+                bullet: (() => {
+                  const mark = document.createElement('span');
+                  mark.textContent = '​';
+                  item.prepend(mark);
+                  const top = mark.getBoundingClientRect().top;
+                  mark.remove();
+                  return Math.abs(top - lines[0]!.top);
+                })(),
+              };
+            }),
+          direction.dir === 'rtl',
+        );
+      expect(wrapped.length).toBeGreaterThan(0);
+      for (const item of wrapped) {
+        expect(item.textAlign).toBe('start');
+        expect(item.spread).toBeLessThan(1);
+        expect(Math.abs(item.offset)).toBeLessThanOrEqual(1);
+        expect(item.bullet).toBeLessThanOrEqual(3);
+      }
+    });
+
+    test('the bullets of a later column have their own room', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openHelp(page, direction);
+      // For each list in columns, the room between one column's items and the
+      // next one's, where the next one's bullets are.
+      const { rooms, needed } = await main(page).evaluate((element, rtl) => {
+        const rooms = [...element.querySelectorAll('.terms')].flatMap(
+          (list) => {
+            const boxes = [...list.querySelectorAll('li')].map((item) => {
+              const box = item.getBoundingClientRect();
+              // Along the text direction, so both directions read the same.
+              return rtl
+                ? { start: -box.right, end: -box.left }
+                : { start: box.left, end: box.right };
+            });
+            const starts = [...new Set(boxes.map((box) => box.start))].sort(
+              (one, other) => one - other,
+            );
+            return starts.slice(1).map((next, index) => {
+              const column = boxes.filter((box) => box.start === starts[index]);
+              return next - Math.max(...column.map((box) => box.end));
+            });
+          },
+        );
+        const rem = parseFloat(
+          getComputedStyle(document.documentElement).fontSize,
+        );
+        return { rooms, needed: 2.5 * rem };
+      }, direction.dir === 'rtl');
+      expect(rooms.length).toBeGreaterThan(0);
+      for (const room of rooms) expect(room).toBeGreaterThanOrEqual(needed);
+    });
+
     test('a term in the list has the preview and the panel', async ({
       page,
     }) => {

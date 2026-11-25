@@ -64,11 +64,19 @@ watch(
 </template>
 
 <style scoped>
+/* Each item has the indent, so the bullets of every column have their room. */
 .terms {
   columns: 16rem;
+  padding-inline-start: 0;
 }
 
 .terms li {
   break-inside: avoid;
+  margin-inline-start: 2.5rem;
+}
+
+/* A name that wraps starts beside its bullet. */
+.terms :deep(.term-trigger) {
+  vertical-align: top;
 }
 </style>

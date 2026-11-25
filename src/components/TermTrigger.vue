@@ -168,6 +168,7 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown));
 }
 
 .kind-text {
+  text-align: start;
   text-decoration: underline dotted currentcolor;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
