@@ -60,7 +60,7 @@ Each is recorded in [Appendix A, GUI.4c](../GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#gu
 - `tests/browser/engine-mock.ts`, `tests/browser/help-content.spec.ts` (new), `tests/browser/getting-started.spec.ts` (new), `tests/browser/term-popups.spec.ts` (only where the panel's new body changes an expectation)
 - `tests/browser/engine/help-content.spec.ts` (new), `tests/browser/engine/real-engine.ts` (a helper only if needed)
 - `tests/unit/help-markdown.test.ts`, `tests/unit/help-links.test.ts` (new), `tests/unit/terms.test.ts`, `tests/unit/platform-browser.test.ts`, `tests/unit/screens.test.ts` (only for the new routes)
-- `tests/unit/close-request.test.ts`, `tests/unit/compare-detail.test.ts`, `tests/unit/use-screen-data.test.ts` (each test Platform gains `openExternal: () => Promise.resolve()` only), `tests/browser/screens.spec.ts` (the sidebar list gains Getting started first and Help before About only)
+- `tests/unit/close-request.test.ts`, `tests/unit/compare-detail.test.ts`, `tests/unit/use-screen-data.test.ts` (each test Platform gains `openExternal: () => Promise.resolve()` only), `tests/browser/screens.spec.ts` (the sidebar list gains Getting started first and Help before About only), `tests/browser/analyze.spec.ts` (Analyze becomes the navigation item after Getting started only)
 
 ## Steps
 
@@ -179,3 +179,4 @@ Closes #32
 - 2026-11-25, escalation 2 (steps 7 to 9): three unit tests build a `Platform` and one browser test lists the sidebar, so they change with the new `openExternal` and the two sidebar items; added to the allowed files for those changes only.
 - 2026-11-25, escalation 3 (steps 5 to 8): the renderer needs `ExternalLink` (step 7) and the panel body needs the Help routes (step 8), so the steps are made in the order 4, 7, 5, 8, 6, 9, each with its own content and commit title.
 - 2026-11-25, escalation 4 (step 8): the engine serves one section heading with Markdown in it (guide `finance-math`, section `as_of-and-publication-timing`), while the API describes a heading as text; the application shows headings as text, and the engine is asked to serve plain text. Served table cells wrap, and an overflowing code block is a `group` named by `help.codeBlock`.
+- 2026-11-25, escalation 5 (step 9): one more browser test asserts that Analyze is the first navigation item; it now expects Analyze after Getting started.
