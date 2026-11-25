@@ -195,6 +195,7 @@
     "f1": "[ar-XB] Press F1 for details."
   },
   "help": {
+    "codeBlock": "[ar-XB] Code",
     "opensInBrowser": "[ar-XB] (opens in your browser)",
     "externalMark": "[ar-XB] ↗"
   },

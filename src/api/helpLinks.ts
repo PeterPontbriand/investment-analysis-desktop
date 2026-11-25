@@ -1,3 +1,4 @@
+/* global document, HTMLElement -- DOM types; src/ configures no browser globals */
 // The links the engine's Markdown holds, by what following one does (D367).
 export type HelpLink =
   // Opens the term's details.
@@ -54,3 +55,13 @@ export const sectionElementId = (sectionId: string): string =>
   `help-section-${sectionId}`;
 export const groupElementId = (groupId: string): string =>
   `help-group-${groupId}`;
+
+// Moves focus, and the view, to the heading an address's hash names, or to the
+// screen's own heading when it names none.
+export function focusHelpTarget(hash: string): void {
+  const heading =
+    (hash === '' ? null : document.getElementById(hash.slice(1))) ??
+    document.querySelector<HTMLElement>('main h1');
+  heading?.focus({ preventScroll: true });
+  heading?.scrollIntoView?.();
+}

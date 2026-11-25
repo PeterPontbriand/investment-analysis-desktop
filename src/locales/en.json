@@ -195,6 +195,7 @@
     "f1": "Press F1 for details."
   },
   "help": {
+    "codeBlock": "Code",
     "opensInBrowser": "(opens in your browser)",
     "externalMark": "↗"
   },
