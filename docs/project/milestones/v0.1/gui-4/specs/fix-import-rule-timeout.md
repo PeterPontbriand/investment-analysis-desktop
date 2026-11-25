@@ -16,13 +16,14 @@ None. The change is a test's set-up, with no decision in it.
 ## Out of scope
 
 - Raising, removing or overriding any timeout, global or per test other than the warm-up's own, and skipping, quarantining or retrying the test.
-- Any other test file, the ESLint configuration, and the other flaky tests (issues 37, 47 and 48).
+- Any other test file (the two allowed ones excepted), the ESLint configuration, and the other flaky tests (issues 37, 47 and 48).
 - Finding why parallel running doubles the cold load. This change keeps the cold load out of any test's own limit; the cause stays open in issue 42's thread.
 
 ## Allowed files
 
 - `docs/project/milestones/v0.1/gui-4/specs/fix-import-rule-timeout.md` (this spec; changed only by the spec author's corrections)
 - `tests/tools/import-rule.test.ts`
+- `tests/browser/help-content.spec.ts` (the two Help list measurement tests wait for a listed term to be visible before measuring; nothing else)
 
 ## Steps
 
@@ -70,6 +71,8 @@ The import-boundary test "rejects Tauri API imports in src and allows them in sr
 
 The file now creates one ESLint instance and warms it in a `beforeAll` with its own 30 second limit, so no test pays the cold load. Every test keeps the default 5 second limit and every assertion is unchanged.
 
+It also fixes two Help list tests from the GUI.4c2 pull request that measured the list before the help index had loaded: each now waits for a listed term to be visible first. A wrong wait in a test, not a browser flake, so no issue is needed.
+
 ## Tests
 
 - `pnpm test` five times in a row on the Windows machine where the test failed in three of three runs on unmodified `main`.
@@ -79,4 +82,4 @@ Closes #42
 
 ## Change log
 
-None yet.
+- 2026-11-25, escalation 1: two Help list tests added with GUI.4c2 measure before the list renders, which failed one slice check in 850 and would keep the slice check intermittently red; fixed here, with the file added to the allowed files for those waits only.
