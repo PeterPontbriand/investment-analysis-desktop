@@ -1,11 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createApiClient } from '../../src/api/client.ts';
 import { createTerms } from '../../src/api/terms.ts';
-import { respond } from '../fixtures/api/server.ts';
+import { guides, guideId, termDocument } from '../fixtures/api/help.ts';
+import { helpIndex } from '../fixtures/api/data.ts';
+import { failure, respond, type Reply } from '../fixtures/api/server.ts';
 
-function setup(locale = () => 'en') {
+function setup(
+  locale = () => 'en',
+  answer: (url: URL) => Reply | undefined = () => undefined,
+) {
   const fetchStub = vi.fn((input: string | URL | Request) => {
-    const reply = respond(new URL(String(input)));
+    const url = new URL(String(input));
+    const reply = answer(url) ?? respond(url);
     return Promise.resolve(
       new Response(JSON.stringify(reply.body), {
         status: reply.status,
@@ -53,6 +59,73 @@ describe('term definitions', () => {
       (c) => new URL(String(c[0])).pathname,
     );
     expect(paths).toEqual(['/v1/help']);
+  });
+});
+
+describe('help documents', () => {
+  const pathsOf = (stub: { mock: { calls: unknown[][] } }) =>
+    stub.mock.calls.map((call) => new URL(String(call[0])).pathname);
+
+  it('reads a term entry and a guide with their language, once per id and locale', async () => {
+    let tag = 'en';
+    const { terms, fetchStub } = setup(() => tag);
+
+    expect(await terms.termDocument('ticker')).toMatchObject({
+      data: termDocument('ticker'),
+      contentLanguage: 'en',
+    });
+    expect(await terms.helpDocument(guideId)).toMatchObject({
+      data: guides[guideId],
+      contentLanguage: 'en',
+    });
+    await terms.termDocument('ticker');
+    await terms.helpDocument(guideId);
+    await terms.termDocument('entry');
+    const first = [
+      '/v1/help/terms/ticker',
+      `/v1/help/documents/${guideId}`,
+      '/v1/help/terms/entry',
+    ];
+    expect(pathsOf(fetchStub)).toEqual(first);
+
+    tag = 'pt-BR';
+    await terms.termDocument('ticker');
+    await terms.helpDocument(guideId);
+    expect(pathsOf(fetchStub)).toEqual([...first, ...first.slice(0, 2)]);
+  });
+
+  it('answers null for an id the engine has no entry or guide for', async () => {
+    const { terms } = setup();
+
+    expect(await terms.termDocument('no-such-term')).toBeNull();
+    expect(await terms.helpDocument('no-such-guide')).toBeNull();
+  });
+
+  it('rejects any other failure, and does not keep it', async () => {
+    let failing = true;
+    const { terms, fetchStub } = setup(undefined, () =>
+      failing ? failure(404, 'endpoint_not_found', 'No endpoint.') : undefined,
+    );
+
+    await expect(terms.termDocument('ticker')).rejects.toMatchObject({
+      reasonCode: 'endpoint_not_found',
+    });
+    await expect(terms.helpDocument(guideId)).rejects.toBeTruthy();
+    failing = false;
+    expect((await terms.termDocument('ticker'))?.data.id).toBe('ticker');
+    expect((await terms.helpDocument(guideId))?.data.id).toBe(guideId);
+    expect(fetchStub).toHaveBeenCalledTimes(4);
+  });
+
+  it('answers the help index it already holds, with its language', async () => {
+    const { terms, fetchStub } = setup();
+
+    await terms.entry('ticker');
+    expect(await terms.helpIndex()).toMatchObject({
+      data: helpIndex,
+      contentLanguage: 'en',
+    });
+    expect(pathsOf(fetchStub)).toEqual(['/v1/help']);
   });
 });
 
