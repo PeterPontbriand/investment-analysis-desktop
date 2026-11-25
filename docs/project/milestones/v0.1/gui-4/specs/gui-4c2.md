@@ -60,6 +60,7 @@ Each is recorded in [Appendix A, GUI.4c](../GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#gu
 - `tests/browser/engine-mock.ts`, `tests/browser/help-content.spec.ts` (new), `tests/browser/getting-started.spec.ts` (new), `tests/browser/term-popups.spec.ts` (only where the panel's new body changes an expectation)
 - `tests/browser/engine/help-content.spec.ts` (new), `tests/browser/engine/real-engine.ts` (a helper only if needed)
 - `tests/unit/help-markdown.test.ts`, `tests/unit/help-links.test.ts` (new), `tests/unit/terms.test.ts`, `tests/unit/platform-browser.test.ts`, `tests/unit/screens.test.ts` (only for the new routes)
+- `tests/unit/close-request.test.ts`, `tests/unit/compare-detail.test.ts`, `tests/unit/use-screen-data.test.ts` (each test Platform gains `openExternal: () => Promise.resolve()` only), `tests/browser/screens.spec.ts` (the sidebar list gains Getting started first and Help before About only)
 
 ## Steps
 
@@ -175,3 +176,4 @@ Closes #32
 ## Change log
 
 - 2026-11-25, escalation 1 (steps 6 and 8): App.vue closes the panel only when the route's path changes, so a hash-only link kept it open. A group or document link inside the panel now also closes it (`closePanel({ returnFocus: false })`); the Help screen focuses the group heading on load and on every hash change; and a link to the address already shown focuses its target again. Mocked failure states use HTTP 500 with `database_busy`, the one failure that offers "Try again". The renderer's `validateLink` accepts every link so that `classifyHelpLink` alone decides how it shows.
+- 2026-11-25, escalation 2 (steps 7 to 9): three unit tests build a `Platform` and one browser test lists the sidebar, so they change with the new `openExternal` and the two sidebar items; added to the allowed files for those changes only.
