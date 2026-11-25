@@ -1,10 +1,17 @@
 import { ESLint } from 'eslint';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { resolve } from 'node:path';
+
+const eslint = new ESLint();
+
+// The first lint call loads the ESLint configuration, which is slow on a cold
+// start, so no test pays for it within its own limit (issue 42).
+beforeAll(async () => {
+  await eslint.lintText('', { filePath: resolve('src/warm-up.ts') });
+}, 30_000);
 
 describe('Tauri import boundary', () => {
   it('rejects Tauri API imports in src and allows them in src/platform', async () => {
-    const eslint = new ESLint();
     const source = "import { invoke } from '@tauri-apps/api/core'\n";
     const srcResult = await eslint.lintText(source, {
       filePath: resolve('src/example.ts'),
@@ -32,7 +39,7 @@ describe('vue-i18n import boundary', () => {
   const tauri = "import { invoke } from '@tauri-apps/api/core';";
 
   async function restricted(code: string, path: string): Promise<boolean> {
-    const [result] = await new ESLint().lintText(code, {
+    const [result] = await eslint.lintText(code, {
       filePath: resolve(path),
     });
     return (

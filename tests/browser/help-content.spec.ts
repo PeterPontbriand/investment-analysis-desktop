@@ -450,6 +450,8 @@ for (const direction of directions) {
     }) => {
       await start(page, direction);
       await openHelp(page, direction);
+      // The list shows once the help index has answered.
+      await expect(listed(page, 'ticker')).toBeVisible();
       // Narrow enough that the longer names wrap.
       await page.setViewportSize({ width: 480, height: 800 });
       const wrapped = await main(page)
@@ -496,6 +498,8 @@ for (const direction of directions) {
     }) => {
       await start(page, direction);
       await openHelp(page, direction);
+      // The list shows once the help index has answered.
+      await expect(listed(page, 'ticker')).toBeVisible();
       // For each list in columns, the room between one column's items and the
       // next one's, where the next one's bullets are.
       const { rooms, needed } = await main(page).evaluate((element, rtl) => {
