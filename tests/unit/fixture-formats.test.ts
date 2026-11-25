@@ -7,6 +7,7 @@ import {
   textModes,
 } from '../fixtures/api/compare.ts';
 import * as data from '../fixtures/api/data.ts';
+import { lookedUp, profiles } from '../fixtures/api/profiles.ts';
 
 // Every fixture API document is walked with its schema from the vendored API
 // description, and each string with a `date` or `date-time` format must be in
@@ -142,6 +143,14 @@ const documents: [string, string, unknown][] = [
       document,
     ],
   ),
+  ...Object.entries(profiles).map(
+    ([ticker, document]): [string, string, unknown] => [
+      `profile ${ticker}`,
+      'InstrumentProfileDocument',
+      document,
+    ],
+  ),
+  ['looked-up profile', 'InstrumentProfileDocument', lookedUp('BOLT')],
   ...Object.entries(runDetails).flatMap(
     ([id, detail]): [string, string, unknown][] => [
       [`overview ${id}`, 'RunOverviewDocument', detail.overview],

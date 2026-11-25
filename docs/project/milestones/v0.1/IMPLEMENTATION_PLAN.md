@@ -64,7 +64,7 @@ The approved technology decisions and their record are in [Appendix A of the GUI
   - **Term help:** Show a short definition popup on hover or keyboard focus; open a help panel on click with the full entry, linked terms, and longer guide. Make the same help available through explicit controls on touch screens. Keep help links inside the application; optional further-reading links may open externally. A run's own derivation stays in its Details view.
   - **The application's own labels:** GUI.4 also decides whether the application's own labels that the comparison and run detail show with no term id ("Saved", "As of", "Saved by", "Warnings", "Limitations", "Not run", "Refresh comparison" and "Ad hoc entries") get help; IAN's glossary has an "As-of Date" term, for example (D165 in the [GUI.2 read-only screens slice plan](gui-2/GUI_2_READ_ONLY_SCREENS_SLICE_PLAN.md#appendix-a-2026-11-10-decision-record)). The project owner decides it before GUI.4b.
   - **Ticker details:** GUI.4a gives any ticker cell, and the headings that name a ticker, a preview and a details panel from the engine's instrument profiles (IAD issue #19).
-- **Branch:** `feat/gui-4a-ticker-details`, then `feat/gui-4b-term-popups`, then `feat/gui-4c-help-panel`.
+- **Branch:** `feat/gui-4a-ticker-details`, then `feat/gui-4b-term-popups`, then `feat/gui-4c1-venue-help`, then `feat/gui-4c2-help-content`.
 - **Detail:** [GUI.4 help in place slice plan](gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md).
 
 ### GUI.5: First-run and installer

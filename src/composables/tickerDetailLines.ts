@@ -1,14 +1,19 @@
+import type { components } from '../api/schema.ts';
 import type {
   InstrumentProfile,
   SecurityIdentity,
 } from '../api/tickerIdentities.ts';
+
+// A listing venue as the engine serves it: the provider's wording and the
+// reviewed code it maps to, which is null when no reviewed table lists it.
+export type ListingVenuePart = components['schemas']['ListingVenuePart'];
 
 // What the preview and the panel show of one ticker's details (D290). Every
 // line is the engine's value as served; a null field has no line. The issuer
 // identifier and the instrument identifier are never shown.
 export type DetailLines = {
   name: string | null;
-  venue: string | null;
+  venue: ListingVenuePart | null;
   // The instrument kind's code; a current profile only.
   kind: string | null;
   // The quote currency; a current profile only.
@@ -65,10 +70,24 @@ export const isDescribed = (lines: DetailLines): boolean =>
 // currency, in that order, those that exist.
 export function previewParts(
   lines: DetailLines,
-): ({ text: string } | { kind: string })[] {
+): ({ text: string } | { venue: ListingVenuePart } | { kind: string })[] {
   return [
-    ...(lines.venue === null ? [] : [{ text: lines.venue }]),
+    ...(lines.venue === null ? [] : [{ venue: lines.venue }]),
     ...(lines.kind === null ? [] : [{ kind: lines.kind }]),
     ...(lines.currency === null ? [] : [{ text: lines.currency }]),
   ];
+}
+
+// How a venue reads (D360): the venue term's name, with the provider's wording
+// after it when the two differ. With no name (a null code, a code the
+// references do not map, or a term the help index does not list) the wording
+// shows alone, because the codes are an open vocabulary.
+export function venueText(
+  part: ListingVenuePart,
+  name: string | null,
+  wordingWithName: (name: string, wording: string) => string,
+): string {
+  if (name === null) return part.provider_value;
+  if (part.provider_value === name) return name;
+  return wordingWithName(name, part.provider_value);
 }

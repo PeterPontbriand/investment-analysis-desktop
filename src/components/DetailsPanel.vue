@@ -1,21 +1,27 @@
 <script setup lang="ts">
 /* global HTMLElement, KeyboardEvent, document -- DOM types; src/ configures no browser globals */
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue';
 import { useMessages } from '../i18n/index.ts';
 import {
+  backPanel,
   closePanel,
   openPanelContent,
   panelId,
+  previousTitle,
 } from '../composables/useDetailsPanel.ts';
+import { insidePanel } from './panelScope.ts';
 
 // The one details panel (D285): non-modal, on the inline-end side, over the
 // content, which stays usable. Another trigger replaces its content. Opening
 // it moves focus to its heading. Escape closes it wherever focus is, unless a
 // modal dialog is open, and the close button does too; focus returns to the
-// trigger (D304). An open preview takes the Escape first.
+// trigger (D304). An open preview takes the Escape first. A term trigger
+// inside the panel replaces its content, and Back restores the content it
+// replaced (D362).
 const { t } = useMessages();
 const content = openPanelContent;
 const heading = ref<HTMLElement | null>(null);
+provide(insidePanel, true);
 
 // Escape closes the panel wherever focus is. A preview closes first: its
 // handler runs in the capture phase and stops the key press. A modal dialog
@@ -28,11 +34,14 @@ function onEscape(event: KeyboardEvent): void {
 onMounted(() => document.addEventListener('keydown', onEscape));
 onBeforeUnmount(() => document.removeEventListener('keydown', onEscape));
 
-watch(content, (held, previous) => {
-  if (held === null) return;
-  if (previous?.owner === held.owner) return;
-  void nextTick(() => heading.value?.focus());
-});
+// Each content shown, a step and Back included, moves focus to its heading.
+watch(
+  () => content.value?.serial,
+  (held) => {
+    if (held === undefined) return;
+    void nextTick(() => heading.value?.focus());
+  },
+);
 </script>
 
 <template>
@@ -42,6 +51,14 @@ watch(content, (held, previous) => {
     class="details-panel"
     aria-labelledby="details-panel-heading"
   >
+    <button
+      v-if="previousTitle !== null"
+      type="button"
+      class="back"
+      @click="backPanel()"
+    >
+      {{ t('detailsPanel.back', { title: previousTitle }) }}
+    </button>
     <div class="panel-head">
       <h2
         id="details-panel-heading"
@@ -97,5 +114,9 @@ watch(content, (held, previous) => {
 
 .close {
   flex: none;
+}
+
+.back {
+  margin-block-end: var(--space-2);
 }
 </style>

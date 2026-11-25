@@ -4,7 +4,7 @@ The fixed shape of a unit spec in the [spec workflow](SPEC_WORKFLOW.md). A spec 
 
 ## How to use it
 
-- Copy the skeleton below to `specs/<unit>.md` in the folder of the slice plan that owns the unit, for example `docs/project/milestones/v0.1/gui-4/specs/gui-4c.md`.
+- Copy the skeleton below to `specs/<unit>.md` in the folder of the slice plan that owns the unit, for example `docs/project/milestones/v0.1/gui-4/specs/gui-4c1.md`.
 - Replace every section's guidance with the unit's content, and keep the headings in this order. A section with nothing to say states that in one line ("None.") rather than being removed.
 - The spec is complete when it is committed: no placeholder, no open question, no guidance text from this template. Missing information is found, or asked of the project owner, before the spec is committed.
 - The spec links to the owning plan for decisions and inventories, and does not restate them.

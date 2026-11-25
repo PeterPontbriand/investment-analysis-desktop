@@ -67,6 +67,20 @@ describe('term names', () => {
     });
   });
 
+  it('names a listing venue by its term, and an unmapped venue code as served', async () => {
+    const { terms } = setup();
+
+    expect(await terms.term('ListingVenue', 'nasdaq')).toEqual({
+      text: 'Nasdaq Stock Market',
+      termId: 'listing-venue-nasdaq',
+      lang: 'en',
+    });
+    // A code the references do not map, and one whose term the help index
+    // does not list, have no term (D360).
+    expect((await terms.term('ListingVenue', 'xetra')).termId).toBeNull();
+    expect((await terms.term('ListingVenue', 'otc')).termId).toBeNull();
+  });
+
   it('asks for the references and the help index once per locale, never for a term', async () => {
     let tag = 'en';
     const { terms, fetchStub } = setup(() => tag);

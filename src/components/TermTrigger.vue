@@ -1,16 +1,18 @@
 <script setup lang="ts">
 /* global HTMLElement, KeyboardEvent, document -- DOM types; src/ configures no browser globals */
-import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, ref, useId } from 'vue';
 import { useEngine } from '../api/engine.ts';
 import {
   isPanelOpenFor,
   panelId,
+  stepPanel,
   togglePanel,
 } from '../composables/useDetailsPanel.ts';
 import { usePreviewTrigger } from '../composables/usePreviewTrigger.ts';
 import { useResolvedEntry } from '../composables/useResolvedEntry.ts';
 import { showPreviews } from '../preferences.ts';
 import { useMessages } from '../i18n/index.ts';
+import { insidePanel } from './panelScope.ts';
 import { termDefinitionId } from './termDefinitionId.ts';
 import PreviewPopup from './PreviewPopup.vue';
 import TermDefinition from './TermDefinition.vue';
@@ -52,13 +54,15 @@ const popupId = useId();
 const describedId = useId();
 const preview = usePreviewTrigger();
 const expanded = computed(() => isPanelOpenFor(owner));
+// Inside the details panel a trigger steps to its term, with Back (D362).
+const inPanel = inject(insidePanel, false);
 
 function open(from: HTMLElement | null = button.value): void {
   const trigger = from;
   const term = entry.value;
   if (trigger === null || term === null) return;
   preview.dismiss();
-  togglePanel({
+  (inPanel ? stepPanel : togglePanel)({
     owner,
     trigger,
     title: term.name,

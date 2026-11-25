@@ -21,7 +21,7 @@ import {
   coreRefreshId,
   identityOf,
 } from '../fixtures/api/compare.ts';
-import { refreshes } from '../fixtures/api/data.ts';
+import { helpIndex, references, refreshes } from '../fixtures/api/data.ts';
 import {
   finished,
   job,
@@ -30,7 +30,12 @@ import {
   type Frame,
   type JobScript,
 } from '../fixtures/api/refresh.ts';
-import { lookedUp, profiles, withoutVenue } from '../fixtures/api/profiles.ts';
+import {
+  lookedUp,
+  profiles,
+  venues,
+  withoutVenue,
+} from '../fixtures/api/profiles.ts';
 import { failure, ok, respond } from '../fixtures/api/server.ts';
 import en from '../../src/locales/en.json' with { type: 'json' };
 import ar from '../fixtures/locales/ar-XB.json' with { type: 'json' };
@@ -49,6 +54,32 @@ const fill = (template: string, values: Record<string, string | number>) =>
     (text, [key, value]) => text.replaceAll(`{${key}}`, String(value)),
     template,
   );
+
+// How a venue reads (D360), from the fixtures' references and help index: the
+// venue term's name, with the wording when the two differ, or the wording
+// alone when the engine names no term for the code.
+type VenuePart = (typeof venues)[keyof typeof venues];
+const termNames = new Map(
+  helpIndex.groups.flatMap((group) =>
+    group.terms.map((term) => [term.id, term.name] as const),
+  ),
+);
+const venueTermId = (part: VenuePart): string | undefined => {
+  if (part.code === null) return undefined;
+  const termId = references.code_sets.ListingVenue?.[part.code];
+  return termId !== undefined && termNames.has(termId) ? termId : undefined;
+};
+function venueShown(words: Direction['words'], part: VenuePart): string {
+  const termId = venueTermId(part);
+  const name = termId === undefined ? undefined : termNames.get(termId);
+  if (name === undefined) return part.provider_value;
+  return name === part.provider_value
+    ? name
+    : fill(words.tickerDetails.venueWithWording, {
+        name,
+        wording: part.provider_value,
+      });
+}
 
 // Makes the application start in the direction's language.
 async function useDirection(page: Page, direction: Direction) {
@@ -112,7 +143,7 @@ for (const direction of directions) {
       await expect(popup(page)).toContainText('Acme Corp');
       // The venue, kind and currency, joined by the separator (D290).
       await expect(popup(page)).toContainText(
-        `NASDAQ ${words.common.separator} Equity ${words.common.separator} USD`,
+        `${venueShown(words, venues.nasdaq)} ${words.common.separator} Equity ${words.common.separator} USD`,
       );
       // The kind is the engine's term name, with its term id kept.
       await expect(
@@ -146,11 +177,11 @@ for (const direction of directions) {
       await expect(popup(page)).not.toContainText(
         `${words.common.separator} Equity`,
       );
-      await expect(popup(page)).not.toContainText('NASDAQ');
+      await expect(popup(page)).not.toContainText(venues.nasdaq.provider_value);
       await trigger.click();
       await expect(panel(page)).toContainText('Acme Corp');
       await expect(panel(page)).toContainText('USD');
-      await expect(panel(page)).not.toContainText('NASDAQ');
+      await expect(panel(page)).not.toContainText(venues.nasdaq.provider_value);
       await expect(panel(page)).toContainText(
         fill(words.tickerDetails.checked, {
           date: await instantText(page, profiles.ACME!.refreshed_at, locale),
@@ -266,7 +297,7 @@ for (const direction of directions) {
       await expect(trigger).toHaveAttribute('aria-expanded', 'true');
       await expect(trigger).toHaveAttribute('aria-controls', 'details-panel');
       await expect(panel(page)).toContainText('Acme Corp');
-      await expect(panel(page)).toContainText('NASDAQ');
+      await expect(panel(page)).toContainText(venueShown(words, venues.nasdaq));
       await expect(
         panel(page).locator('[data-term-id="instrument-kind-equity"]'),
       ).toHaveText('Equity');
@@ -447,6 +478,153 @@ for (const direction of directions) {
     });
   });
 
+  test.describe(`venue and kind help (${direction.name})`, () => {
+    const termName = (termId: string) => termNames.get(termId) ?? '';
+    const kindTermId = references.code_sets.InstrumentKind!.equity!;
+    const panelHeading = (page: Page) =>
+      panel(page).getByRole('heading', { level: 2 });
+    const backButton = (page: Page, ticker: string) =>
+      panel(page).getByRole('button', {
+        name: fill(words.detailsPanel.back, {
+          title: fill(words.tickerDetails.panelTitle, { ticker }),
+        }),
+      });
+
+    async function openDividends(page: Page) {
+      await page.getByRole('link', { name: 'Dividends' }).click();
+      await expect(h1(page)).toHaveText('Dividends');
+    }
+
+    test('the preview shows each venue as it reads, with no trigger', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      // A wording that differs from the term's name, and one equal to it.
+      await tickerButton(page, 'ACME').hover();
+      await expect(popup(page)).toContainText(venueShown(words, venues.nasdaq));
+      await expect(popup(page).getByRole('button')).toHaveCount(0);
+      await page.mouse.move(2, 2);
+      await expect(popup(page)).toHaveCount(0);
+      await tickerButton(page, 'ZED').hover();
+      await expect(popup(page)).toContainText(venueShown(words, venues.nyse));
+      await expect(popup(page)).not.toContainText(
+        fill(words.tickerDetails.venueWithWording, {
+          name: venues.nyse.provider_value,
+          wording: venues.nyse.provider_value,
+        }),
+      );
+    });
+
+    test('the preview shows the wording alone for a venue with no code', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openDividends(page);
+      await tickerButton(page, 'DIVI').hover();
+      await expect(popup(page)).toContainText(
+        `${venues.unmapped.provider_value} ${words.common.separator}`,
+      );
+    });
+
+    test('the venue in the panel opens its term, and Back returns to the ticker with focus on its heading', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      await tickerButton(page, 'ACME').click();
+      const venueTermId = references.code_sets.ListingVenue!.nasdaq!;
+      const venue = panel(page).getByRole('button', {
+        name: venueShown(words, venues.nasdaq),
+        exact: true,
+      });
+      await expect(venue).toHaveAttribute('aria-expanded', 'false');
+      await expect(backButton(page, 'ACME')).toHaveCount(0);
+      await venue.click();
+      await expect(panelHeading(page)).toHaveText(termName(venueTermId));
+      await expect(panelHeading(page)).toBeFocused();
+      await expect(panel(page)).toContainText(
+        helpIndex.groups
+          .flatMap((group) => group.terms)
+          .find((term) => term.id === venueTermId)!.definition,
+      );
+      await backButton(page, 'ACME').click();
+      await expect(panelHeading(page)).toHaveText(
+        fill(words.tickerDetails.panelTitle, { ticker: 'ACME' }),
+      );
+      await expect(panelHeading(page)).toBeFocused();
+      await expect(backButton(page, 'ACME')).toHaveCount(0);
+    });
+
+    test('the kind in the panel opens its term', async ({ page }) => {
+      await start(page, direction);
+      await openCore(page);
+      await tickerButton(page, 'ACME').click();
+      await panel(page)
+        .getByRole('button', { name: termName(kindTermId), exact: true })
+        .click();
+      await expect(panelHeading(page)).toHaveText(termName(kindTermId));
+      await expect(panelHeading(page)).toBeFocused();
+      await expect(backButton(page, 'ACME')).toBeVisible();
+    });
+
+    test('a venue with no term opens the term that explains the field', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openDividends(page);
+      await tickerButton(page, 'DIVI').click();
+      await panel(page)
+        .getByRole('button', {
+          name: venues.unmapped.provider_value,
+          exact: true,
+        })
+        .click();
+      await expect(panelHeading(page)).toHaveText(termName('listing-venue'));
+      await expect(backButton(page, 'DIVI')).toBeVisible();
+    });
+
+    test('Escape after a step closes the panel and returns focus to the ticker', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      const trigger = tickerButton(page, 'ACME');
+      await trigger.click();
+      await panel(page)
+        .getByRole('button', {
+          name: venueShown(words, venues.nasdaq),
+          exact: true,
+        })
+        .click();
+      await expect(backButton(page, 'ACME')).toBeVisible();
+      await page.keyboard.press('Escape');
+      await expect(panel(page)).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+      // Opened again, the panel has no history.
+      await trigger.click();
+      await expect(backButton(page, 'ACME')).toHaveCount(0);
+    });
+
+    test('the close button after a step closes the panel and returns focus to the ticker', async ({
+      page,
+    }) => {
+      await start(page, direction);
+      await openCore(page);
+      const trigger = tickerButton(page, 'ACME');
+      await trigger.click();
+      await panel(page)
+        .getByRole('button', { name: termName(kindTermId), exact: true })
+        .click();
+      await expect(backButton(page, 'ACME')).toBeVisible();
+      await panel(page)
+        .getByRole('button', { name: words.detailsPanel.close })
+        .click();
+      await expect(panel(page)).toHaveCount(0);
+      await expect(trigger).toBeFocused();
+    });
+  });
+
   test.describe(`tap (${direction.name})`, () => {
     test.use({ hasTouch: true });
 
@@ -529,7 +707,9 @@ for (const direction of directions) {
       await pending.click({ force: true });
       release();
       await expect(panel(page)).toContainText('Bolt Industries');
-      await expect(panel(page)).toContainText('TSX');
+      await expect(panel(page)).toContainText(
+        venueShown(words, venues.unlisted),
+      );
       await expect(panel(page)).toContainText('CAD');
       await expect(panel(page)).toContainText(
         fill(words.tickerDetails.checked, {
@@ -663,7 +843,7 @@ for (const direction of directions) {
       await openCore(page);
       await tickerButton(page, 'ZED').hover();
       await expect(popup(page)).toContainText('Zedco Group');
-      await expect(popup(page)).toContainText('NYSE');
+      await expect(popup(page)).toContainText(venueShown(words, venues.nyse));
       await page.mouse.move(2, 2);
       await expect(popup(page)).toHaveCount(0);
 
@@ -675,7 +855,9 @@ for (const direction of directions) {
       await trigger.hover();
       await expect(popup(page)).toContainText('Zed Holdings');
       await expect(popup(page)).not.toContainText('Zedco');
-      await expect(popup(page)).not.toContainText('NYSE');
+      await expect(popup(page)).not.toContainText(
+        venueShown(words, venues.nyse),
+      );
       await page.mouse.move(2, 2);
       await trigger.click();
       await expect(panel(page)).toContainText('Zed Holdings');
@@ -872,7 +1054,7 @@ for (const direction of directions) {
           ...reply,
           body: {
             ...(reply.body as object),
-            security_identity: identityOf(ticker, name, 'NYSE'),
+            security_identity: identityOf(ticker, name, venues.nyse),
           },
         };
       };
@@ -893,12 +1075,12 @@ for (const direction of directions) {
       const ticker = h1(page).getByRole('button', { name: 'MSFT' });
       await ticker.hover();
       await expect(popup(page)).toBeVisible();
-      await expect(popup(page)).toHaveText('NYSE');
+      await expect(popup(page)).toHaveText(venueShown(words, venues.nyse));
       await expect(popup(page)).not.toContainText('Microsoft Corp');
       // The panel keeps every line.
       await ticker.click();
       await expect(panel(page)).toContainText('Microsoft Corp');
-      await expect(panel(page)).toContainText('NYSE');
+      await expect(panel(page)).toContainText(venueShown(words, venues.nyse));
     });
 
     test('run detail: with nothing but the name, no preview opens and Enter opens the panel with every line', async ({
@@ -956,7 +1138,7 @@ for (const direction of directions) {
       await openOneTicker(page, withVenue('ACME', 'Acme Corp', analyzeRun));
       const ticker = h1(page).getByRole('button', { name: 'ACME' });
       await ticker.hover();
-      await expect(popup(page)).toHaveText('NYSE');
+      await expect(popup(page)).toHaveText(venueShown(words, venues.nyse));
     });
 
     test('the one-ticker comparison heading opens no preview when only the name is known', async ({

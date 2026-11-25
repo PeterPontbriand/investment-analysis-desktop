@@ -183,7 +183,8 @@
     "identifiedNoProvider": "Identified for this run {date}",
     "lookUp": "Look up",
     "lookingUp": "Looking up…",
-    "nameAndTicker": "{name} ({ticker})"
+    "nameAndTicker": "{name} ({ticker})",
+    "venueWithWording": "{name} ({wording})"
   },
   "previewSwitch": {
     "label": "Show popups"
@@ -195,7 +196,8 @@
   },
   "detailsPanel": {
     "close": "Close details",
-    "closeMark": "×"
+    "closeMark": "×",
+    "back": "Back to {title}"
   },
   "actions": {
     "cancel": "Cancel",

@@ -276,6 +276,26 @@ export const helpIndex: Schemas['HelpIndexDocument'] = {
           name: 'Cryptocurrency',
           definition: 'A digital currency.',
         },
+        // The listing-venue terms the fixtures use, as the engine serves them
+        // at the vendored engine commit (D360).
+        {
+          id: 'listing-venue',
+          name: 'Listing Venue',
+          definition:
+            "The market where an instrument's shares or units are listed for trading, written as the data provider reports it.",
+        },
+        {
+          id: 'listing-venue-nasdaq',
+          name: 'Nasdaq Stock Market',
+          definition:
+            'The Nasdaq Stock Market, a national securities exchange in the United States, with the market identifier code XNAS.',
+        },
+        {
+          id: 'listing-venue-nyse',
+          name: 'New York Stock Exchange',
+          definition:
+            'The New York Stock Exchange, a national securities exchange in the United States, with the market identifier code XNYS.',
+        },
       ],
     },
     {
@@ -405,6 +425,18 @@ export const references: Schemas['HelpReferencesDocument'] = {
       equity: 'instrument-kind-equity',
       etf: 'instrument-kind-etf',
       cryptocurrency: 'instrument-kind-cryptocurrency',
+    },
+    // The engine's LISTING_VENUE_TERMS at the vendored engine commit (D360).
+    ListingVenue: {
+      nasdaq: 'listing-venue-nasdaq',
+      nyse: 'listing-venue-nyse',
+      nyse_group: 'listing-venue-nyse-group',
+      nyse_arca: 'listing-venue-nyse-arca',
+      nyse_american: 'listing-venue-nyse-american',
+      cboe: 'listing-venue-cboe',
+      cboe_bzx: 'listing-venue-cboe-bzx',
+      txse: 'listing-venue-txse',
+      otc: 'listing-venue-otc',
     },
     ProviderCheckVerdict: {
       healthy: 'verdict-healthy',

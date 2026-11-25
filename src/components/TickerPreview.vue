@@ -6,6 +6,7 @@ import { isDescribed, previewParts } from '../composables/tickerDetailLines.ts';
 import { useTickerDetails } from '../composables/useTickerDetails.ts';
 import { useMessages } from '../i18n/index.ts';
 import TermName from './TermName.vue';
+import VenueName from './VenueName.vue';
 
 // The short, read-only preview of a ticker (D284, D290): the name, then the
 // venue, the kind and the currency joined by a separator. It has no controls.
@@ -51,6 +52,7 @@ const failure = computed(() =>
           :code="part.kind"
           plain
         />
+        <VenueName v-else-if="'venue' in part" :part="part.venue" plain />
         <template v-else>{{ part.text }}</template>
       </template>
     </p>
