@@ -93,4 +93,4 @@ Closes #50
 
 ## Change log
 
-None yet.
+- 2026-11-26, escalation 1 (step 5): the engine checkout was in use by another session, so the real-engine suite runs after the push and before the pull request opens; this change shows no engine data.
