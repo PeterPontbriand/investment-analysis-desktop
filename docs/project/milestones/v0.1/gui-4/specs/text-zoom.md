@@ -7,7 +7,7 @@
 
 ## Goal
 
-Ctrl plus, Ctrl minus and Ctrl 0 enlarge, shrink and reset the whole window's content on Windows, macOS and Linux, through the webview's own zoom and no in-app control. At a larger zoom the sidebar outgrows a window of the minimum size and scrolls by itself, so the owner can try that behaviour by hand.
+Ctrl plus and Ctrl minus enlarge and shrink the whole window's content on Windows, macOS and Linux, and Ctrl 0 resets it on Windows (WebView2), through the webview's own zoom and no in-app control. At a larger zoom the sidebar outgrows a window of the minimum size and scrolls by itself, so the owner can try that behaviour by hand.
 
 ## Decisions
 
@@ -23,7 +23,7 @@ None. The change is one window setting, plus a permission only if the platform n
 
 - `docs/project/milestones/v0.1/gui-4/specs/text-zoom.md` (this spec; changed only by the spec author's corrections)
 - `src-tauri/tauri.conf.json` (the main window's `zoomHotkeysEnabled` only)
-- `src-tauri/capabilities/default.json`, or the capability file that holds the window's permissions, only if the zoom keys need a webview zoom permission on a platform (step 3)
+- `src-tauri/capabilities/default.json`, or the capability file that holds the window's permissions (the one webview zoom permission of step 3 only)
 - one test file that checks the setting: a new Vitest file under `tests/tools/` or an addition to an existing shell test file under `tests/shell/`, whichever the repository's convention for checking `tauri.conf.json` already uses
 
 ## Steps
@@ -32,9 +32,9 @@ None. The change is one window setting, plus a permission only if the platform n
 
 2. **The setting.** In `src-tauri/tauri.conf.json`, set `zoomHotkeysEnabled` to `true` on the main window, next to `minWidth` and `minHeight`. Check, in the Tauri 2.12.5 documentation or schema in the repository's dependencies (not from memory), that the property exists for a window with that name and what it needs on each platform. If it does not exist under that name, or the platform notes need anything beyond step 3, stop and escalate (AGENTS.md escalation table, the row for a work that needs a file outside the allowed files, or the Tauri configuration).
 
-3. **Permission, only if needed.** If the documentation says macOS or Linux need a webview zoom permission, add exactly that one permission (for Tauri 2, `core:webview:allow-set-webview-zoom`) to the capability that already covers the main window; nothing else. If no permission is needed, change no capability file and say so in the report.
+3. **Permission.** macOS and Linux need a webview zoom permission for the zoom keys, so add exactly `core:webview:allow-set-webview-zoom` to the capability that already covers the main window; nothing else. The report quotes the documentation lines that say so.
 
-4. **The test.** Add a test that reads `src-tauri/tauri.conf.json` and fails when the main window does not have `zoomHotkeysEnabled: true` (and, if step 3 added a permission, when the capability lacks it). Expected values come from the file's structure, no literal window label other than the one the file already uses. Run it once with the setting removed to see it fail, then restore it. Check: `pnpm gate:slice`, then `pnpm gate --part shell` (the shell job runs in CI for any `src-tauri/` change; run it locally if the machine can, and say if it cannot). Commit: `feat(shell): enable keyboard zoom of the window text`.
+4. **The test.** Add a test that reads `src-tauri/tauri.conf.json` and fails when the main window does not have `zoomHotkeysEnabled: true` (and, if step 3 added a permission, when the capability lacks it). Expected values come from the file's structure, no literal window label other than the one the file already uses. Run it once with the setting removed to see it fail, then restore it. This configuration test is the required test; a check in the shell smoke test under `tests/shell/` is added only if it is certain to work, and otherwise left out, with the report saying so. Check: `pnpm gate:slice`, then `pnpm gate --part shell` (the shell job runs in CI for any `src-tauri/` change; run it locally if the machine can, and say if it cannot). Commit: `feat(shell): enable keyboard zoom of the window text`.
 
 5. **Push and report.** `git push -u origin feat/text-zoom-keys`, then report (see Report) and wait for the spec author's review. After a clean review, and when the project owner has typed the go-ahead for the pull request in the thread, open the pull request with the PR text below through `gh pr create --base main --head feat/text-zoom-keys --title "..." --body-file ...`; if the machine's permission check refuses it, report that and wait. Then watch CI and send the spec author the failing lines of any failed job.
 
@@ -61,7 +61,7 @@ None. The change is one window setting, plus a permission only if the platform n
 - The result of each acceptance check, numbered as above.
 - Every escalation, with the table row that triggered it.
 - Pilot measures: one value for each measure in the engine's spec workflow section 7, "not yet known" for those known only after the pull request.
-- **Try it:** in the application press Ctrl plus a few times: the content grows and the menu on the left scrolls by itself in a short window; Ctrl 0 resets it. Command: `pnpm sandbox` (or the built application, if the sandbox runs in a browser).
+- **Try it:** in the application press Ctrl plus a few times: the content grows and the menu on the left scrolls by itself in a short window; Ctrl 0 resets it on Windows. Command: `pnpm sandbox` (or the built application, if the sandbox runs in a browser).
 
 ## PR text
 
@@ -83,4 +83,4 @@ The owner's look at GUI.4c3a found no way to enlarge the text, and so no way to 
 
 ## Change log
 
-None yet.
+- 2026-11-26, spec author's corrections: step 3's permission is required, because macOS and Linux need it; Ctrl 0 reset is promised on Windows only; the configuration test is the required test, and a shell smoke check only if certain.
