@@ -253,7 +253,7 @@ Approved by the project owner on 2026-11-22. Decisions D313 to D327 are recorded
 
 ### GUI.4c: venue help, help content and Getting started
 
-Approved by the project owner on 2026-11-24, as one decision list for both sub-slices. Decisions D356 to D377 are recorded in this section, and D378 after the owner's look at GUI.4c1. They amend D283 (for guides only), D320 and D321 where they say so.
+Approved by the project owner on 2026-11-24, as one decision list for both sub-slices. Decisions D356 to D377 are recorded in this section, D378 after the owner's look at GUI.4c1, and D379 after the owner's look at GUI.4c2. They amend D283 (for guides only), D320 and D321 where they say so.
 
 | # | Decision |
 | :--- | :--- |
@@ -280,3 +280,4 @@ Approved by the project owner on 2026-11-24, as one decision list for both sub-s
 | D376 | Both sub-slices change screens: each report gives the `pnpm test:engine` summary and ends with "Try it" (`pnpm sandbox`), and the project owner tries each before merging. |
 | D377 | Not in GUI.4c, each already tracked: issues #42 and #37 (flaky tests, under D347), #34 (the macOS WebKit hover skip), #24 and #25 (checks that need a long refresh), #4 (TypeScript 7). A GUI.4c change that touches one of them is raised by the spec author, not settled by the implementer. |
 | D378 | Found in the owner's look at GUI.4c1 (2026-11-24). For NTR.TO the ticker details name Nutrien Ltd. and the venue "Toronto" from Yahoo Finance, while a Graham Number run is Unavailable because SEC EDGAR's ticker list does not include NTR.TO, and nothing the application shows says why. The explanation is the engine's, because the engine owns every explanation: [engine issue #302](https://github.com/PeterPontbriand/investment-analysis-engine/issues/302) explains SEC EDGAR's coverage in the glossary, and adds a clearer reason and an entry warning, which the application shows after a re-vendor in a later slice. [Engine issue #301](https://github.com/PeterPontbriand/investment-analysis-engine/issues/301) records the project owner's goal that the analysis strategies become usable with Canadian-listed tickers as soon as possible. GUI.4c1 itself is unchanged. |
+| D379 | Found in the owner's look at GUI.4c2 (2026-11-25). The sidebar stays in place while the content scrolls, on every screen, at the window's full height; in a window too short for it, it scrolls by itself. Styles only. |
