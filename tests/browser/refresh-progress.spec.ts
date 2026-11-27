@@ -110,7 +110,9 @@ test.describe('starting', () => {
       .click();
     await expect(refreshNow(page)).toBeVisible();
     await refreshNow(page).click();
-    expect(engine.actions('POST', '/v1/refreshes')[0]?.body).toEqual({
+    expect(
+      (await engine.recordedActions('POST', '/v1/refreshes'))[0]?.body,
+    ).toEqual({
       watchlist_id: coreComparison.watchlist_id,
     });
     await expect(heading(page)).toHaveText(
