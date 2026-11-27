@@ -1,4 +1,4 @@
-import type { Page, Route } from '@playwright/test';
+import { expect, type Page, type Route } from '@playwright/test';
 import { failure, respond, type Reply } from '../fixtures/api/server.ts';
 
 export const engineOrigin = 'http://127.0.0.1:4999';
@@ -132,6 +132,14 @@ export async function mockEngine(
   rejected: string[];
   paths: (path: string) => URL[];
   actions: (method: string, path: string) => RecordedRequest[];
+  // The action requests, once at least `count` of them have been recorded: a
+  // request is recorded only when the page sends it, after the action that
+  // causes it.
+  recordedActions: (
+    method: string,
+    path: string,
+    count?: number,
+  ) => Promise<RecordedRequest[]>;
 }> {
   const requests: RecordedRequest[] = [];
   const rejected: string[] = [];
@@ -180,5 +188,11 @@ export async function mockEngine(
       requests.filter((r) => r.url.pathname === path).map((r) => r.url),
     actions: (method, path) =>
       requests.filter((r) => r.method === method && r.url.pathname === path),
+    recordedActions: async (method, path, count = 1) => {
+      const matching = () =>
+        requests.filter((r) => r.method === method && r.url.pathname === path);
+      await expect.poll(() => matching().length).toBeGreaterThanOrEqual(count);
+      return matching();
+    },
   };
 }
