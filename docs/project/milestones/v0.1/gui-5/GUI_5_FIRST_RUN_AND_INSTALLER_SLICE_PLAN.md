@@ -71,6 +71,8 @@ GUI.5b depends on IAN API.20 and API.21 being merged. GUI.5c depends on a workin
 - This plan does not implement product code, installer scripts or configuration, signing/updater configuration, dependencies, CI workflows, telemetry, automatic diagnostic-data transmission, a general-purpose package manager or background updating.
 - Technical details that need implementation-time validation remain constraints or future decisions for their owning specs; this plan does not settle them in advance.
 
+Future specs must validate whether a pinned bundled `uv` can establish and recover the IAN environment on each supported platform and architecture; the installed engine's discovery, startup, shutdown and compatibility behavior; package and updater recovery paths; signing-key custody and the ongoing signing/notarization process; and the diagnostic report's exact contents and sanitization. These implementation details remain open.
+
 ## Acceptance criteria
 
 - The first-run path can reach a functioning demonstration without a user installing development tools or configuring the engine.
