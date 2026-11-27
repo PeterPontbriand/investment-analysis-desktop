@@ -106,4 +106,4 @@ Closes #51
 
 ## Change log
 
-None yet.
+- 2026-11-27, spec author's corrections after review: the test catalog `tests/fixtures/locales/ar-XB.json` is an allowed file, as part of the catalog conventions this spec names. Two accepted deviations: a sidebar navigation empties the trail even when it stays on the same path or names the screen already shown (D381 takes precedence over "the same path changes nothing"); and the bar's height reaches the page as `scroll-padding-block-start` on `html`, through one CSS variable set in a constructed stylesheet, instead of a scroll margin on each heading, which meets D384 and keeps the page free of inline style.
