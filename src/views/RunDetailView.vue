@@ -5,7 +5,6 @@ import type { ApiResult, GetResponse } from '../api/client.ts';
 import { useEngine } from '../api/engine.ts';
 import { runIdentitySource } from '../api/identitySource.ts';
 import { useScreenData } from '../api/useScreenData.ts';
-import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import HeadlineCards from '../components/HeadlineCards.vue';
 import OutcomePill from '../components/OutcomePill.vue';
 import RunTabs from '../components/RunTabs.vue';
@@ -21,6 +20,7 @@ import {
   formatInstant,
 } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
+import { labelParts, registerScreen } from '../composables/useTrail.ts';
 import { compareLocation, runCrumbs } from './navigation.ts';
 
 type Overview = ApiResult<GetResponse<'/v1/runs/{analysis_run_id}/overview'>>;
@@ -103,10 +103,26 @@ const asOfDate = computed(() =>
         fullDocument.value.data.effective_as_of,
       ),
 );
+
+// The trail's label: the run's ticker and strategy once it has loaded, the
+// strategy in the language the engine served it in (D382).
+registerScreen({
+  label: () => {
+    const overview = loaded.value?.overview;
+    if (overview === undefined) return t('trail.run');
+    return labelParts((values) => t('runDetail.titleNoName', values), {
+      ticker: { text: overview.data.ticker, lang: null },
+      strategy: {
+        text: overview.data.strategy.label,
+        lang: overview.contentLanguage,
+      },
+    });
+  },
+  parents: () => crumbs.value,
+});
 </script>
 
 <template>
-  <AppBreadcrumb :crumbs="crumbs" />
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <template v-else>
     <h1>

@@ -5,7 +5,6 @@ import { useRoute, useRouter } from 'vue-router';
 import { ApiError, type UnreadableEntry } from '../api/client.ts';
 import { useEngine } from '../api/engine.ts';
 import { useScreenData } from '../api/useScreenData.ts';
-import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import { watchlistCrumbs } from './navigation.ts';
 import ConfirmDialog from '../components/ConfirmDialog.vue';
 import EntryWarningLines from '../components/EntryWarningLines.vue';
@@ -34,6 +33,7 @@ import {
 import { currentProfileSource } from '../api/identitySource.ts';
 import { formatDateOrInstant, formatInstant } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 import EntryOptions from '../selection/EntryOptions.vue';
 import EntryOptionsButton from '../selection/EntryOptionsButton.vue';
 import { useSelectionForms } from '../selection/useSelectionForms.ts';
@@ -318,10 +318,18 @@ const deleteTitle = computed(() =>
     ? t('watchlist.deleteTitle', { name: deleting.value.name })
     : t('watchlist.deleteTitleNoName'),
 );
+
+// The trail's label: the watchlist's name once it has loaded (D382).
+registerScreen({
+  label: () =>
+    state.value.kind === 'ready'
+      ? state.value.data.display_name
+      : t('trail.watchlist'),
+  parents: () => crumbs,
+});
 </script>
 
 <template>
-  <AppBreadcrumb :crumbs="crumbs" />
   <div v-if="status !== null || warnings.length > 0" role="status">
     <p v-if="status !== null">
       {{

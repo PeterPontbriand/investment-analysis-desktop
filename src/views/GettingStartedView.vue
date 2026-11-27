@@ -5,6 +5,7 @@ import { useScreenData } from '../api/useScreenData.ts';
 import ScreenState from '../components/ScreenState.vue';
 import TermTrigger from '../components/TermTrigger.vue';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 
 // What the application does and does not do, and what each screen is for
 // (D371, D372). It explains no engine term: each is a trigger that does. A
@@ -31,6 +32,9 @@ async function retry(): Promise<void> {
   await reload();
   reads.value += 1;
 }
+
+// The trail's label for this screen (D382); it has no screen above it.
+registerScreen({ label: () => t('nav.gettingStarted'), parents: () => [] });
 </script>
 
 <template>

@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router';
 import { useEngine } from '../api/engine.ts';
 import { useScreenData } from '../api/useScreenData.ts';
 import ActionFailure from '../components/ActionFailure.vue';
-import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import EntryWarningLines from '../components/EntryWarningLines.vue';
 import ScreenState from '../components/ScreenState.vue';
 import { useAction } from '../composables/useAction.ts';
@@ -15,6 +14,7 @@ import {
 } from '../composables/useEntryWarnings.ts';
 import { leaveNotice } from '../composables/useNotice.ts';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 import { formatConjunction } from '../selection/format.ts';
 import { asOfTarget, tickersTarget } from '../selection/problems.ts';
 import StrategyChooser from '../selection/StrategyChooser.vue';
@@ -178,10 +178,20 @@ function cancel(): void {
     params: { watchlistId: watchlistId.value },
   });
 }
+
+// The trail's label: the screen's heading once the watchlist has loaded (D382).
+registerScreen({
+  label: () =>
+    state.value.kind === 'ready'
+      ? t('addEntries.heading', {
+          name: state.value.data.watchlist.display_name,
+        })
+      : t('trail.addEntries'),
+  parents: () => crumbs.value,
+});
 </script>
 
 <template>
-  <AppBreadcrumb :crumbs="crumbs" />
   <template v-if="state.kind !== 'ready'">
     <ScreenState :state="state" @retry="reload()" />
   </template>

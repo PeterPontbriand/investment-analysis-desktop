@@ -6,7 +6,6 @@ import {
   type IdentitySource,
 } from '../api/identitySource.ts';
 import { useScreenData } from '../api/useScreenData.ts';
-import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import CompareRunCells from '../components/CompareRunCells.vue';
 import RefreshNowButton from '../components/RefreshNowButton.vue';
 import RefreshNowNote from '../components/RefreshNowNote.vue';
@@ -21,6 +20,7 @@ import { useRefreshStart } from '../composables/useRefreshStart.ts';
 import { useRouteParam } from '../composables/useRouteParam.ts';
 import { formatCompletion, formatCount } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 import {
   groupsOf,
   outcomeCountsOf,
@@ -122,10 +122,15 @@ const counts = computed(() =>
     ? []
     : outcomeCountsOf(loaded.value.document, loaded.value.outcomes),
 );
+
+// The trail's label is the screen's fixed name (D382).
+registerScreen({
+  label: () => t('compare.refreshComparison'),
+  parents: () => crumbs,
+});
 </script>
 
 <template>
-  <AppBreadcrumb :crumbs="crumbs" />
   <ScreenState v-if="state.kind !== 'ready'" :state="state" @retry="reload()" />
   <template v-else>
     <div class="heading-row">

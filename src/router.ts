@@ -1,4 +1,10 @@
-import { createMemoryHistory, createRouter } from 'vue-router';
+import { createMemoryHistory, createRouter, START_LOCATION } from 'vue-router';
+import {
+  currentScreen,
+  nextTrail,
+  takeSidebarNavigation,
+  trail,
+} from './composables/useTrail.ts';
 import AddEntriesView from './views/AddEntriesView.vue';
 import AnalyzeView from './views/AnalyzeView.vue';
 import AboutView from './views/AboutView.vue';
@@ -14,7 +20,7 @@ import WatchlistView from './views/WatchlistView.vue';
 import WatchlistsView from './views/WatchlistsView.vue';
 
 export function createAppRouter() {
-  return createRouter({
+  const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: '/', redirect: { name: 'watchlists' } },
@@ -57,4 +63,26 @@ export function createAppRouter() {
       { path: '/about', name: 'about', component: AboutView },
     ],
   });
+  // Keeps the one navigation trail (D380, D381): the screen being left, as it
+  // labels itself now and at its full location, joins the trail, unless the
+  // sidebar started the navigation or the path stays the same.
+  router.beforeEach((to, from) => {
+    const fromSidebar = takeSidebarNavigation();
+    const screen = currentScreen.value;
+    const leaving =
+      from === START_LOCATION || screen === null
+        ? null
+        : {
+            label: screen.label(),
+            path: from.path,
+            to: { path: from.path, query: { ...from.query } },
+          };
+    trail.value = nextTrail(trail.value, leaving, to.path, fromSidebar);
+  });
+  // A sidebar click that made no navigation (a modifier key, say) leaves no
+  // mark behind for the next one.
+  router.afterEach(() => {
+    takeSidebarNavigation();
+  });
+  return router;
 }

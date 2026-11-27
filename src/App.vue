@@ -1,17 +1,32 @@
 <script setup lang="ts">
-/* global console, document, KeyboardEvent -- the browser's console and DOM types; src/ configures no browser globals */
-import { onBeforeUnmount, onErrorCaptured, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+/* global console, document, HTMLElement, KeyboardEvent, MutationObserver, ResizeObserver, window, CSSStyleSheet -- the browser's console and DOM types; src/ configures no browser globals */
+import {
+  computed,
+  onBeforeUnmount,
+  onErrorCaptured,
+  onMounted,
+  ref,
+  watch,
+} from 'vue';
+import { useRoute, useRouter, type RouteLocationRaw } from 'vue-router';
 import { useEngine } from './api/engine.ts';
+import AppBreadcrumb from './components/AppBreadcrumb.vue';
 import ConfirmDialog from './components/ConfirmDialog.vue';
 import DetailsPanel from './components/DetailsPanel.vue';
 import PreviewSwitch from './components/PreviewSwitch.vue';
 import RefreshMarker from './components/RefreshMarker.vue';
 import { closePanel } from './composables/useDetailsPanel.ts';
+import {
+  currentScreen,
+  markSidebarNavigation,
+  takeCrumbNavigation,
+  trail,
+} from './composables/useTrail.ts';
 import { useMessages } from './i18n/index.ts';
 
 const { t } = useMessages();
 const route = useRoute();
+const router = useRouter();
 const engine = useEngine();
 
 // Closing the window while a refresh runs asks first (D255). The question is
@@ -61,6 +76,87 @@ watch(
   () => route.path,
   () => closePanel({ returnFocus: false }),
 );
+
+// The one navigation trail (D380 to D384): the screens the reader came
+// through, or, with none, the screens above the current one.
+const crumbs = computed(() =>
+  trail.value.length > 0 ? trail.value : (currentScreen.value?.parents() ?? []),
+);
+
+// A sidebar item starts the trail afresh (D381), also when it names the screen
+// already shown, which makes no navigation.
+function fromSidebar(to: RouteLocationRaw): void {
+  if (router.resolve(to).fullPath === route.fullPath) trail.value = [];
+  else markSidebarNavigation();
+}
+
+// The bar stays at the top while the screen scrolls, unless it would take more
+// than a quarter of the window (D383). Its height is the page's scroll padding,
+// so whatever a link or focus scrolls into view stops clear of it (D384).
+const bar = ref<HTMLElement | null>(null);
+const sticky = ref(true);
+let barObserver: ResizeObserver | null = null;
+// The height goes in a stylesheet of its own, not a style attribute, so the
+// page holds no inline style.
+const barSheet =
+  typeof CSSStyleSheet === 'undefined' ||
+  document.adoptedStyleSheets === undefined
+    ? null
+    : new CSSStyleSheet();
+if (barSheet !== null)
+  document.adoptedStyleSheets = [...document.adoptedStyleSheets, barSheet];
+
+function measureBar(): void {
+  const height = bar.value?.getBoundingClientRect().height ?? 0;
+  sticky.value = height <= window.innerHeight / 4;
+  barSheet?.replaceSync(
+    `:root { --trail-block-size: ${sticky.value ? height : 0}px; }`,
+  );
+}
+onMounted(() => {
+  measureBar();
+  window.addEventListener('resize', measureBar);
+  if (bar.value !== null && typeof ResizeObserver !== 'undefined') {
+    barObserver = new ResizeObserver(measureBar);
+    barObserver.observe(bar.value);
+  }
+});
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', measureBar);
+  barObserver?.disconnect();
+});
+
+// After a crumb is used, focus moves to the screen's main heading once it
+// shows; a guide keeps its own focus rule (D369, D384).
+let headingWatch: MutationObserver | null = null;
+function focusMainHeading(main: HTMLElement): void {
+  headingWatch?.disconnect();
+  const focus = (): boolean => {
+    const heading = main.querySelector<HTMLElement>('h1');
+    if (heading === null) return false;
+    if (!heading.hasAttribute('tabindex'))
+      heading.setAttribute('tabindex', '-1');
+    heading.focus();
+    return true;
+  };
+  if (focus() || typeof MutationObserver === 'undefined') return;
+  const watcher = new MutationObserver(() => {
+    if (focus()) watcher.disconnect();
+  });
+  watcher.observe(main, { childList: true, subtree: true });
+  headingWatch = watcher;
+  window.setTimeout(() => watcher.disconnect(), 10_000);
+}
+const main = ref<HTMLElement | null>(null);
+watch(
+  () => route.path,
+  () => {
+    if (!takeCrumbNavigation() || route.name === 'help-document') return;
+    if (main.value !== null) focusMainHeading(main.value);
+  },
+  { flush: 'post' },
+);
+onBeforeUnmount(() => headingWatch?.disconnect());
 </script>
 
 <template>
@@ -71,36 +167,54 @@ watch(
       <nav :aria-label="t('nav.label')">
         <ul>
           <li>
-            <RouterLink :to="{ name: 'getting-started' }">{{
-              t('nav.gettingStarted')
-            }}</RouterLink>
+            <RouterLink
+              :to="{ name: 'getting-started' }"
+              @click="fromSidebar({ name: 'getting-started' })"
+              >{{ t('nav.gettingStarted') }}</RouterLink
+            >
           </li>
           <li>
-            <RouterLink :to="{ name: 'analyze' }">{{
-              t('nav.analyze')
-            }}</RouterLink>
+            <RouterLink
+              :to="{ name: 'analyze' }"
+              @click="fromSidebar({ name: 'analyze' })"
+              >{{ t('nav.analyze') }}</RouterLink
+            >
           </li>
           <li>
-            <RouterLink :to="{ name: 'watchlists' }">{{
-              t('nav.watchlists')
-            }}</RouterLink>
+            <RouterLink
+              :to="{ name: 'watchlists' }"
+              @click="fromSidebar({ name: 'watchlists' })"
+              >{{ t('nav.watchlists') }}</RouterLink
+            >
           </li>
           <li>
-            <RouterLink :to="{ name: 'refreshes' }">{{
-              t('nav.refreshes')
-            }}</RouterLink>
+            <RouterLink
+              :to="{ name: 'refreshes' }"
+              @click="fromSidebar({ name: 'refreshes' })"
+              >{{ t('nav.refreshes') }}</RouterLink
+            >
             <RefreshMarker />
           </li>
           <li>
-            <RouterLink :to="{ name: 'runs' }">{{ t('nav.runs') }}</RouterLink>
+            <RouterLink
+              :to="{ name: 'runs' }"
+              @click="fromSidebar({ name: 'runs' })"
+              >{{ t('nav.runs') }}</RouterLink
+            >
           </li>
           <li>
-            <RouterLink :to="{ name: 'help' }">{{ t('nav.help') }}</RouterLink>
+            <RouterLink
+              :to="{ name: 'help' }"
+              @click="fromSidebar({ name: 'help' })"
+              >{{ t('nav.help') }}</RouterLink
+            >
           </li>
           <li>
-            <RouterLink :to="{ name: 'about' }">{{
-              t('nav.about')
-            }}</RouterLink>
+            <RouterLink
+              :to="{ name: 'about' }"
+              @click="fromSidebar({ name: 'about' })"
+              >{{ t('nav.about') }}</RouterLink
+            >
           </li>
         </ul>
       </nav>
@@ -108,11 +222,17 @@ watch(
         <PreviewSwitch />
       </div>
     </header>
-    <main class="content">
+    <main ref="main" class="content">
+      <div ref="bar" class="trail-bar" :class="{ sticky }">
+        <AppBreadcrumb :crumbs="crumbs" />
+      </div>
       <div v-if="renderFailed" role="alert" class="failure">
         <p>{{ t('state.renderFailed') }}</p>
       </div>
-      <RouterView v-else />
+      <RouterView v-else v-slot="{ Component, route: shown }">
+        <!-- A screen opened with another parameter is a new screen. -->
+        <component :is="Component" :key="shown.path" />
+      </RouterView>
     </main>
     <DetailsPanel />
     <ConfirmDialog
@@ -210,5 +330,28 @@ watch(
   flex: 1;
   min-inline-size: 0;
   padding: var(--space-4) var(--space-6);
+}
+
+/* Above the comparison's sticky column (1), below the details panel (10) and
+   the preview popup (20). */
+.trail-bar {
+  background: var(--color-surface);
+}
+
+.trail-bar:not(:empty) {
+  padding-block: var(--space-2);
+}
+
+.trail-bar.sticky {
+  inset-block-start: 0;
+  position: sticky;
+  z-index: 5;
+}
+</style>
+
+<style>
+/* What a link or focus scrolls into view stops below the sticky trail (D384). */
+html {
+  scroll-padding-block-start: var(--trail-block-size, 0);
 }
 </style>

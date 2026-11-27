@@ -4,11 +4,11 @@ import { useRoute } from 'vue-router';
 import { useEngine } from '../api/engine.ts';
 import { focusHelpTarget, sectionElementId } from '../api/helpLinks.ts';
 import { useScreenData } from '../api/useScreenData.ts';
-import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import HelpMarkdown from '../components/HelpMarkdown.vue';
 import ScreenState from '../components/ScreenState.vue';
 import { useRouteParam } from '../composables/useRouteParam.ts';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 
 // One of the engine's guides (D369): its title, its introduction and its
 // sections, all as served.
@@ -37,10 +37,19 @@ watch(
   },
   { flush: 'post' },
 );
+
+// The trail's label: the guide's title, in its language, once it has loaded
+// (D382); Help is the screen above it.
+registerScreen({
+  label: () =>
+    guide.value === null
+      ? t('trail.guide')
+      : [{ text: guide.value.data.title, lang: lang.value }],
+  parents: () => [{ label: t('nav.help'), to: { name: 'help' } }],
+});
 </script>
 
 <template>
-  <AppBreadcrumb :crumbs="[{ label: t('nav.help'), to: { name: 'help' } }]" />
   <h1 tabindex="-1" :lang="lang ?? undefined">
     {{ guide === null ? t('nav.help') : guide.data.title }}
   </h1>

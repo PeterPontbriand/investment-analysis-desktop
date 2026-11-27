@@ -3,9 +3,13 @@ import { useScreenData } from '../api/useScreenData.ts';
 import ScreenState from '../components/ScreenState.vue';
 import { formatList } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 
 const { t, locale } = useMessages();
 const { state, reload } = useScreenData((client) => client.get('/v1/info'), []);
+
+// The trail's label for this screen (D382); it has no screen above it.
+registerScreen({ label: () => t('nav.about'), parents: () => [] });
 </script>
 
 <template>

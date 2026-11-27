@@ -13,6 +13,7 @@ import TickerButton from '../components/TickerButton.vue';
 import TableScroll from '../components/TableScroll.vue';
 import { formatInstant } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 import {
   compareLocation,
   filtersFromQuery,
@@ -109,6 +110,9 @@ const list = usePagedList(
   ['references', 'help', 'strategies'],
   [ticker, method, outcome],
 );
+
+// The trail's label for this screen (D382); it has no screen above it.
+registerScreen({ label: () => t('nav.runs'), parents: () => [] });
 </script>
 
 <template>

@@ -7,6 +7,7 @@ import { useScreenData } from '../api/useScreenData.ts';
 import ScreenState from '../components/ScreenState.vue';
 import TermTrigger from '../components/TermTrigger.vue';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 
 // The engine's guides and glossary (D369), from the cached help index.
 const { t } = useMessages();
@@ -31,6 +32,9 @@ watch(
   },
   { flush: 'post' },
 );
+
+// The trail's label for this screen (D382); it has no screen above it.
+registerScreen({ label: () => t('nav.help'), parents: () => [] });
 </script>
 
 <template>

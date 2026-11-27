@@ -88,9 +88,12 @@ test.describe('starting', () => {
     await expect(
       page.getByText(counts(0, 4), { exact: true }).first(),
     ).toBeVisible();
+    // The trail lists the screens the refresh was started from (D380).
     await expect(
-      page.getByRole('navigation', { name: en.breadcrumb.label }),
-    ).toContainText(en.nav.refreshes);
+      page
+        .getByRole('navigation', { name: en.breadcrumb.label })
+        .getByRole('link'),
+    ).toHaveText([en.nav.watchlists, 'Core']);
   });
 
   test('starts from the comparison of a refresh that has a watchlist', async ({
