@@ -10,6 +10,7 @@ import {
   type RefreshNote,
 } from '../composables/useRefreshStart.ts';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 import { asOfTarget, tickersTarget } from '../selection/problems.ts';
 import StrategyChooser from '../selection/StrategyChooser.vue';
 import TermTrigger from '../components/TermTrigger.vue';
@@ -99,6 +100,9 @@ async function submit(): Promise<void> {
 const aboveButton = form.aboveButton;
 const describe = form.describe;
 const messagesAt = (target: string) => form.messagesAt(target);
+
+// The trail's label for this screen (D382); it has no screen above it.
+registerScreen({ label: () => t('nav.analyze'), parents: () => [] });
 </script>
 
 <template>

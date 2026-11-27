@@ -5,7 +5,6 @@ import { useEngine } from '../api/engine.ts';
 import { currentProfileSource } from '../api/identitySource.ts';
 import type { ScreenState as ScreenStateType } from '../api/useScreenData.ts';
 import ActionFailure from '../components/ActionFailure.vue';
-import AppBreadcrumb from '../components/AppBreadcrumb.vue';
 import OutcomePill from '../components/OutcomePill.vue';
 import ScreenState from '../components/ScreenState.vue';
 import StrategyName from '../components/StrategyName.vue';
@@ -16,6 +15,7 @@ import { createAnnouncer } from '../composables/announcer.ts';
 import { useRouteParam } from '../composables/useRouteParam.ts';
 import { formatCount } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 import { compareLocation, compareCrumbs, runLocation } from './navigation.ts';
 import { endOf, pillsOf, subjectOf, subjectText } from './refreshModel.ts';
 
@@ -175,10 +175,13 @@ function stop(): void {
   if (stopDisabled.value) return;
   void follower.stop();
 }
+
+// The trail's label is the screen's fixed name: its heading changes while the
+// refresh runs (D382).
+registerScreen({ label: () => t('trail.progress'), parents: () => crumbs });
 </script>
 
 <template>
-  <AppBreadcrumb :crumbs="crumbs" />
   <template v-if="state !== null">
     <ScreenState :state="state" @retry="retry()" />
   </template>

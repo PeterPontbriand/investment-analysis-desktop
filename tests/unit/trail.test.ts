@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { effectScope, ref } from 'vue';
 import {
   currentScreen,
+  labelParts,
   nextTrail,
   registerScreen,
   type TrailCrumb,
@@ -96,5 +97,22 @@ describe('the current screen', () => {
     first.stop();
     expect(currentScreen.value?.label()).toBe('Two');
     second.stop();
+  });
+});
+
+describe('a label of parts', () => {
+  it('keeps the language of each served part, in the message order', () => {
+    const parts = labelParts(
+      (values) => `${values.ticker} — ${values.strategy}`,
+      {
+        ticker: { text: 'KO', lang: null },
+        strategy: { text: 'Graham Number', lang: 'en' },
+      },
+    );
+    expect(parts).toEqual([
+      { text: 'KO', lang: null },
+      { text: ' — ', lang: null },
+      { text: 'Graham Number', lang: 'en' },
+    ]);
   });
 });

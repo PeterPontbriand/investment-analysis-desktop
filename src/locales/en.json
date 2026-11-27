@@ -23,6 +23,13 @@
   "breadcrumb": {
     "label": "Breadcrumb"
   },
+  "trail": {
+    "watchlist": "Watchlist",
+    "addEntries": "Add entries",
+    "progress": "Refresh progress",
+    "run": "Saved run",
+    "guide": "Guide"
+  },
   "common": {
     "showMore": "Show more",
     "tryAgain": "Try again",

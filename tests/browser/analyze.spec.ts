@@ -96,9 +96,12 @@ test.describe('analyzing', () => {
     ]);
     for (const entry of body.entries)
       expect(entry.selection).toMatchObject({ as_of: '2025-12-31' });
+    // The trail leads back to the Analyze screen the refresh started from (D380).
     await expect(
-      page.getByRole('navigation', { name: en.breadcrumb.label }),
-    ).toContainText(en.nav.refreshes);
+      page
+        .getByRole('navigation', { name: en.breadcrumb.label })
+        .getByRole('link'),
+    ).toHaveText([en.nav.analyze]);
   });
 
   test('names the ticker on the progress screen, the ended state and the comparison (D274)', async ({

@@ -23,6 +23,13 @@
   "breadcrumb": {
     "label": "[ar-XB] Breadcrumb"
   },
+  "trail": {
+    "watchlist": "[ar-XB] Watchlist",
+    "addEntries": "[ar-XB] Add entries",
+    "progress": "[ar-XB] Refresh progress",
+    "run": "[ar-XB] Saved run",
+    "guide": "[ar-XB] Guide"
+  },
   "common": {
     "showMore": "[ar-XB] Show more",
     "tryAgain": "[ar-XB] Try again",

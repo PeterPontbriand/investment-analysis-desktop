@@ -1,5 +1,5 @@
 import { onScopeDispose, shallowRef } from 'vue';
-import type { Crumb, CrumbLabel } from '../components/crumbs.ts';
+import type { Crumb, CrumbLabel, CrumbPart } from '../components/crumbs.ts';
 
 // One navigation trail for the whole application (D380 to D384): the screens
 // the reader came through, oldest first, each a link back to the exact place
@@ -82,4 +82,25 @@ export function takeCrumbNavigation(): boolean {
   const marked = crumbNavigation;
   crumbNavigation = false;
   return marked;
+}
+
+// A label from a catalog message whose named values are parts of their own,
+// each with its language, so a served part keeps it (D370, D382).
+export function labelParts(
+  message: (values: Record<string, string>) => string,
+  values: Record<string, CrumbPart>,
+): CrumbPart[] {
+  // A private-use character marks where each value goes in the message.
+  const mark = (name: string) => `\u{e000}${name}\u{e000}`;
+  const text = message(
+    Object.fromEntries(Object.keys(values).map((name) => [name, mark(name)])),
+  );
+  return text
+    .split(/\u{e000}(\w+)\u{e000}/u)
+    .map((piece, index) =>
+      index % 2 === 1
+        ? (values[piece] ?? { text: piece, lang: null })
+        : { text: piece, lang: null },
+    )
+    .filter((part) => part.text !== '');
 }

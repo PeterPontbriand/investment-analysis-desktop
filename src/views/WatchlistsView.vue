@@ -11,6 +11,7 @@ import { useAction } from '../composables/useAction.ts';
 import { takeNotice } from '../composables/useNotice.ts';
 import { formatCount, formatInstant } from '../i18n/format.ts';
 import { useMessages } from '../i18n/index.ts';
+import { registerScreen } from '../composables/useTrail.ts';
 
 const { t, plural, locale } = useMessages();
 const router = useRouter();
@@ -51,6 +52,9 @@ async function submit(name: string): Promise<void> {
       params: { watchlistId: result.value.data.watchlist_id },
     });
 }
+
+// The trail's label for this screen (D382); it has no screen above it.
+registerScreen({ label: () => t('nav.watchlists'), parents: () => [] });
 </script>
 
 <template>
