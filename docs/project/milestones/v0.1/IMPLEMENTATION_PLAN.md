@@ -72,20 +72,10 @@ The approved technology decisions and their record are in [Appendix A of the GUI
 ### GUI.5: First-run and installer
 
 - **Problem:** Users need a guided first launch and a predictable way to install the GUI and its pinned engine. A new user who starts with an empty database also finds every screen empty until they have learned enough to fill it.
-- **Decision:** The first-run screen sends the SEC identity to the engine through IAN's API (D341); install the release's pinned IAN version behind the scenes. The first-run screen offers a sample workspace that the engine builds and controls, and an in-app "Try it" guide walks through it (D332 to D340).
-- **Scope:** The first-run screen (SEC identity and the sample workspace choice), the sample workspace controls and banner, the "Try it" guide, `pnpm sandbox` building on the engine's sample, and Windows, macOS and Linux installers, using the technology and signing choices approved in GUI.1.
-- **Branch:** A dedicated GUI.5 branch after the scaffold decisions and API requirements it consumes are available. The sample workspace needs IAN API.20 and the SEC identity screen needs IAN API.21, both merged first.
-- **Detail:** ⚠ no slice plan yet.
-
-**Decisions to approve before GUI.5**
-
-| Decision | Recommendation and trade-off |
-| :--- | :--- |
-| Windows and macOS installer formats and signing | Start with a signed Windows installer and a signed, notarized macOS disk image. Signing improves publisher identification and macOS distribution; certificates, notarization, and release steps add recurring cost and operational work. |
-| Linux package format | No recommendation yet. Linux became a supported platform in GUI.1 ([D22 in Appendix A of the GUI.1 slice plan](gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record)). Candidates include AppImage, .deb and Flatpak, which differ in distribution reach, sandboxing and update handling. |
-| Obtaining uv and pinning IAN | Bundle a pinned uv executable with each installer and install the exact IAN version selected for that GUI release. This avoids an extra user setup step and makes the pair reproducible; each release must update and validate its bundled installer tooling. |
-| Update mechanism | Use Tauri's signed updater with explicit user confirmation before installing an update. It gives the application a direct update path; signing keys and release metadata become security-critical operational assets. |
-| Where a new user lands | After the first-run screen a new user lands on Getting started, which offers Open sample workspace and, while the sample is open, a link to the Try it guide ([issue 36](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/36)'s comment). The rule replaces Watchlists as the start screen for a new user only (D374 in the [GUI.4 slice plan](gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#gui4c-venue-help-help-content-and-getting-started)). |
+- **Decision:** The first-run SEC identity is sent to IAN through its API (D341); the sample workspace and in-app Try it guide follow D332–D340. The desktop application and its compatible, pinned IAN version are one tested product release. The approved direction also covers managed engine lifecycle, platform-appropriate signed distribution, confirmed compatible-pair updates, user-data preservation, repeatable release production, clean-machine acceptance and privacy-conscious user-controlled diagnostics (D344–D351).
+- **Scope:** Deliver a complete installable desktop-and-engine product: managed engine installation and lifecycle, first-run SEC identity and sample onboarding, platform packaging and signing, updates and recovery, user-data safety, release automation and clean-machine acceptance. Windows, macOS and Linux remain supported. GUI.5 prepares and verifies the product; preview publication and feedback intake belong to GUI.6.
+- **Branch:** The implementation sequence and branches are in the [GUI.5 first-run and installer slice plan](gui-5/GUI_5_FIRST_RUN_AND_INSTALLER_SLICE_PLAN.md). The first-run sample workspace and SEC identity work still require IAN API.20 and API.21 respectively, both merged first.
+- **Detail:** [GUI.5 first-run and installer slice plan](gui-5/GUI_5_FIRST_RUN_AND_INSTALLER_SLICE_PLAN.md).
 
 **Sample workspace, "Try it" guide and SEC identity (approved 2026-11-22)**
 
@@ -108,14 +98,14 @@ The engine's side is recorded in [IAN API plan A.18](https://github.com/PeterPon
 
 The product name was decided in GUI.1 ([D13 in Appendix A of the GUI.1 slice plan](gui-1/GUI_1_TECHNOLOGY_AND_SCAFFOLD_SLICE_PLAN.md#appendix-a-2026-10-31-decision-record)).
 
-Answers to Q4 inform the signing decision, so these decisions are made after the user questions, not before GUI.1.
+Q4's answer informs the approved signing and trust direction; the product-delivery decisions were approved on 2026-11-27 and are recorded in [Appendix A of the GUI.5 slice plan](gui-5/GUI_5_FIRST_RUN_AND_INSTALLER_SLICE_PLAN.md#appendix-a--approved-decisions-2026-11-27).
 
 ### GUI.6: Preview release and feedback
 
 - **Problem:** The preview needs a controlled release and a way for users to report what they cannot understand or complete.
-- **Decision:** Release the application as a preview and collect feedback against the screens and setup flow.
-- **Entry criterion:** GUI.5's sample workspace and "Try it" guide are complete, so the first installer ships with them (D343).
-- **Scope:** Publish preview builds, explain the pre-release status, and provide a feedback intake route. Before preview builds are published, run and record a human smoke test of the installed application that walks through the preview's screens against a real engine started by the application. It is the human end-to-end check of IAN's local HTTP API, which [IAN's smoke test](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/SMOKE_TESTING.md) does not cover. Quitting on macOS while a refresh runs is tracked in [issue 24](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/24); it waits for a Mac and is run then.
+- **Decision:** Publish an accessible preview release with clear pre-release information, a prominent route to the appropriate platform download, and an easy feedback path (D352, recorded in [Appendix A of the GUI.5 slice plan](gui-5/GUI_5_FIRST_RUN_AND_INSTALLER_SLICE_PLAN.md#d352--make-preview-downloads-and-feedback-accessible-gui6)). Provide a user-controlled, privacy-conscious diagnostic-report capability (D351).
+- **Entry criterion:** GUI.5's complete installable desktop-and-engine product has met its installed-artifact acceptance criteria. The first installer includes the sample workspace and Try it guide (D343).
+- **Scope:** Publish preview builds and release information, explain the pre-release status, provide a prominent accessible download route and feedback intake, and plan a diagnostic report that users can produce and choose to share without telemetry or automatic transmission. Before preview builds are published, run and record a human smoke test of the installed application that walks through the preview's screens against a real engine started by the application. It is the human end-to-end check of IAN's local HTTP API, which [IAN's smoke test](https://github.com/PeterPontbriand/investment-analysis-engine/blob/main/docs/user/SMOKE_TESTING.md) does not cover. Quitting on macOS while a refresh runs is tracked in [issue 24](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/24); it waits for a Mac and is run then.
 - **Open decision:** What becomes of [docs/project/SMOKE_TESTING.md](../../SMOKE_TESTING.md) (D310 in the [GUI.4 slice plan](gui-4/GUI_4_HELP_IN_PLACE_SLICE_PLAN.md#appendix-a-2026-11-20-decision-record)). It is no longer maintained per pull request. The expected answer is a short checklist for the installed application (the installer, the first start, the engine found, and the macOS quit check of [issue 24](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/24)), run once per release, but GUI.6 decides.
 - **Branch:** A dedicated release branch or tag from the accepted GUI implementation.
 - **Detail:** ⚠ no slice plan yet.
