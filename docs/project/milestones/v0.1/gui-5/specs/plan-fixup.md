@@ -48,7 +48,7 @@ The patch itself, `.tmp/specs/gui-5-plan-fixup.patch`, is not committed.
 
 2. **The records.** Check the patch: `sha256sum .tmp/specs/gui-5-plan-fixup.patch` must print `7190e98058c6e85321c63a525275269e2f854946dfdab6c6dd2a0907f9381071`. Then `git apply --check .tmp/specs/gui-5-plan-fixup.patch` and `git apply .tmp/specs/gui-5-plan-fixup.patch`. If the checksum differs or the patch does not apply, stop and report; do not merge it by hand. Do not commit yet.
 
-3. **The tracking issue (D390).** File the issue with `gh issue create --repo PeterPontbriand/investment-analysis-desktop --title "Offer to remove all of the user's data, through the engine" --body-file <file>`, with the body below, written to a file under `.tmp/`. Then replace both occurrences of `ISSUE_NUMBER` in `GUI_5_FIRST_RUN_AND_INSTALLER_SLICE_PLAN.md` (two links, in GUI.5d's Scope and in D390) with the new issue's number, so each reads `[issue N](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/N)`. Check that `ISSUE_NUMBER` no longer appears anywhere in the repository. If the machine's permission check refuses `gh issue create`, stop and report; the project owner approved filing it with the decision list.
+3. **The tracking issue (D390).** File the issue with `gh issue create --repo PeterPontbriand/investment-analysis-desktop --title "Offer to remove all of the user's data, through the engine" --body-file <file>`, with the body below, written to a file under `.tmp/`. Then replace both occurrences of `ISSUE_NUMBER` in `GUI_5_FIRST_RUN_AND_INSTALLER_SLICE_PLAN.md` (two links, in GUI.5d's Scope and in D390) with the new issue's number, so each reads `[issue N](https://github.com/PeterPontbriand/investment-analysis-desktop/issues/N)`. Check that `ISSUE_NUMBER` no longer appears in any file outside this spec. If the machine's permission check refuses `gh issue create`, stop and report; the project owner approved filing it with the decision list.
 
    Issue body:
 
@@ -76,7 +76,7 @@ The patch itself, `.tmp/specs/gui-5-plan-fixup.patch`, is not committed.
 1. The spec is the branch's first commit, alone.
 2. `pnpm docs:check` prints no broken local links or anchors and valid sequence tables; `pnpm format:check` passes.
 3. `git --no-pager diff --stat origin/main...HEAD` lists only the four allowed files.
-4. `git grep -n ISSUE_NUMBER` finds nothing, and both issue links name the issue filed in step 3.
+4. `git grep -n ISSUE_NUMBER -- ':!docs/project/milestones/v0.1/gui-5/specs/plan-fixup.md'` finds nothing, and both issue links name the issue filed in step 3.
 5. The GUI.5 sequence table lists GUI.5a (Next), GUI.5c, GUI.5d, GUI.5b and GUI.5e, in that order.
 6. The slice plan has an Appendix B with D385 to D395.
 
@@ -121,3 +121,4 @@ Documentation only: the GUI.5 slice plan, the v0.1 implementation plan's GUI.5 s
 ## Change log
 
 - 2026-11-28: The link to AGENTS.md under Norms and safeguards had five ../ segments; it needs six, because the spec is five folders below the repository root. Found by the implementer's step 1 check.
+- 2026-11-28: Step 3's check and acceptance check 4 asked that `ISSUE_NUMBER` appear nowhere in the repository, which this spec cannot meet while it names the placeholder; both now exclude this spec. Found by the implementer's report.
