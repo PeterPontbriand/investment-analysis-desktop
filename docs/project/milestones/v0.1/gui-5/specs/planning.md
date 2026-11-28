@@ -169,7 +169,7 @@ Technical details that require implementation-time validation should be recorded
 
 Only these files may be created or changed:
 
-1. `docs/project/milestones/v0.1/gui-5/specs/gui-5-planning-update.md` — this spec, committed as the first commit of the branch.
+1. `docs/project/milestones/v0.1/gui-5/specs/planning.md` — this spec, committed as the first commit of the branch.
 2. `docs/project/milestones/v0.1/IMPLEMENTATION_PLAN.md` — update the GUI.5 and GUI.6 descriptions, sequencing, and links to reflect the new planning.
 3. `docs/project/milestones/v0.1/gui-5/GUI_5_FIRST_RUN_AND_INSTALLER_SLICE_PLAN.md` — create the detailed GUI.5 planning document.
 
@@ -348,4 +348,4 @@ Documentation only. No application code, installer configuration, release workfl
 
 ## Change log
 
-None. This is the initial committed version of the spec.
+- 2026-11-28: Allowed files named this spec `gui-5-planning-update.md`; it was committed as `specs/planning.md`, so the entry now names that file (D395 in [Appendix B of the GUI.5 slice plan](../GUI_5_FIRST_RUN_AND_INSTALLER_SLICE_PLAN.md#appendix-b--approved-decisions-2026-11-28)).
